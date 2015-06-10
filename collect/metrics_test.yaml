@@ -1,0 +1,5 @@
+metrics:
+- hostname: localhost
+  plugins:
+  - plugin_name: ng-monitor-plugin-linux-basic
+    plugin_option: ""
