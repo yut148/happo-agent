@@ -106,6 +106,11 @@ var Commands = []cli.Command{
 				Name:  "ip, i",
 				Usage: "IP address (This host!)",
 			},
+			cli.IntFlag{
+				Name:  "port, P",
+				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Usage: "Listen port number",
+			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
 				Value: happo_agent.API_ENDPOINT,
@@ -125,6 +130,11 @@ var Commands = []cli.Command{
 			cli.StringFlag{
 				Name:  "ip, i",
 				Usage: "IP address (This host!)",
+			},
+			cli.IntFlag{
+				Name:  "port, P",
+				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
