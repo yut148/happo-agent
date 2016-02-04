@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
@@ -21,7 +22,32 @@ const ERROR_LOG_COMMANDS = "w,ps auxwwf,ss -anp,lsof"
 const ERROR_LOG_OUTPUT_PATH = "/tmp"
 const ERROR_LOG_OUTPUT_FILENAME = "snapshot_%s.log"
 
+var (
+	saveStateChan   = make(chan bool)
+	lastRunnedMutex = sync.Mutex{}
+	lastRunned      int64
+)
+
 // --- Method
+
+func init() {
+	lastRunned = 0
+	go func() {
+		for {
+			select {
+			case <-saveStateChan:
+				go func() {
+					if isPermitSaveState() {
+						err := saveMachineState()
+						if err != nil {
+							log.Println(fmt.Sprintf("ERROR while saveMachieState(): %s, %v", err, time.Now()))
+						}
+					}
+				}()
+			}
+		}
+	}()
+}
 
 func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
 	var monitor_response happo_agent.MonitorResponse
@@ -34,7 +60,7 @@ func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
 		return
 	}
 	if ret != 0 {
-		saveMachineState()
+		saveStateChan <- true
 	}
 
 	monitor_response.Return_Value = ret
@@ -65,9 +91,6 @@ func execPluginCommand(plugin_name string, plugin_option string) (int, string, e
 }
 
 func saveMachineState() error {
-	if saveState() {
-		return nil
-	}
 	logged_time := time.Now()
 
 	result := ""
@@ -91,18 +114,15 @@ func saveMachineState() error {
 	return err
 }
 
-func isPermitSaveState() func() bool {
-	var last_runned int64
-	last_runned = 0
-	return func() bool {
-		duration := time.Now().Unix() - last_runned
-		if duration < happo_agent.ERROR_LOG_INTERVAL_SEC {
-			log.Println(fmt.Sprintf("Duration: %d < %d", duration, happo_agent.ERROR_LOG_INTERVAL_SEC))
-			return true
-		}
-		last_runned = time.Now().Unix()
+func isPermitSaveState() bool {
+	lastRunnedMutex.Lock()
+	defer lastRunnedMutex.Unlock()
+
+	duration := time.Now().Unix() - lastRunned
+	if duration < happo_agent.ERROR_LOG_INTERVAL_SEC {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, happo_agent.ERROR_LOG_INTERVAL_SEC))
 		return false
 	}
+	lastRunned = time.Now().Unix()
+	return true
 }
-
-var saveState = isPermitSaveState()
