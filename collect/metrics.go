@@ -8,6 +8,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/heartbeatsjp/happo-lib"
@@ -17,6 +18,7 @@ import (
 
 // --- Package Variables
 var metrics_data_buffer []happo_agent.MetricsData
+var metrics_data_buffer_mutex = sync.Mutex{}
 
 // --- Method
 
@@ -27,6 +29,9 @@ func Metrics(config_path string) error {
 	if err != nil {
 		return err
 	}
+
+	metrics_data_buffer_mutex.Lock()
+	defer metrics_data_buffer_mutex.Unlock()
 
 	for _, metric_host_list := range metric_list.Metrics {
 		for _, metric_plugin := range metric_host_list.Plugins {
@@ -54,6 +59,9 @@ func Metrics(config_path string) error {
 
 // 取得済みのメトリックを返します
 func GetCollectedMetrics() []happo_agent.MetricsData {
+	metrics_data_buffer_mutex.Lock()
+	defer metrics_data_buffer_mutex.Unlock()
+
 	collected_metrics_data := make([]happo_agent.MetricsData, len(metrics_data_buffer))
 
 	copy(collected_metrics_data, metrics_data_buffer)
