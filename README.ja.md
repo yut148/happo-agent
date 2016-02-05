@@ -242,6 +242,26 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric --post-data=
 
 *TODO*
 
+### /metric/status
+
+Get collected metric status.
+
+- Input format
+    - None
+- Input variables
+    - None
+- Return format
+    - JSON
+- Return variables
+    - length: length of metric_data_buffer
+    - capacity: capacity of metric_data_buffer
+    - oldest_timestamp: oldest Timestamp(int64) in metric_data_buffer
+    - newest_timestamp: newest Timestamp(int64) in metric_data_buffer
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/status
+{"capacity":4,"length":4,"newest_timestamp":1454654233,"oldest_timestamp":1454654173}
+```
 
 ## Contribution
 
@@ -257,3 +277,4 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric --post-data=
 ## Author
 
 [Yuichiro Saito](https://github.com/koemu)
+[Toshiaki Baba](https://github.com/netmarkjp)
