@@ -31,3 +31,7 @@ func MetricConfigUpdate(metric_request happo_agent.MetricConfigUpdateRequest, r 
 
 	r.JSON(http.StatusOK, metric_response)
 }
+
+func MetricDataBufferStatus(r render.Render) {
+	r.JSON(http.StatusOK, collect.GetMetricDataBufferStatus())
+}

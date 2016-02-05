@@ -33,8 +33,10 @@ func Metrics(config_path string) error {
 	metrics_data_buffer_mutex.Lock()
 	defer metrics_data_buffer_mutex.Unlock()
 
+	metric_total_count := 0
 	for _, metric_host_list := range metric_list.Metrics {
 		for _, metric_plugin := range metric_host_list.Plugins {
+			metric_total_count++
 			raw_metrics, err := getMetrics(metric_plugin.Plugin_Name, metric_plugin.Plugin_Option)
 			if err != nil {
 				return err
@@ -52,6 +54,12 @@ func Metrics(config_path string) error {
 			metrics.Metrics = metric_data
 			metrics_data_buffer = append(metrics_data_buffer, metrics)
 		}
+	}
+
+	// fuzzy capacity control. FIXME
+	// keep about 1 week. (60 times/hour * 24 times/day * 7 days/week)
+	if metric_total_count > 0 && len(metrics_data_buffer) > metric_total_count*10080 {
+		metrics_data_buffer = metrics_data_buffer[metric_total_count:]
 	}
 
 	return nil
@@ -162,4 +170,28 @@ func SaveMetricConfig(config happo_agent.MetricConfig, config_file string) error
 	}
 
 	return nil
+}
+
+func GetMetricDataBufferStatus() map[string]int64 {
+	metrics_data_buffer_mutex.Lock()
+	defer metrics_data_buffer_mutex.Unlock()
+
+	length := len(metrics_data_buffer)
+	capacity := cap(metrics_data_buffer)
+
+	oldest_timestamp := int64(0)
+	newest_timestamp := int64(0)
+	if len(metrics_data_buffer) > 0 {
+		oldest_timestamp = metrics_data_buffer[0].Timestamp
+		newest_timestamp = metrics_data_buffer[len(metrics_data_buffer)-1].Timestamp
+	}
+
+	result := map[string]int64{
+		"length":           int64(length),
+		"capacity":         int64(capacity),
+		"oldest_timestamp": oldest_timestamp,
+		"newest_timestamp": newest_timestamp,
+	}
+
+	return result
 }
