@@ -1,7 +1,6 @@
 package command
 
 import (
-	"bufio"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -42,16 +41,18 @@ type daemonListener struct {
 func CmdDaemonWrapper(c *cli.Context) {
 	args := os.Args
 	args[1] = "_daemon"
-	fmt.Println(args[0])
+	started := []time.Time{}
 	for {
 		cmd := exec.Command(args[0], args[1:]...)
-		stdout, _ := cmd.StdoutPipe()
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		started = append(started, time.Now())
 		cmd.Start()
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			fmt.Println(scanner.Text())
-		}
 		cmd.Wait()
+		if len(started) > 10 && time.Now().Add(-30*time.Second).Before(started[len(started)-5]) {
+			log.Fatal("Restarted too fast. Abort!")
+			os.Exit(1)
+		}
 	}
 }
 
