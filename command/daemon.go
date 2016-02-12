@@ -1,12 +1,14 @@
 package command
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime/pprof"
 	"time"
@@ -37,6 +39,21 @@ type daemonListener struct {
 }
 
 // --- functions
+func CmdDaemonWrapper(c *cli.Context) {
+	args := os.Args
+	args[1] = "_daemon"
+	fmt.Println(args[0])
+	for {
+		cmd := exec.Command(args[0], args[1:]...)
+		stdout, _ := cmd.StdoutPipe()
+		cmd.Start()
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+		cmd.Wait()
+	}
+}
 
 // Daemon mode (agent mode)
 func CmdDaemon(c *cli.Context) {
