@@ -44,16 +44,26 @@ func CmdDaemonWrapper(c *cli.Context) {
 	args[1] = "_daemon"
 	started := []time.Time{}
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt)
-	signal.Notify(ch, syscall.SIGTERM)
+	sigTerm := make(chan os.Signal, 1)
+	signal.Notify(sigTerm, os.Interrupt)
+	signal.Notify(sigTerm, syscall.SIGTERM)
 	var cmd *exec.Cmd
 
 	go func() {
-		<-ch
+		<-sigTerm
 		cmd.Process.Kill()
 		os.Exit(1)
 	}()
+
+	sigHup := make(chan os.Signal, 1)
+	signal.Notify(sigHup, syscall.SIGHUP)
+	go func() {
+		for {
+			<-sigHup
+			//TODO reopen file
+		}
+	}()
+
 	for {
 		cmd = exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
