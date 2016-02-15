@@ -17,6 +17,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/client9/reopen"
 	"github.com/codegangsta/cli"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/codegangsta/martini-contrib/secure"
@@ -44,16 +45,26 @@ func CmdDaemonWrapper(c *cli.Context) {
 	args[1] = "_daemon"
 	started := []time.Time{}
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt)
-	signal.Notify(ch, syscall.SIGTERM)
+	sigTerm := make(chan os.Signal, 1)
+	signal.Notify(sigTerm, os.Interrupt)
+	signal.Notify(sigTerm, syscall.SIGTERM)
 	var cmd *exec.Cmd
 
 	go func() {
-		<-ch
+		<-sigTerm
 		cmd.Process.Kill()
 		os.Exit(1)
 	}()
+
+	sigHup := make(chan os.Signal, 1)
+	signal.Notify(sigHup, syscall.SIGHUP)
+	go func() {
+		for {
+			<-sigHup
+			cmd.Process.Signal(syscall.SIGHUP)
+		}
+	}()
+
 	for {
 		cmd = exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
@@ -70,9 +81,40 @@ func CmdDaemonWrapper(c *cli.Context) {
 	}
 }
 
+// custom martini.Classic() for change change martini.Logger() to util.Logger()
+func customClassic() *martini.ClassicMartini {
+	/*
+		- remove martini.Logging()
+		- add happo_agent.martini_util.Logging()
+	*/
+	r := martini.NewRouter()
+	m := martini.New()
+	m.Use(util.Logger())
+	m.Use(martini.Recovery())
+	m.Use(martini.Static("public"))
+	m.MapTo(r, (*martini.Routes)(nil))
+	m.Action(r.Handle)
+	return &martini.ClassicMartini{m, r}
+}
+
 // Daemon mode (agent mode)
 func CmdDaemon(c *cli.Context) {
-	m := martini.Classic()
+
+	fp, err := reopen.NewFileWriter(c.String("logfile"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	log.SetOutput(fp)
+	sigHup := make(chan os.Signal, 1)
+	signal.Notify(sigHup, syscall.SIGHUP)
+	go func() {
+		for {
+			<-sigHup
+			fp.Reopen()
+		}
+	}()
+
+	m := customClassic()
 	m.Use(render.Renderer())
 	m.Use(util.ACL(c.StringSlice("allowed-hosts")))
 	m.Use(

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/go-martini/martini"
 )
@@ -50,5 +51,24 @@ func ACL(allowIPs []string) martini.Handler {
 		}
 
 		http.Error(res, "Access Denied", http.StatusForbidden)
+	}
+}
+
+func Logger() martini.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c martini.Context, martiniLog *log.Logger) {
+		start := time.Now()
+
+		addr := req.Header.Get("X-Real-IP")
+		if addr == "" {
+			addr = req.Header.Get("X-Forwarded-For")
+			if addr == "" {
+				addr = req.RemoteAddr
+			}
+		}
+
+		rw := res.(martini.ResponseWriter)
+		c.Next()
+
+		log.Printf("Aceess: %s \"%s %s\" %d %d %d\n", addr, req.Method, req.RequestURI, rw.Status(), rw.Size(), time.Since(start)/time.Millisecond)
 	}
 }
