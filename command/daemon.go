@@ -70,9 +70,26 @@ func CmdDaemonWrapper(c *cli.Context) {
 	}
 }
 
+// custom martini.Classic() for change change martini.Logger() to util.Logger()
+func customClassic() *martini.ClassicMartini {
+	/*
+		- remove martini.Logging()
+		- add happo_agent.martini_util.Logging()
+	*/
+	r := martini.NewRouter()
+	m := martini.New()
+	m.Use(util.Logger())
+	m.Use(martini.Recovery())
+	m.Use(martini.Static("public"))
+	m.MapTo(r, (*martini.Routes)(nil))
+	m.Action(r.Handle)
+	return &martini.ClassicMartini{m, r}
+}
+
 // Daemon mode (agent mode)
 func CmdDaemon(c *cli.Context) {
-	m := martini.Classic()
+
+	m := customClassic()
 	m.Use(render.Renderer())
 	m.Use(util.ACL(c.StringSlice("allowed-hosts")))
 	m.Use(
