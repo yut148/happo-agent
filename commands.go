@@ -52,6 +52,11 @@ var daemonFlags = []cli.Flag{
 		Value: happo_agent.COMMAND_TIMEOUT,
 		Usage: "Command execution timeout.",
 	},
+	cli.StringFlag{
+		Name:  "logfile, l",
+		Value: "happo-agent.log",
+		Usage: "logfile.",
+	},
 }
 
 var Commands = []cli.Command{

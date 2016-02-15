@@ -17,6 +17,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/client9/reopen"
 	"github.com/codegangsta/cli"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/codegangsta/martini-contrib/secure"
@@ -60,7 +61,7 @@ func CmdDaemonWrapper(c *cli.Context) {
 	go func() {
 		for {
 			<-sigHup
-			//TODO reopen file
+			cmd.Process.Signal(syscall.SIGHUP)
 		}
 	}()
 
@@ -98,6 +99,20 @@ func customClassic() *martini.ClassicMartini {
 
 // Daemon mode (agent mode)
 func CmdDaemon(c *cli.Context) {
+
+	fp, err := reopen.NewFileWriter(c.String("logfile"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	log.SetOutput(fp)
+	sigHup := make(chan os.Signal, 1)
+	signal.Notify(sigHup, syscall.SIGHUP)
+	go func() {
+		for {
+			<-sigHup
+			fp.Reopen()
+		}
+	}()
 
 	m := customClassic()
 	m.Use(render.Renderer())
