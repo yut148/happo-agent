@@ -11,53 +11,61 @@ import (
 
 var GlobalFlags = []cli.Flag{}
 
+var daemonFlags = []cli.Flag{
+	cli.IntFlag{
+		Name:  "port, P",
+		Value: happo_agent.DEFAULT_AGENT_PORT,
+		Usage: "Listen port number",
+	},
+	cli.StringSliceFlag{
+		Name:  "allowed-hosts, A",
+		Value: &cli.StringSlice{},
+		Usage: "Access allowed hosts (You can multiple define.)",
+	},
+	cli.StringFlag{
+		Name:  "public-key, B",
+		Value: happo_agent.TLS_PUBLIC_KEY,
+		Usage: "TLS public key file path",
+	},
+	cli.StringFlag{
+		Name:  "private-key, R",
+		Value: happo_agent.TLS_PRIVATE_KEY,
+		Usage: "TLS private key file path",
+	},
+	cli.StringFlag{
+		Name:  "metric-config, M",
+		Value: happo_agent.CONFIG_METRIC,
+		Usage: "Metric config file path",
+	},
+	cli.StringFlag{
+		Name:  "cpu-profile, C",
+		Value: "",
+		Usage: "CPU profile output.",
+	},
+	cli.IntFlag{
+		Name:  "max-connections, X",
+		Value: happo_agent.MAX_CONNECTIONS,
+		Usage: "CPU profile output.",
+	},
+	cli.IntFlag{
+		Name:  "command-timeout, T",
+		Value: happo_agent.COMMAND_TIMEOUT,
+		Usage: "Command execution timeout.",
+	},
+}
+
 var Commands = []cli.Command{
+	{
+		Name:   "_daemon",
+		Usage:  "Daemon mode (agent mode)",
+		Action: command.CmdDaemon,
+		Flags:  daemonFlags,
+	},
 	{
 		Name:   "daemon",
 		Usage:  "Daemon mode (agent mode)",
-		Action: command.CmdDaemon,
-		Flags: []cli.Flag{
-			cli.IntFlag{
-				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
-				Usage: "Listen port number",
-			},
-			cli.StringSliceFlag{
-				Name:  "allowed-hosts, A",
-				Value: &cli.StringSlice{},
-				Usage: "Access allowed hosts (You can multiple define.)",
-			},
-			cli.StringFlag{
-				Name:  "public-key, B",
-				Value: happo_agent.TLS_PUBLIC_KEY,
-				Usage: "TLS public key file path",
-			},
-			cli.StringFlag{
-				Name:  "private-key, R",
-				Value: happo_agent.TLS_PRIVATE_KEY,
-				Usage: "TLS private key file path",
-			},
-			cli.StringFlag{
-				Name:  "metric-config, M",
-				Value: happo_agent.CONFIG_METRIC,
-				Usage: "Metric config file path",
-			},
-			cli.StringFlag{
-				Name:  "cpu-profile, C",
-				Value: "",
-				Usage: "CPU profile output.",
-			},
-			cli.IntFlag{
-				Name:  "max-connections, X",
-				Value: happo_agent.MAX_CONNECTIONS,
-				Usage: "CPU profile output.",
-			},
-			cli.IntFlag{
-				Name:  "command-timeout, T",
-				Value: happo_agent.COMMAND_TIMEOUT,
-				Usage: "Command execution timeout.",
-			},
-		},
+		Action: command.CmdDaemonWrapper,
+		Flags:  daemonFlags,
 	},
 	{
 		Name:   "add",

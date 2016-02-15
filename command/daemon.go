@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime/pprof"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/netutil"
@@ -37,6 +39,36 @@ type daemonListener struct {
 }
 
 // --- functions
+func CmdDaemonWrapper(c *cli.Context) {
+	args := os.Args
+	args[1] = "_daemon"
+	started := []time.Time{}
+
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
+	signal.Notify(ch, syscall.SIGTERM)
+	var cmd *exec.Cmd
+
+	go func() {
+		<-ch
+		cmd.Process.Kill()
+		os.Exit(1)
+	}()
+	for {
+		cmd = exec.Command(args[0], args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		started = append(started, time.Now())
+
+		cmd.Start()
+		cmd.Wait()
+
+		if len(started) > 10 && time.Now().Add(-30*time.Second).Before(started[len(started)-5]) {
+			log.Fatal("Restarted too fast. Abort!")
+			os.Exit(1)
+		}
+	}
+}
 
 // Daemon mode (agent mode)
 func CmdDaemon(c *cli.Context) {
