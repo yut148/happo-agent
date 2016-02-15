@@ -17,7 +17,9 @@ import (
 func Inventory(inventory_request happo_agent.InventoryRequest, r render.Render, params martini.Params) {
 	var inventory_response happo_agent.InventoryResponse
 
-	log.Printf("Inventory Command: %s %s\n", inventory_request.Command, inventory_request.CommandOption)
+	if !util.Production {
+		log.Printf("Inventory Command: %s %s\n", inventory_request.Command, inventory_request.CommandOption)
+	}
 
 	exitstatus, stdout, stderr, err := util.ExecCommand(inventory_request.Command, inventory_request.CommandOption)
 	if err != nil {

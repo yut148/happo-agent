@@ -86,7 +86,9 @@ func getMetrics(plugin_name string, plugin_option string) (string, error) {
 		plugin = path.Join(base_path, plugin_name)
 		_, err := os.Stat(plugin)
 		if err == nil {
-			log.Println(plugin)
+			if !util.Production {
+				log.Println(plugin)
+			}
 			break
 		}
 	}
@@ -96,7 +98,9 @@ func getMetrics(plugin_name string, plugin_option string) (string, error) {
 		return "", nil
 	}
 
-	log.Println("Execute metric plugin:" + plugin)
+	if !util.Production {
+		log.Println("Execute metric plugin:" + plugin)
+	}
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, plugin_option)
 
 	if err != nil {

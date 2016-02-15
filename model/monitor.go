@@ -52,7 +52,9 @@ func init() {
 func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
 	var monitor_response happo_agent.MonitorResponse
 
-	log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitor_request.Plugin_Name, monitor_request.Plugin_Option))
+	if !util.Production {
+		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitor_request.Plugin_Name, monitor_request.Plugin_Option))
+	}
 	ret, message, err := execPluginCommand(monitor_request.Plugin_Name, monitor_request.Plugin_Option)
 	if err != nil {
 		monitor_response.Return_Value = happo_agent.MONITOR_UNKNOWN
@@ -76,7 +78,9 @@ func execPluginCommand(plugin_name string, plugin_option string) (int, string, e
 		plugin = path.Join(base_path, plugin_name)
 		_, err := os.Stat(plugin)
 		if err == nil {
-			log.Println(plugin)
+			if !util.Production {
+				log.Println(plugin)
+			}
 			break
 		}
 	}
