@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/heartbeatsjp/happo-lib"
@@ -16,8 +18,12 @@ import (
 
 // Global Variables
 var CommandTimeout time.Duration = -1
+var Production bool
 
 // --- Function
+func init() {
+	Production = strings.ToLower(os.Getenv("MARTINI_ENV")) == "production"
+}
 
 func ExecCommand(command string, option string) (int, string, string, error) {
 

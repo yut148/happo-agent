@@ -40,12 +40,16 @@ func ACL(allowIPs []string) martini.Handler {
 			}
 			if ip.Equal(host) {
 				// OK! (Equal)
-				log.Printf("%s <=> %s", raw_host, raw_ip)
+				if !Production {
+					log.Printf("%s <=> %s", raw_host, raw_ip)
+				}
 				return
 			}
 			if ip_net != nil && ip_net.Contains(host) {
 				// OK! (Range)
-				log.Printf("%s <=> %s", raw_host, raw_ip)
+				if !Production {
+					log.Printf("%s <=> %s", raw_host, raw_ip)
+				}
 				return
 			}
 		}
