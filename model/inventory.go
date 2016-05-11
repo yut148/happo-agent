@@ -21,7 +21,7 @@ func Inventory(inventory_request happo_agent.InventoryRequest, r render.Render, 
 		log.Printf("Inventory Command: %s %s\n", inventory_request.Command, inventory_request.CommandOption)
 	}
 
-	exitstatus, stdout, stderr, err := util.ExecCommand(inventory_request.Command, inventory_request.CommandOption)
+	exitstatus, out, err := util.ExecCommandCombinedOutput(inventory_request.Command, inventory_request.CommandOption)
 	if err != nil {
 		r.JSON(http.StatusExpectationFailed, inventory_response)
 		return
@@ -29,12 +29,12 @@ func Inventory(inventory_request happo_agent.InventoryRequest, r render.Render, 
 
 	if exitstatus != 0 {
 		inventory_response.ReturnCode = exitstatus
-		inventory_response.ReturnValue = stderr
+		inventory_response.ReturnValue = out
 		r.JSON(http.StatusBadRequest, inventory_response)
 		return
 	}
 	inventory_response.ReturnCode = exitstatus
-	inventory_response.ReturnValue = stdout
+	inventory_response.ReturnValue = out
 
 	r.JSON(http.StatusOK, inventory_response)
 }
