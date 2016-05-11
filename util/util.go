@@ -47,6 +47,34 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 	return exitStatus.GetChildExitCode(), stdout, stderr, err
 }
 
+func ExecCommandCombinedOutput(command string, option string) (int, string, error) {
+
+	command_timeout := CommandTimeout
+	if command_timeout == -1 {
+		command_timeout = happo_agent.COMMAND_TIMEOUT
+	}
+
+	command_with_options := fmt.Sprintf("%s %s", command, option)
+	tio := &timeout.Timeout{
+		Cmd:       exec.Command("/bin/sh", "-c", command_with_options),
+		Duration:  command_timeout * time.Second,
+		KillAfter: happo_agent.COMMAND_KILLAFTER * time.Second,
+	}
+	out := &bytes.Buffer{}
+	tio.Cmd.Stdout = out
+	tio.Cmd.Stderr = out
+
+	ch, err := tio.RunCommand()
+	exitStatus := <-ch
+
+	if err == nil && exitStatus.IsTimedOut() {
+		err = errors.New("Exec timeout: " + command_with_options)
+	}
+
+	return exitStatus.GetChildExitCode(), out.String(), err
+
+}
+
 func BindManageParameter(c *cli.Context) (happo_agent.ManageRequest, error) {
 	var hostinfo happo_agent.CrawlConfigAgent
 	var manage_request happo_agent.ManageRequest
