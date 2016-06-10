@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime/pprof"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -69,6 +70,16 @@ func CmdDaemonWrapper(c *cli.Context) {
 		cmd = exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		envHappoUserId := os.Getenv("HAPPO_USER_ID")
+		if envHappoUserId != "" {
+			uid, err := strconv.Atoi(envHappoUserId)
+			if err != nil {
+				log.Print("HAPPO_USER_ID ", envHappoUserId)
+				log.Fatal(err)
+			}
+			cmd.SysProcAttr = &syscall.SysProcAttr{}
+			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid)}
+		}
 		started = append(started, time.Now())
 
 		cmd.Start()
