@@ -9,7 +9,7 @@ import (
 )
 
 const TEST_CONFIG_FILE = "./metrics_test.yaml"
-const TEST_PLUGIN = "ng-monitor-plugin-linux-basic"
+const TEST_PLUGIN = "metrics_test_plugin"
 
 var CONFIG_DATA = happo_agent.MetricConfig{
 	Metrics: []struct {
@@ -26,7 +26,7 @@ var CONFIG_DATA = happo_agent.MetricConfig{
 				Plugin_Option string `yaml:"plugin_option"`
 			}{
 				{
-					Plugin_Name:   "ng-monitor-plugin-linux-basic",
+					Plugin_Name:   "metrics_test_plugin",
 					Plugin_Option: "",
 				},
 			},
@@ -51,7 +51,7 @@ func TestGetCollectedMetrics1(t *testing.T) {
 func TestGetMetrics1(t *testing.T) {
 	ret, err := getMetrics(TEST_PLUGIN, "")
 	assert.NotNil(t, ret)
-	assert.Contains(t, ret, "linux")
+	assert.Contains(t, ret, "usr.local.bin.metrics_test_plugin")
 	assert.Nil(t, err)
 }
 
