@@ -1,5 +1,6 @@
 # happo-agent README
 
+[![wercker status](https://app.wercker.com/status/1d02bef8da5959d5b6456e25835ae026/s/ "wercker status")](https://app.wercker.com/project/byKey/1d02bef8da5959d5b6456e25835ae026)
 
 ## Description
 
