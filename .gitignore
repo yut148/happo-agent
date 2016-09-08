@@ -3,4 +3,6 @@
 .swp
 *.prof
 happo-agent
-
+tmp/
+vendor/
+.wercker/
