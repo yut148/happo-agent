@@ -57,7 +57,8 @@ func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
 	}
 	ret, message, err := execPluginCommand(monitor_request.Plugin_Name, monitor_request.Plugin_Option)
 	if err != nil {
-		monitor_response.Return_Value = happo_agent.MONITOR_UNKNOWN
+		monitor_response.Return_Value = happo_agent.MONITOR_ERROR
+		monitor_response.Message = err.Error()
 		r.JSON(http.StatusBadRequest, monitor_response)
 		return
 	}
