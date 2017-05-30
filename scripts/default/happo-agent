@@ -1,0 +1,19 @@
+# basic settings
+LANG=C
+MARTINI_ENV=production
+APPNAME=happo-agent
+
+# specific settings
+HAPPO_CONF_DIR="/etc/happo"
+PATH=/usr/local/bin:$PATH
+ALLOWED_HOSTS="-A 192.168.0.0/24"
+PUBLIC_KEY="-B ${HAPPO_CONF_DIR}/${APPNAME}.pub"
+PRIVATE_KEY="-R ${HAPPO_CONF_DIR}/${APPNAME}.key"
+METRIC_CONFIG="-M ${HAPPO_CONF_DIR}/metrics.yaml"
+LOGFILE="-l /var/log/${APPNAME}.log"
+
+# limitations
+ulimit -n 8192
+
+# do not edit below
+HAPPO_AGENT_OPTS="${ALLOWED_HOSTS} ${PUBLIC_KEY} ${PRIVATE_KEY} ${METRIC_CONFIG} ${LOGFILE}"
