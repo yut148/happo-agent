@@ -87,25 +87,9 @@ $ sudo initctl reload-configuration
 $ sudo initctl start happo-agent
 ```
 
-happo-agent.conf
-
-```
-description "happo-agent"
-author  "Your Name <USER@example.com>"
-
-start on runlevel [2345]
-stop on runlevel [016]
-
-env LANG=C
-env MARTINI_ENV=production
-env APPNAME=happo-agent
-
-exec /path/to/${APPNAME} daemon -A [Accept from IP/Subnet] -B ./${APPNAME}.pub -R ./${APPNAME}.key -M metrics.yaml >/dev/null 2>&1
-respawn
-```
-
 You want to use sensu metrics plugins, should install `/usr/local/bin`.
 
+Example of init scripts are in [scripts/](scripts/)
 
 ### Metric collection configuration
 
