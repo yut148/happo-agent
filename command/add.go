@@ -9,22 +9,23 @@ import (
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
-func CmdAdd(c *cli.Context) {
+func CmdAdd(c *cli.Context) error {
 
 	manage_request, err := util.BindManageParameter(c)
 	data, err := json.Marshal(manage_request)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return cli.NewExitError(err.Error(), 1)
 	}
 
 	resp, err := util.RequestToManageAPI(c.String("endpoint"), "/manage/add", data)
 	if err != nil && resp == nil {
-		log.Fatalf(err.Error())
+		return cli.NewExitError(err.Error(), 1)
 	}
 	if resp.StatusCode == http.StatusFound {
-		log.Fatalf("Conflict!")
+		return cli.NewExitError("Conflict!", 1)
 	} else if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Failed!")
+		return cli.NewExitError("Failed!", 1)
 	}
 	log.Printf("Success.")
+	return nil
 }
