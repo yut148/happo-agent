@@ -41,56 +41,6 @@ type daemonListener struct {
 }
 
 // --- functions
-func CmdDaemonWrapper(c *cli.Context) {
-	args := os.Args
-	args[1] = "_daemon"
-	started := []time.Time{}
-
-	sigTerm := make(chan os.Signal, 1)
-	signal.Notify(sigTerm, os.Interrupt)
-	signal.Notify(sigTerm, syscall.SIGTERM)
-	var cmd *exec.Cmd
-
-	go func() {
-		<-sigTerm
-		cmd.Process.Kill()
-		os.Exit(1)
-	}()
-
-	sigHup := make(chan os.Signal, 1)
-	signal.Notify(sigHup, syscall.SIGHUP)
-	go func() {
-		for {
-			<-sigHup
-			cmd.Process.Signal(syscall.SIGHUP)
-		}
-	}()
-
-	for {
-		cmd = exec.Command(args[0], args[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		envHappoUserId := os.Getenv("HAPPO_USER_ID")
-		if envHappoUserId != "" {
-			uid, err := strconv.Atoi(envHappoUserId)
-			if err != nil {
-				log.Print("HAPPO_USER_ID ", envHappoUserId)
-				log.Fatal(err)
-			}
-			cmd.SysProcAttr = &syscall.SysProcAttr{}
-			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid)}
-		}
-		started = append(started, time.Now())
-
-		cmd.Start()
-		cmd.Wait()
-
-		if len(started) > 10 && time.Now().Add(-30*time.Second).Before(started[len(started)-5]) {
-			log.Fatal("Restarted too fast. Abort!")
-			os.Exit(1)
-		}
-	}
-}
 
 // custom martini.Classic() for change change martini.Logger() to util.Logger()
 func customClassic() *martini.ClassicMartini {

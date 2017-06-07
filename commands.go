@@ -61,15 +61,9 @@ var daemonFlags = []cli.Flag{
 
 var Commands = []cli.Command{
 	{
-		Name:   "_daemon",
-		Usage:  "Daemon mode (agent mode)",
-		Action: command.CmdDaemon,
-		Flags:  daemonFlags,
-	},
-	{
 		Name:   "daemon",
 		Usage:  "Daemon mode (agent mode)",
-		Action: command.CmdDaemonWrapper,
+		Action: command.CmdDaemon,
 		Flags:  daemonFlags,
 	},
 	{
