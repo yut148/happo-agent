@@ -1,37 +1,36 @@
 package collect
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"strconv"
 	"strings"
-	"sync"
+	"time"
 
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/heartbeatsjp/happo-lib"
+	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
 	"gopkg.in/yaml.v2"
 )
-
-// --- Package Variables
-var metrics_data_buffer []happo_agent.MetricsData
-var metrics_data_buffer_mutex = sync.Mutex{}
 
 // --- Method
 
 // メインクラス
 func Metrics(config_path string) error {
+	var metrics_data_buffer []happo_agent.MetricsData
 
 	metric_list, err := GetMetricConfig(config_path)
 	if err != nil {
 		return err
 	}
-
-	metrics_data_buffer_mutex.Lock()
-	defer metrics_data_buffer_mutex.Unlock()
 
 	metric_total_count := 0
 	for _, metric_host_list := range metric_list.Metrics {
@@ -56,10 +55,54 @@ func Metrics(config_path string) error {
 		}
 	}
 
-	// fuzzy capacity control. FIXME
-	// keep about 1 week. (60 times/hour * 24 times/day * 7 days/week)
-	if metric_total_count > 0 && len(metrics_data_buffer) > metric_total_count*10080 {
-		metrics_data_buffer = metrics_data_buffer[metric_total_count:]
+	now := time.Now()
+
+	// Save Metrics
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Println(err)
+	}
+
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	err = enc.Encode(metrics_data_buffer)
+	if err != nil {
+		log.Println(err)
+	} else {
+		transaction.Put(
+			[]byte(fmt.Sprintf("m-%d", now.Unix())),
+			b.Bytes(),
+			nil)
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		//Fatal
+		log.Fatalln(err)
+	}
+
+	// retire old metrics
+	transaction, err = db.DB.OpenTransaction()
+	if err != nil {
+		log.Println(err)
+	}
+	oldestThreshold := now.Add(-1 * 7 * 86400 * time.Second) //FIXME set threthold
+	iter := transaction.NewIterator(
+		&leveldbUtil.Range{
+			Start: []byte("m-0"),
+			Limit: []byte(fmt.Sprintf("m-%d", oldestThreshold.Unix()))},
+		nil)
+	for iter.Next() {
+		key := iter.Key()
+		value := iter.Value()
+		transaction.Delete(key, nil)
+		log.Printf("retire old metrics: key=%v, value=%v\n", string(key), value)
+	}
+	iter.Release()
+
+	err = transaction.Commit()
+	if err != nil {
+		log.Println(err)
 	}
 
 	return nil
@@ -67,15 +110,39 @@ func Metrics(config_path string) error {
 
 // 取得済みのメトリックを返します
 func GetCollectedMetrics() []happo_agent.MetricsData {
-	metrics_data_buffer_mutex.Lock()
-	defer metrics_data_buffer_mutex.Unlock()
+	var collectedMetricsData []happo_agent.MetricsData
 
-	collected_metrics_data := make([]happo_agent.MetricsData, len(metrics_data_buffer))
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Println(err)
+	}
 
-	copy(collected_metrics_data, metrics_data_buffer)
-	metrics_data_buffer = nil // バッファはオールクリア
+	var metricsData []happo_agent.MetricsData
+	var dec *gob.Decoder
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix([]byte("m-")),
+		nil)
+	for iter.Next() {
+		key := iter.Key()
+		value := iter.Value()
 
-	return collected_metrics_data
+		metricsData = []happo_agent.MetricsData{}
+		dec = gob.NewDecoder(bytes.NewReader(value))
+		err = dec.Decode(&metricsData)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		collectedMetricsData = append(collectedMetricsData, metricsData...)
+		transaction.Delete(key, nil)
+	}
+	iter.Release()
+
+	err = transaction.Commit()
+	if err != nil {
+		log.Println(err)
+	}
+	return collectedMetricsData
 }
 
 // メトリック取得
@@ -177,17 +244,46 @@ func SaveMetricConfig(config happo_agent.MetricConfig, config_file string) error
 }
 
 func GetMetricDataBufferStatus() map[string]int64 {
-	metrics_data_buffer_mutex.Lock()
-	defer metrics_data_buffer_mutex.Unlock()
 
-	length := len(metrics_data_buffer)
-	capacity := cap(metrics_data_buffer)
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Println(err)
+		return map[string]int64{}
+	}
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix([]byte("m-")),
+		nil)
+	i := 0
+	var firstKey, lastKey []byte
+	for iter.Next() {
+		if i == 0 {
+			firstKey = iter.Key()
+		}
+		lastKey = iter.Key()
+		i = i + 1
+	}
+	iter.Release()
+	transaction.Discard()
+
+	length := i
+	capacity := i
 
 	oldest_timestamp := int64(0)
 	newest_timestamp := int64(0)
-	if len(metrics_data_buffer) > 0 {
-		oldest_timestamp = metrics_data_buffer[0].Timestamp
-		newest_timestamp = metrics_data_buffer[len(metrics_data_buffer)-1].Timestamp
+	if i > 0 {
+		firstUnixTime, err := strconv.Atoi(strings.SplitN(string(firstKey), "-", 2)[1])
+		if err != nil {
+			log.Println(err)
+		} else {
+			oldest_timestamp = int64(firstUnixTime)
+		}
+
+		lastUnixTime, err := strconv.Atoi(strings.SplitN(string(lastKey), "-", 2)[1])
+		if err != nil {
+			log.Println(err)
+		} else {
+			newest_timestamp = int64(lastUnixTime)
+		}
 	}
 
 	result := map[string]int64{

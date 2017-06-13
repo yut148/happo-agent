@@ -24,6 +24,7 @@ import (
 	"github.com/codegangsta/martini-contrib/secure"
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/collect"
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/model"
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/heartbeatsjp/happo-lib"
@@ -153,6 +154,10 @@ func CmdDaemon(c *cli.Context) {
 			}
 		}()
 	}
+
+	dbfile := c.String("dbfile")
+	db.Open(dbfile)
+	defer db.Close()
 
 	m.Get("/", func() string {
 		return "OK"

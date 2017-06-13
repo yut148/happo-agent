@@ -57,6 +57,12 @@ var daemonFlags = []cli.Flag{
 		Value: "happo-agent.log",
 		Usage: "logfile.",
 	},
+	cli.StringFlag{
+		Name:   "dbfile, d",
+		Value:  "happo-agent.db",
+		Usage:  "dbfile",
+		EnvVar: "HAPPO_AGENT_DBFILE",
+	},
 }
 
 var Commands = []cli.Command{
