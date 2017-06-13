@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	DB *leveldb.DB
+	DB                        *leveldb.DB
+	MetricsMaxLifetimeSeconds int64
 )
 
 func Open(dbfile string) {

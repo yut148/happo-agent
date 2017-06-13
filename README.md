@@ -258,7 +258,7 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/status
 
 - key `m-<timestamp>` are metrics(timestamp is unixtime).
     - value: `happo_agent.MetricsData`
-- key `s-<timestamp>` are saved machine state(timestamp is unixtime).
+- key `s-<timestamp>` are saved machine state(timestamp is unixtime). // Future TODO
     - value: `string`
 
 [syndtr/goleveldb: LevelDB key/value database in Go\.](https://github.com/syndtr/goleveldb)

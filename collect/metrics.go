@@ -86,7 +86,7 @@ func Metrics(config_path string) error {
 	if err != nil {
 		log.Println(err)
 	}
-	oldestThreshold := now.Add(-1 * 7 * 86400 * time.Second) //FIXME set threthold
+	oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
 		&leveldbUtil.Range{
 			Start: []byte("m-0"),
@@ -96,7 +96,13 @@ func Metrics(config_path string) error {
 		key := iter.Key()
 		value := iter.Value()
 		transaction.Delete(key, nil)
-		log.Printf("retire old metrics: key=%v, value=%v\n", string(key), value)
+
+		// logging
+		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
+		metricsData := []happo_agent.MetricsData{}
+		dec := gob.NewDecoder(bytes.NewReader(value))
+		dec.Decode(&metricsData)
+		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), metricsData)
 	}
 	iter.Release()
 

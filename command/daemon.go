@@ -158,6 +158,7 @@ func CmdDaemon(c *cli.Context) {
 	dbfile := c.String("dbfile")
 	db.Open(dbfile)
 	defer db.Close()
+	db.MetricsMaxLifetimeSeconds = c.Int64("metrics-max-lifetime-seconds")
 
 	m.Get("/", func() string {
 		return "OK"
