@@ -7,3 +7,5 @@ happo-agent.db
 tmp/
 vendor/
 .wercker/
+debug
+.vscode/
