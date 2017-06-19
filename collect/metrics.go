@@ -116,6 +116,14 @@ func Metrics(config_path string) error {
 
 // 取得済みのメトリックを返します
 func GetCollectedMetrics() []happo_agent.MetricsData {
+	return GetCollectedMetricsWithLimit(-1)
+}
+
+// GetCollectedMetricsWithLimit returns collected metrics. with max `limit`
+func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
+	/*
+		limit > 0 works fine. (otherwise, means unlimited)
+	*/
 	var collectedMetricsData []happo_agent.MetricsData
 
 	transaction, err := db.DB.OpenTransaction()
@@ -128,6 +136,8 @@ func GetCollectedMetrics() []happo_agent.MetricsData {
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix([]byte("m-")),
 		nil)
+
+	i := 0
 	for iter.Next() {
 		key := iter.Key()
 		value := iter.Value()
@@ -141,6 +151,11 @@ func GetCollectedMetrics() []happo_agent.MetricsData {
 		}
 		collectedMetricsData = append(collectedMetricsData, metricsData...)
 		transaction.Delete(key, nil)
+
+		i = i + 1
+		if limit > 0 && i >= limit {
+			break
+		}
 	}
 	iter.Release()
 

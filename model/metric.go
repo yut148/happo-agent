@@ -14,7 +14,7 @@ var MetricConfigFile string
 func Metric(metric_request happo_agent.MetricRequest, r render.Render) {
 	var metric_response happo_agent.MetricResponse
 
-	metric_response.MetricData = collect.GetCollectedMetrics()
+	metric_response.MetricData = collect.GetCollectedMetricsWithLimit(1440) // FIXME to prefer value. now 1 day = 1440 minutes
 
 	r.JSON(http.StatusOK, metric_response)
 }

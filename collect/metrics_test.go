@@ -3,6 +3,7 @@ package collect
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-lib"
@@ -50,6 +51,19 @@ func TestGetCollectedMetrics1(t *testing.T) {
 	ret := GetCollectedMetrics()
 	assert.NotNil(t, ret)
 	assert.Nil(t, GetCollectedMetrics())
+}
+
+func TestGetCollectedMetricsWithLimit1(t *testing.T) {
+	err := Metrics(TEST_CONFIG_FILE)
+	assert.Nil(t, err)
+	time.Sleep(1 * time.Second)
+	err = Metrics(TEST_CONFIG_FILE)
+	assert.Nil(t, err)
+
+	ret := GetCollectedMetricsWithLimit(1)
+	assert.NotNil(t, ret)
+	assert.Equal(t, 1, len(ret))
+	assert.NotNil(t, GetCollectedMetrics())
 }
 
 func TestGetMetrics1(t *testing.T) {

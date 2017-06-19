@@ -11,6 +11,10 @@ var (
 	MetricsMaxLifetimeSeconds int64
 )
 
+func init() {
+	MetricsMaxLifetimeSeconds = 7 * 86400 //default is 7 days
+}
+
 func Open(dbfile string) {
 	var err error
 	DB, err = leveldb.OpenFile(dbfile, nil)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/command"
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-lib"
 )
 
@@ -65,7 +66,7 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.Int64Flag{
 		Name:   "metrics-max-lifetime-seconds",
-		Value:  7 * 86400,
+		Value:  db.MetricsMaxLifetimeSeconds,
 		Usage:  "Metrics Max Lifetime Seconds.",
 		EnvVar: "HAPPO_AGENT_METRICS_MAX_LIFETIME_SECONDS",
 	},
