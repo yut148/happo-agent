@@ -173,6 +173,8 @@ func CmdDaemon(c *cli.Context) {
 	m.Post("/metric", binding.Json(happo_agent.MetricRequest{}), model.Metric)
 	m.Post("/metric/config/update", binding.Json(happo_agent.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
+	m.Get("/machine-state/", model.ListMachieState)
+	m.Get("/machine-state/:key", model.GetMachineState)
 
 	// Listener
 	var lis daemonListener

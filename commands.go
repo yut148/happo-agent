@@ -70,6 +70,12 @@ var daemonFlags = []cli.Flag{
 		Usage:  "Metrics Max Lifetime Seconds.",
 		EnvVar: "HAPPO_AGENT_METRICS_MAX_LIFETIME_SECONDS",
 	},
+	cli.Int64Flag{
+		Name:   "machine-state-max-lifetime-seconds",
+		Value:  db.MachineStateMaxLifetimeSeconds,
+		Usage:  "Machine State Max Lifetime Seconds.",
+		EnvVar: "HAPPO_AGENT_MACHINE_STATE_MAX_LIFETIME_SECONDS",
+	},
 }
 
 var Commands = []cli.Command{

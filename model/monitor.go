@@ -2,18 +2,20 @@ package model
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/heartbeatsjp/happo-lib"
+	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // --- Constant Values
@@ -112,11 +114,49 @@ func saveMachineState() error {
 		}
 	}
 
-	file_suffix_time := fmt.Sprintf("%04d%02d%02d_%02d%02d%02d", logged_time.Year(), logged_time.Month(), logged_time.Day(), logged_time.Hour(), logged_time.Minute(), logged_time.Second())
-	filepath := path.Join(ERROR_LOG_OUTPUT_PATH, fmt.Sprintf(ERROR_LOG_OUTPUT_FILENAME, file_suffix_time))
-	err := ioutil.WriteFile(filepath, []byte(result), os.ModePerm)
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		return err
+	}
 
-	return err
+	transaction.Put(
+		[]byte(fmt.Sprintf("s-%d", logged_time.Unix())),
+		[]byte(result),
+		nil)
+	err = transaction.Commit()
+
+	if err != nil {
+		return err
+	}
+
+	// retire old metrics
+	transaction, err = db.DB.OpenTransaction()
+	if err != nil {
+		log.Println(err)
+	}
+	oldestThreshold := logged_time.Add(time.Duration(-1*db.MachineStateMaxLifetimeSeconds) * time.Second)
+	iter := transaction.NewIterator(
+		&leveldbUtil.Range{
+			Start: []byte("s-0"),
+			Limit: []byte(fmt.Sprintf("s-%d", oldestThreshold.Unix()))},
+		nil)
+	for iter.Next() {
+		key := iter.Key()
+		transaction.Delete(key, nil)
+
+		// logging
+		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
+		log.Printf("retire old metrics: key=%v(%v)\n", string(key), time.Unix(int64(unixTime), 0))
+		// if write value to log, log become too large...
+	}
+	iter.Release()
+
+	err = transaction.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func isPermitSaveState() bool {

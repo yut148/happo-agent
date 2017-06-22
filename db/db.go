@@ -7,12 +7,14 @@ import (
 )
 
 var (
-	DB                        *leveldb.DB
-	MetricsMaxLifetimeSeconds int64
+	DB                             *leveldb.DB
+	MetricsMaxLifetimeSeconds      int64
+	MachineStateMaxLifetimeSeconds int64
 )
 
 func init() {
-	MetricsMaxLifetimeSeconds = 7 * 86400 //default is 7 days
+	MetricsMaxLifetimeSeconds = 7 * 86400      //default is 7 days
+	MachineStateMaxLifetimeSeconds = 3 * 86400 //default is 3 days
 }
 
 func Open(dbfile string) {
