@@ -29,7 +29,7 @@ func ListMachieState(r render.Render) {
 	transaction.Discard()
 
 	if len(keys) == 0 {
-		r.JSON(http.StatusNotFound, nil)
+		r.JSON(http.StatusNotFound, map[string][]string{"keys": []string{}})
 		return
 	}
 	r.JSON(http.StatusOK, map[string][]string{"keys": keys})
