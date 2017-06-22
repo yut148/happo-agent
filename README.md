@@ -270,6 +270,7 @@ Get machine state key list.
 
 ```
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/
+{"keys":["s-1498112479","s-1498112819"]}
 ```
 
 ### /machine-state/:key
@@ -286,7 +287,8 @@ Get machine state.
     - machineState: command results
 
 ```
-$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/s-1498110600
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/s-1498112479
+{"machineState":"********** w (2017-06-22T15:21:19+09:00) cron 15:21:19 up 13 days, ..."}
 ```
 
 ## DBMS
