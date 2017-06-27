@@ -3,6 +3,9 @@
 .swp
 *.prof
 happo-agent
+happo-agent.db
 tmp/
 vendor/
 .wercker/
+debug
+.vscode/

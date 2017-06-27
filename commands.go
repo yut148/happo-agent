@@ -6,6 +6,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/command"
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-lib"
 )
 
@@ -56,6 +57,24 @@ var daemonFlags = []cli.Flag{
 		Name:  "logfile, l",
 		Value: "happo-agent.log",
 		Usage: "logfile.",
+	},
+	cli.StringFlag{
+		Name:   "dbfile, d",
+		Value:  "happo-agent.db",
+		Usage:  "dbfile",
+		EnvVar: "HAPPO_AGENT_DBFILE",
+	},
+	cli.Int64Flag{
+		Name:   "metrics-max-lifetime-seconds",
+		Value:  db.MetricsMaxLifetimeSeconds,
+		Usage:  "Metrics Max Lifetime Seconds.",
+		EnvVar: "HAPPO_AGENT_METRICS_MAX_LIFETIME_SECONDS",
+	},
+	cli.Int64Flag{
+		Name:   "machine-state-max-lifetime-seconds",
+		Value:  db.MachineStateMaxLifetimeSeconds,
+		Usage:  "Machine State Max Lifetime Seconds.",
+		EnvVar: "HAPPO_AGENT_MACHINE_STATE_MAX_LIFETIME_SECONDS",
 	},
 }
 

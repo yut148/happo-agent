@@ -1,11 +1,16 @@
 package collect
 
 import (
+	"os"
 	"testing"
+	"time"
 
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-lib"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/storage"
 )
 
 const TEST_CONFIG_FILE = "./metrics_test.yaml"
@@ -45,7 +50,20 @@ func TestGetCollectedMetrics1(t *testing.T) {
 
 	ret := GetCollectedMetrics()
 	assert.NotNil(t, ret)
-	assert.Nil(t, metrics_data_buffer)
+	assert.Nil(t, GetCollectedMetrics())
+}
+
+func TestGetCollectedMetricsWithLimit1(t *testing.T) {
+	err := Metrics(TEST_CONFIG_FILE)
+	assert.Nil(t, err)
+	time.Sleep(1 * time.Second)
+	err = Metrics(TEST_CONFIG_FILE)
+	assert.Nil(t, err)
+
+	ret := GetCollectedMetricsWithLimit(1)
+	assert.NotNil(t, ret)
+	assert.Equal(t, 1, len(ret))
+	assert.NotNil(t, GetCollectedMetrics())
 }
 
 func TestGetMetrics1(t *testing.T) {
@@ -109,4 +127,16 @@ func TestSaveMetricConfig1(t *testing.T) {
 	config, err := GetMetricConfig(TEST_CONFIG_FILE)
 	assert.EqualValues(t, config, CONFIG_DATA)
 	assert.Nil(t, err)
+}
+
+func TestMain(m *testing.M) {
+	//Mock
+	DB, err := leveldb.Open(storage.NewMemStorage(), nil)
+	if err != nil {
+		os.Exit(1)
+	}
+	db.DB = DB
+	os.Exit(m.Run())
+
+	db.DB.Close()
 }

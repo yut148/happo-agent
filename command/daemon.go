@@ -24,6 +24,7 @@ import (
 	"github.com/codegangsta/martini-contrib/secure"
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/collect"
+	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/model"
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/heartbeatsjp/happo-lib"
@@ -154,6 +155,12 @@ func CmdDaemon(c *cli.Context) {
 		}()
 	}
 
+	dbfile := c.String("dbfile")
+	db.Open(dbfile)
+	defer db.Close()
+	db.MetricsMaxLifetimeSeconds = c.Int64("metrics-max-lifetime-seconds")
+	db.MachineStateMaxLifetimeSeconds = c.Int64("machine-state-max-lifetime-seconds")
+
 	m.Get("/", func() string {
 		return "OK"
 	})
@@ -167,6 +174,8 @@ func CmdDaemon(c *cli.Context) {
 	m.Post("/metric", binding.Json(happo_agent.MetricRequest{}), model.Metric)
 	m.Post("/metric/config/update", binding.Json(happo_agent.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
+	m.Get("/machine-state/", model.ListMachieState)
+	m.Get("/machine-state/:key", model.GetMachineState)
 
 	// Listener
 	var lis daemonListener

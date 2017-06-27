@@ -254,6 +254,52 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/status
 {"capacity":4,"length":4,"newest_timestamp":1454654233,"oldest_timestamp":1454654173}
 ```
 
+
+### /machine-state/
+
+Get machine state key list.
+
+- Input format
+    - None
+- Input variables
+    - None
+- Return format
+    - JSON
+- Return variables
+    - keys: machine-state key list
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/
+{"keys":["s-1498112479","s-1498112819"]}
+```
+
+### /machine-state/:key
+
+Get machine state.
+
+- Input format
+    - None
+- Input variables
+    - key (can find from `/machine-state/` )
+- Return format
+    - JSON
+- Return variables
+    - machineState: command results
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/s-1498112479
+{"machineState":"********** w (2017-06-22T15:21:19+09:00) cron 15:21:19 up 13 days, ..."}
+```
+
+## DBMS
+
+- key `m-<timestamp>` are metrics(timestamp is unixtime).
+    - value: `happo_agent.MetricsData`
+- key `s-<timestamp>` are saved machine state(timestamp is unixtime).
+    - value: `string`
+
+[syndtr/goleveldb: LevelDB key/value database in Go\.](https://github.com/syndtr/goleveldb)
+
 ## Contribution
 
 1. Fork ([http://github.com/heartbeatsjp/happo-agent/fork](http://github.com/heartbeatsjp/happo-agent/fork))
