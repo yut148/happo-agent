@@ -16,6 +16,7 @@ import (
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/heartbeatsjp/happo-lib"
+	leveldbErrors "github.com/syndtr/goleveldb/leveldb/errors"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
 	"gopkg.in/yaml.v2"
@@ -42,7 +43,7 @@ func Metrics(config_path string) error {
 			} else if raw_metrics == "" {
 				continue
 			}
-			metric_data, timestamp, err := parseMetricData(raw_metrics)
+			metric_data, timestamp, err := ParseMetricData(raw_metrics)
 			if err != nil {
 				return err
 			}
@@ -55,7 +56,12 @@ func Metrics(config_path string) error {
 		}
 	}
 
-	now := time.Now()
+	err = SaveMetrics(time.Now(), metrics_data_buffer)
+	return err
+}
+
+//SaveMetrics save metrics to dbms
+func SaveMetrics(timestamp time.Time, metricsData []happo_agent.MetricsData) error {
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
@@ -63,14 +69,24 @@ func Metrics(config_path string) error {
 		log.Println(err)
 	}
 
+	value, err := transaction.Get(
+		[]byte(fmt.Sprintf("m-%d", timestamp.Unix())),
+		nil)
+	if err != leveldbErrors.ErrNotFound {
+		savedMetricsData := []happo_agent.MetricsData{}
+		dec := gob.NewDecoder(bytes.NewReader(value))
+		dec.Decode(&savedMetricsData)
+		metricsData = append(savedMetricsData, metricsData...)
+	}
+
 	var b bytes.Buffer
 	enc := gob.NewEncoder(&b)
-	err = enc.Encode(metrics_data_buffer)
+	err = enc.Encode(metricsData)
 	if err != nil {
 		log.Println(err)
 	} else {
 		transaction.Put(
-			[]byte(fmt.Sprintf("m-%d", now.Unix())),
+			[]byte(fmt.Sprintf("m-%d", timestamp.Unix())),
 			b.Bytes(),
 			nil)
 	}
@@ -86,7 +102,7 @@ func Metrics(config_path string) error {
 	if err != nil {
 		log.Println(err)
 	}
-	oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
+	oldestThreshold := timestamp.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
 		&leveldbUtil.Range{
 			Start: []byte("m-0"),
@@ -99,10 +115,10 @@ func Metrics(config_path string) error {
 
 		// logging
 		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		metricsData := []happo_agent.MetricsData{}
+		deletedMetricsData := []happo_agent.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
-		dec.Decode(&metricsData)
-		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), metricsData)
+		dec.Decode(&deletedMetricsData)
+		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), deletedMetricsData)
 	}
 	iter.Release()
 
@@ -203,7 +219,7 @@ func getMetrics(plugin_name string, plugin_option string) (string, error) {
 }
 
 // Sensu形式のメトリックをパースします
-func parseMetricData(raw_metricdata string) (map[string]float64, int64, error) {
+func ParseMetricData(raw_metricdata string) (map[string]float64, int64, error) {
 	var timestamp int64 = 0
 	results := make(map[string]float64)
 

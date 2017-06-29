@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/collect"
@@ -17,6 +18,30 @@ func Metric(metric_request happo_agent.MetricRequest, r render.Render) {
 	metric_response.MetricData = collect.GetCollectedMetricsWithLimit(60) // FIXME to prefer value. now 60 times = 1hour
 
 	r.JSON(http.StatusOK, metric_response)
+}
+
+//MetricAppend store metrics to local dbms
+func MetricAppend(request struct {
+	Api_Key    string                    `json:"apikey"`
+	MetricData []happo_agent.MetricsData `json:"metric_data"`
+}, // happo_agent.MetricsAppendRequest //TODO
+	r render.Render) {
+	//var response happo_agent.MetricAppendResponse  // TODO
+	var response struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+
+	err := collect.SaveMetrics(time.Now(), request.MetricData)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	response.Status = "ok"
+	r.JSON(http.StatusOK, response)
 }
 
 func MetricConfigUpdate(metric_request happo_agent.MetricConfigUpdateRequest, r render.Render) {

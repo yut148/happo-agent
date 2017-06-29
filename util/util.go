@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -104,4 +105,20 @@ func RequestToManageAPI(endpoint string, path string, postdata []byte) (*http.Re
 	req.Header.Set("Content-Type", "application/json")
 
 	return http.DefaultTransport.RoundTrip(req)
+}
+
+func RequestToMetricAppendAPI(endpoint string, postdata []byte) (*http.Response, error) {
+	uri := fmt.Sprintf("%s/metric/append", endpoint)
+	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(postdata))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	//FIXME other parameters should be proper values
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}}
+
+	return client.Do(req)
 }

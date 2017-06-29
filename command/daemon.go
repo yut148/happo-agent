@@ -172,6 +172,10 @@ func CmdDaemon(c *cli.Context) {
 	m.Post("/inventory", binding.Json(happo_agent.InventoryRequest{}), model.Inventory)
 	m.Post("/monitor", binding.Json(happo_agent.MonitorRequest{}), model.Monitor)
 	m.Post("/metric", binding.Json(happo_agent.MetricRequest{}), model.Metric)
+	m.Post("/metric/append", binding.Json(struct {
+		Api_Key    string                    `json:"apikey"`
+		MetricData []happo_agent.MetricsData `json:"metric_data"`
+	}{}), model.MetricAppend)
 	m.Post("/metric/config/update", binding.Json(happo_agent.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
 	m.Get("/machine-state/", model.ListMachieState)
