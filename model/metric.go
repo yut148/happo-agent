@@ -21,16 +21,8 @@ func Metric(metric_request happo_agent.MetricRequest, r render.Render) {
 }
 
 //MetricAppend store metrics to local dbms
-func MetricAppend(request struct {
-	Api_Key    string                    `json:"apikey"`
-	MetricData []happo_agent.MetricsData `json:"metric_data"`
-}, // happo_agent.MetricsAppendRequest //TODO
-	r render.Render) {
-	//var response happo_agent.MetricAppendResponse  // TODO
-	var response struct {
-		Status  string `json:"status"`
-		Message string `json:"message"`
-	}
+func MetricAppend(request happo_agent.MetricAppendRequest, r render.Render) {
+	var response happo_agent.MetricAppendResponse
 
 	err := collect.SaveMetrics(time.Now(), request.MetricData)
 	if err != nil {

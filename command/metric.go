@@ -54,11 +54,7 @@ func CmdAppendMetric(c *cli.Context) error {
 		return nil
 	}
 
-	//var metricAppendRequest happo_agent.MetricAppendRequest  //TODO
-	var metricAppendRequest struct {
-		Api_Key    string                    `json:"apikey"`
-		MetricData []happo_agent.MetricsData `json:"metric_data"`
-	}
+	var metricAppendRequest happo_agent.MetricAppendRequest
 
 	metricAppendRequest.Api_Key = c.String("api-key")
 	metricAppendRequest.MetricData = metricsDataSlice
