@@ -298,7 +298,8 @@ func GetMetricDataBufferStatus() map[string]int64 {
 			firstKey = make([]byte, len(iter.Key()))
 			copy(firstKey, iter.Key())
 		}
-		lastKey = iter.Key()
+		lastKey = make([]byte, len(iter.Key()))
+		copy(lastKey, iter.Key())
 		i = i + 1
 	}
 	iter.Release()

@@ -193,6 +193,72 @@ func TestSaveMetrics3(t *testing.T) {
 	assert.Equal(t, got, append(metricsData1, metricsData2...))
 }
 
+func TestSaveMetrics4(t *testing.T) {
+	var err error
+	metricsData1 := []happo_agent.MetricsData{
+		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	}
+	metricsData2 := []happo_agent.MetricsData{
+		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	}
+
+	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
+	assert.Nil(t, err)
+
+	err = SaveMetrics(time.Unix(1000+db.MetricsMaxLifetimeSeconds+1, 0), metricsData2)
+	assert.Nil(t, err)
+
+	got := GetCollectedMetricsWithLimit(-1)
+	//metricsData1 must expired
+	assert.Equal(t, got, metricsData2)
+}
+
+func TestGetMetricDataBufferStatus1(t *testing.T) {
+	var err error
+	var savedMetricData map[string]int64
+	metricsData1 := []happo_agent.MetricsData{
+		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	}
+	metricsData2 := []happo_agent.MetricsData{
+		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	}
+
+	//cleanup
+	GetCollectedMetricsWithLimit(-1)
+
+	savedMetricData = GetMetricDataBufferStatus()
+	assert.Equal(t, savedMetricData["length"], int64(0))
+	assert.Equal(t, savedMetricData["capacity"], int64(0))
+
+	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
+	assert.Nil(t, err)
+
+	savedMetricData = GetMetricDataBufferStatus()
+	assert.Equal(t, savedMetricData["length"], int64(1))
+	assert.Equal(t, savedMetricData["capacity"], int64(1))
+	assert.Equal(t, savedMetricData["oldest_timestamp"], int64(1000))
+	assert.Equal(t, savedMetricData["newest_timestamp"], int64(1000))
+
+	err = SaveMetrics(time.Unix(1001, 0), metricsData2)
+	assert.Nil(t, err)
+
+	savedMetricData = GetMetricDataBufferStatus()
+	assert.Equal(t, savedMetricData["length"], int64(2))
+	assert.Equal(t, savedMetricData["capacity"], int64(2))
+	assert.Equal(t, savedMetricData["oldest_timestamp"], int64(1000))
+	assert.Equal(t, savedMetricData["newest_timestamp"], int64(1001))
+
+	GetCollectedMetricsWithLimit(-1)
+
+	savedMetricData = GetMetricDataBufferStatus()
+	assert.Equal(t, savedMetricData["length"], int64(0))
+	assert.Equal(t, savedMetricData["capacity"], int64(0))
+}
+
 func TestMain(m *testing.M) {
 	//Mock
 	DB, err := leveldb.Open(storage.NewMemStorage(), nil)
