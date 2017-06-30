@@ -115,10 +115,10 @@ func SaveMetrics(timestamp time.Time, metricsData []happo_agent.MetricsData) err
 
 		// logging
 		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		deletedMetricsData := []happo_agent.MetricsData{}
+		expired := []happo_agent.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
-		dec.Decode(&deletedMetricsData)
-		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), deletedMetricsData)
+		dec.Decode(&expired)
+		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
 	}
 	iter.Release()
 
