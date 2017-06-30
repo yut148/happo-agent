@@ -56,12 +56,13 @@ func Metrics(config_path string) error {
 		}
 	}
 
-	err = SaveMetrics(time.Now(), metrics_data_buffer)
+	now := time.Now()
+	err = SaveMetrics(now, metrics_data_buffer)
 	return err
 }
 
 //SaveMetrics save metrics to dbms
-func SaveMetrics(timestamp time.Time, metricsData []happo_agent.MetricsData) error {
+func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
@@ -69,12 +70,12 @@ func SaveMetrics(timestamp time.Time, metricsData []happo_agent.MetricsData) err
 		log.Println(err)
 	}
 
-	value, err := transaction.Get(
-		[]byte(fmt.Sprintf("m-%d", timestamp.Unix())),
+	got, err := transaction.Get(
+		[]byte(fmt.Sprintf("m-%d", now.Unix())),
 		nil)
 	if err != leveldbErrors.ErrNotFound {
 		savedMetricsData := []happo_agent.MetricsData{}
-		dec := gob.NewDecoder(bytes.NewReader(value))
+		dec := gob.NewDecoder(bytes.NewReader(got))
 		dec.Decode(&savedMetricsData)
 		metricsData = append(savedMetricsData, metricsData...)
 	}
@@ -86,7 +87,7 @@ func SaveMetrics(timestamp time.Time, metricsData []happo_agent.MetricsData) err
 		log.Println(err)
 	} else {
 		transaction.Put(
-			[]byte(fmt.Sprintf("m-%d", timestamp.Unix())),
+			[]byte(fmt.Sprintf("m-%d", now.Unix())),
 			b.Bytes(),
 			nil)
 	}
@@ -102,7 +103,7 @@ func SaveMetrics(timestamp time.Time, metricsData []happo_agent.MetricsData) err
 	if err != nil {
 		log.Println(err)
 	}
-	oldestThreshold := timestamp.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
+	oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
 		&leveldbUtil.Range{
 			Start: []byte("m-0"),
