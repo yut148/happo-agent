@@ -108,10 +108,18 @@ func RequestToManageAPI(endpoint string, path string, postdata []byte) (*http.Re
 }
 
 func RequestToMetricAppendAPI(endpoint string, postdata []byte) (*http.Response, error) {
+	client, req, err := buildMetricAppendAPIRequest(endpoint, postdata)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(req)
+}
+
+func buildMetricAppendAPIRequest(endpoint string, postdata []byte) (*http.Client, *http.Request, error) {
 	uri := fmt.Sprintf("%s/metric/append", endpoint)
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(postdata))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -119,6 +127,5 @@ func RequestToMetricAppendAPI(endpoint string, postdata []byte) (*http.Response,
 	client := &http.Client{Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}}
-
-	return client.Do(req)
+	return client, req, err
 }
