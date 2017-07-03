@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/heartbeatsjp/happo-lib"
@@ -79,5 +80,33 @@ func TestExecCommand4(t *testing.T) {
 	exit_code, out, err := ExecCommandCombinedOutput(command, option)
 	assert.EqualValues(t, exit_code, 0)
 	assert.Contains(t, out, "1.STDOUT.2.STDERR.3.STDOUT.4.STDERR.")
+	assert.Nil(t, err)
+}
+
+func TestBuildMetricAppendAPIRequest1(t *testing.T) {
+	client, req, err := buildMetricAppendAPIRequest("https://127.0.0.2:6777", []byte(
+		`{
+		"api_key": "asdf",
+		"metric_data":[
+		{ "hostname":"saito-hb-vm101",
+		"timestamp":1444028731,
+		"metrics": {"linux.context_switches.context_switches":10001,
+		"linux.disk.elapsed.iotime_sda":11,
+		"linux.disk.elapsed.iotime_weighted_sda":111 }
+	},
+	{ "hostname":"saito-hb-vm102",
+	"timestamp":1444028732,
+	"metrics":{
+		"linux.context_switches.context_switches":20002,
+		"linux.disk.elapsed.iotime_sda":22,
+		"linux.disk.elapsed.iotime_weighted_sda":222 }
+	}
+	]}`))
+	assert.True(t, (client.Transport.(*http.Transport)).TLSClientConfig.InsecureSkipVerify)
+	assert.Equal(t, req.URL.Scheme, "https")
+	assert.Equal(t, req.URL.Host, "127.0.0.2:6777")
+	assert.Equal(t, req.URL.Path, "/metric/append")
+	assert.Equal(t, req.Method, "POST")
+	assert.Equal(t, req.Header.Get("Content-Type"), "application/json")
 	assert.Nil(t, err)
 }

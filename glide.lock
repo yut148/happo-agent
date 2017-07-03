@@ -19,7 +19,7 @@ imports:
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/heartbeatsjp/happo-lib
-  version: 0506b1206a1b3d6e79fb0394dc6dc465f849dcb0
+  version: 8bbc8b27737ec591aa70ab607ea85dcaf980ee82
 - name: github.com/martini-contrib/binding
   version: 05d3e151b6cf34dacac6306226a33db68459a3b5
 - name: github.com/Sirupsen/logrus

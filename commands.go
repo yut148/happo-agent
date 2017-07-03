@@ -175,6 +175,41 @@ var Commands = []cli.Command{
 			},
 		},
 	},
+	{
+		Name:   "append_metric",
+		Usage:  "Append Metric.",
+		Action: command.CmdAppendMetric,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:   "hostname, H",
+				Usage:  "Hostname",
+				EnvVar: "HAPPO_AGENT_HOSTNAME",
+			},
+			cli.StringFlag{
+				Name:   "bastion-endpoint, b",
+				Value:  "https://127.0.0.1:6777",
+				Usage:  "Bastion (Nearby happo-agent) endpoint address",
+				EnvVar: "HAPPO_AGENT_BASTION_ENDPOINT",
+			},
+			cli.StringFlag{
+				Name:   "datafile",
+				Value:  "-",
+				Usage:  "sensu format datafile(default: - (stdin))",
+				EnvVar: "HAPPO_AGENT_DATAFILE",
+			},
+			cli.StringFlag{
+				Name:   "api-key, a",
+				Value:  "",
+				Usage:  "API Key",
+				EnvVar: "HAPPO_AGENT_API_KEY",
+			},
+			cli.BoolFlag{
+				Name:   "dry-run, n",
+				Usage:  "dry run(NOT post to bastion)",
+				EnvVar: "HAPPO_AGENT_DRY_RUN",
+			},
+		},
+	},
 }
 
 func CommandNotFound(c *cli.Context, command string) {
