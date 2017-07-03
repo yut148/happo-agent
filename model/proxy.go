@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -69,6 +70,9 @@ func postToAgent(host string, port int, request_type string, jsonData []byte) (i
 
 	resp, err := _httpClient.Do(req)
 	if err != nil {
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return http.StatusGatewayTimeout, "", err
+		}
 		return http.StatusBadGateway, "", err
 	}
 	body, err := ioutil.ReadAll(resp.Body)
