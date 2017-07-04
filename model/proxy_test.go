@@ -1,13 +1,20 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/codegangsta/martini-contrib/render"
+	"github.com/go-martini/martini"
+	"github.com/heartbeatsjp/happo-lib"
+	"github.com/martini-contrib/binding"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,4 +37,258 @@ func TestPostToAgent1(t *testing.T) {
 	assert.EqualValues(t, status_code, http.StatusOK)
 	assert.Contains(t, response, STUB_RESPONSE)
 	assert.Nil(t, err)
+}
+
+func TestPostToAgent2(t *testing.T) {
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(10 * time.Millisecond)
+				fmt.Fprintln(w, "will ignore(return will be blank)")
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+
+	timeout := _httpClient.Timeout
+	_httpClient.Timeout = 1 * time.Millisecond
+	status_code, response, err := postToAgent(host, port, "test", []byte("{}"))
+	_httpClient.Timeout = timeout
+
+	assert.EqualValues(t, status_code, http.StatusGatewayTimeout)
+	assert.Contains(t, response, "")
+	assert.True(t, err.(net.Error).Timeout())
+}
+
+func TestPostToAgent3(t *testing.T) {
+	/*
+		// FIXME cannot test err != nil and err is NOT timeout.
+		ts := httptest.NewTLSServer(
+			http.HandlerFunc(
+				func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusTemporaryRedirect)
+					w.Header().Set("Location", "the/broken:location:header/")
+					fmt.Fprintln(w, "will ignore(return will be blank)")
+				}))
+		defer ts.Close()
+
+		re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+		found := re.FindStringSubmatch(ts.URL)
+		host := found[2]
+		port, _ := strconv.Atoi(found[3])
+		status_code, response, err := postToAgent(host, port, "test", []byte("{}"))
+
+		assert.EqualValues(t, status_code, http.StatusBadGateway)
+		assert.Contains(t, response, "")
+		assert.NotNil(t, err)
+	*/
+}
+
+func TestPostToAgent4(t *testing.T) {
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				fmt.Fprint(w, "error response")
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+	status_code, response, err := postToAgent(host, port, "test", []byte("{}"))
+
+	assert.EqualValues(t, status_code, http.StatusServiceUnavailable)
+	assert.Contains(t, response, "error response")
+	assert.Nil(t, err)
+}
+
+func TestProxy1(t *testing.T) {
+	//monitor ok
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(happo_agent.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+
+	requestJson := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
+	}`, host, port)
+	reader := bytes.NewReader([]byte(requestJson))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	lastRunned = time.Now().Unix() //avoid saveMachineState
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t,
+		res.Body.String(),
+		`{"return_value":0,"message":"ok"}`,
+	)
+}
+
+func TestProxy2(t *testing.T) {
+	//gateway timeout
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(happo_agent.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(1 * time.Second)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+
+	requestJson := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"xxx\", \"plugin_option\": \"\"}"
+	}`, host, port)
+	reader := bytes.NewReader([]byte(requestJson))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	timeout := _httpClient.Timeout
+	_httpClient.Timeout = 1 * time.Millisecond
+
+	lastRunned = time.Now().Unix() //avoid saveMachineState
+	m.ServeHTTP(res, req)
+
+	_httpClient.Timeout = timeout
+
+	assert.Equal(t, res.Code, http.StatusGatewayTimeout)
+	assert.Equal(t,
+		res.Body.String(),
+		fmt.Sprintf(`{"return_value":3,"message":"Post https://%s:%d/monitor: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"}`, host, port),
+	)
+}
+
+func TestProxy3(t *testing.T) {
+	//monitor ok (multi proxy)
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(happo_agent.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+
+	requestJson := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d","127.0.0.1:6777"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
+	}`, host, port)
+	reader := bytes.NewReader([]byte(requestJson))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	lastRunned = time.Now().Unix() //avoid saveMachineState
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t,
+		res.Body.String(),
+		`{"return_value":0,"message":"ok"}`,
+	)
+}
+
+func TestProxy4(t *testing.T) {
+	//gateway timeout(multi proxy)
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(happo_agent.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(1 * time.Second)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+
+	requestJson := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d","127.0.0.1:6777"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"xxx\", \"plugin_option\": \"\"}"
+	}`, host, port)
+	reader := bytes.NewReader([]byte(requestJson))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	timeout := _httpClient.Timeout
+	_httpClient.Timeout = 1 * time.Millisecond
+
+	lastRunned = time.Now().Unix() //avoid saveMachineState
+	m.ServeHTTP(res, req)
+
+	_httpClient.Timeout = timeout
+
+	assert.Equal(t, res.Code, http.StatusGatewayTimeout)
+	assert.Equal(t,
+		res.Body.String(),
+		fmt.Sprintf(`{"return_value":3,"message":"Post https://%s:%d/proxy: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"}`, host, port),
+	)
 }

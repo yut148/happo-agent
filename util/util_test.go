@@ -19,6 +19,9 @@ func TestExecCommand1(t *testing.T) {
 	assert.Contains(t, stdout, "hoge")
 	assert.Contains(t, stderr, "")
 	assert.Nil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.False(t, ok)
 }
 
 func TestExecCommand2(t *testing.T) {
@@ -30,6 +33,9 @@ func TestExecCommand2(t *testing.T) {
 	assert.Contains(t, stdout, "")
 	assert.Contains(t, stderr, "hoge")
 	assert.Nil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.False(t, ok)
 }
 
 func TestExecCommand3(t *testing.T) {
@@ -41,6 +47,9 @@ func TestExecCommand3(t *testing.T) {
 	assert.Contains(t, stdout, "")
 	assert.Contains(t, stderr, "")
 	assert.NotNil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.True(t, ok)
 }
 
 func TestExecCommandCombinedOutput1(t *testing.T) {
@@ -51,6 +60,9 @@ func TestExecCommandCombinedOutput1(t *testing.T) {
 	assert.EqualValues(t, exit_code, 0)
 	assert.Contains(t, out, "hoge")
 	assert.Nil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.False(t, ok)
 }
 
 func TestExecCommandCombinedOutput2(t *testing.T) {
@@ -61,6 +73,9 @@ func TestExecCommandCombinedOutput2(t *testing.T) {
 	assert.EqualValues(t, exit_code, 0)
 	assert.Contains(t, out, "hoge")
 	assert.Nil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.False(t, ok)
 }
 
 func TestExecCommandCombinedOutput3(t *testing.T) {
@@ -71,6 +86,9 @@ func TestExecCommandCombinedOutput3(t *testing.T) {
 	assert.EqualValues(t, exit_code, -1)
 	assert.Contains(t, out, "")
 	assert.NotNil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.True(t, ok)
 }
 
 func TestExecCommand4(t *testing.T) {
@@ -81,6 +99,9 @@ func TestExecCommand4(t *testing.T) {
 	assert.EqualValues(t, exit_code, 0)
 	assert.Contains(t, out, "1.STDOUT.2.STDERR.3.STDOUT.4.STDERR.")
 	assert.Nil(t, err)
+
+	_, ok := err.(*TimeoutError)
+	assert.False(t, ok)
 }
 
 func TestBuildMetricAppendAPIRequest1(t *testing.T) {
