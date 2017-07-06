@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-lib"
@@ -81,4 +82,8 @@ func postToAgent(host string, port int, request_type string, jsonData []byte) (i
 		return http.StatusBadGateway, "", err
 	}
 	return resp.StatusCode, string(body[:]), nil
+}
+
+func SetProxyTimeout(timeoutSeconds int64) {
+	_httpClient.Timeout = time.Duration(timeoutSeconds) * time.Second
 }

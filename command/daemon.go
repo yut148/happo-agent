@@ -161,6 +161,8 @@ func CmdDaemon(c *cli.Context) {
 	db.MetricsMaxLifetimeSeconds = c.Int64("metrics-max-lifetime-seconds")
 	db.MachineStateMaxLifetimeSeconds = c.Int64("machine-state-max-lifetime-seconds")
 
+	model.SetProxyTimeout(c.Int64("proxy-timeout-seconds"))
+
 	m.Get("/", func() string {
 		return "OK"
 	})
