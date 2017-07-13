@@ -157,6 +157,8 @@ Use agent bastion(proxy) mode.
 - Return variables
     - By `request_type` type.
 
+In case `--proxy-timeout-seconds` reached, return `504 Gateway Timeout` .
+
 ```
 $ wget -q --no-check-certificate -O - https://192.0.2.1:6777/proxy --post-data='{"proxy_hostport": ["198.51.100.1:6777"], "request_type": "monitor", "request_json": "{\"apikey\": \"\", \"plugin_name\": \"check_procs\", \"plugin_option\": \"-w 100 -c 200\"}"}'
 {"return_value":1,"message":"PROCS WARNING: 168 processes\n"}
@@ -200,6 +202,8 @@ Call monitor plugin. It likes nrpe.
 - Return variables
     - return\_code: commands return code
     - return\_value: commands return value (stdout, stderr)
+
+In case `--command-timeout` reached, return `503 Service Unavailable` .
 
 ```
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/monitor --post-data='{"apikey": "", "plugin_name": "check_procs", "plugin_option": "-w 100 -c 200"}'

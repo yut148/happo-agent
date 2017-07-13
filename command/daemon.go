@@ -33,7 +33,7 @@ import (
 
 // --- Struct
 type daemonListener struct {
-	Timeout        int
+	Timeout        int //second
 	MaxConnections int
 	Port           string
 	Handler        http.Handler
@@ -161,6 +161,8 @@ func CmdDaemon(c *cli.Context) {
 	db.MetricsMaxLifetimeSeconds = c.Int64("metrics-max-lifetime-seconds")
 	db.MachineStateMaxLifetimeSeconds = c.Int64("machine-state-max-lifetime-seconds")
 
+	model.SetProxyTimeout(c.Int64("proxy-timeout-seconds"))
+
 	m.Get("/", func() string {
 		return "OK"
 	})
@@ -183,6 +185,12 @@ func CmdDaemon(c *cli.Context) {
 	lis.Port = fmt.Sprintf(":%d", c.Int("port"))
 	lis.Handler = m
 	lis.Timeout = happo_agent.HTTP_TIMEOUT
+	if lis.Timeout < int(c.Int64("proxy-timeout-seconds")) {
+		lis.Timeout = int(c.Int64("proxy-timeout-seconds"))
+	}
+	if lis.Timeout < c.Int("command-timeout") {
+		lis.Timeout = c.Int("command-timeout")
+	}
 	lis.MaxConnections = c.Int("max-connections")
 	lis.PublicKey = c.String("public-key")
 	lis.PrivateKey = c.String("private-key")
@@ -239,8 +247,8 @@ func (l *daemonListener) listenAndServe() error {
 		TLSConfig:    tls_config,
 		Addr:         l.Port,
 		Handler:      l.Handler,
-		ReadTimeout:  happo_agent.HTTP_TIMEOUT * time.Second,
-		WriteTimeout: happo_agent.HTTP_TIMEOUT * time.Second,
+		ReadTimeout:  time.Duration(l.Timeout) * time.Second,
+		WriteTimeout: time.Duration(l.Timeout) * time.Second,
 	}
 
 	return http_config.Serve(tls_listener)

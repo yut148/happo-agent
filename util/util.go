@@ -21,6 +21,14 @@ import (
 var CommandTimeout time.Duration = -1
 var Production bool
 
+type TimeoutError struct {
+	Message string
+}
+
+func (err *TimeoutError) Error() string {
+	return err.Message
+}
+
 // --- Function
 func init() {
 	Production = strings.ToLower(os.Getenv("MARTINI_ENV")) == "production"
@@ -42,7 +50,7 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 	exitStatus, stdout, stderr, err := tio.Run()
 
 	if err == nil && exitStatus.IsTimedOut() {
-		err = errors.New("Exec timeout: " + command_with_options)
+		err = &TimeoutError{"Exec timeout: " + command_with_options}
 	}
 
 	return exitStatus.GetChildExitCode(), stdout, stderr, err
@@ -69,7 +77,7 @@ func ExecCommandCombinedOutput(command string, option string) (int, string, erro
 	exitStatus := <-ch
 
 	if err == nil && exitStatus.IsTimedOut() {
-		err = errors.New("Exec timeout: " + command_with_options)
+		err = &TimeoutError{"Exec timeout: " + command_with_options}
 	}
 
 	return exitStatus.GetChildExitCode(), out.String(), err

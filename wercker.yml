@@ -16,7 +16,10 @@ build:
         code: "glide install"
     - script: 
         name: "install test plugin"
-        code: "install -m 755 collect/metrics_test_plugin /usr/local/bin/metrics_test_plugin"
+        code: |
+            install -m 755 collect/metrics_test_plugin /usr/local/bin/metrics_test_plugin
+            install -m 755 model/monitor_test_plugin /usr/local/bin/monitor_test_plugin
+            install -m 755 model/monitor_test_sleep /usr/local/bin/monitor_test_sleep
     - script: 
         name: "go test"
         code: "go test $(glide novendor)"

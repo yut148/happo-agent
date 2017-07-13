@@ -76,6 +76,12 @@ var daemonFlags = []cli.Flag{
 		Usage:  "Machine State Max Lifetime Seconds.",
 		EnvVar: "HAPPO_AGENT_MACHINE_STATE_MAX_LIFETIME_SECONDS",
 	},
+	cli.Int64Flag{
+		Name:   "proxy-timeout-seconds",
+		Value:  180,
+		Usage:  "/proxy timeout Seconds.",
+		EnvVar: "HAPPO_AGENT_PROXY_TIMEOUT_SECONDS",
+	},
 }
 
 var Commands = []cli.Command{

@@ -61,6 +61,10 @@ func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
 	if err != nil {
 		monitor_response.Return_Value = happo_agent.MONITOR_ERROR
 		monitor_response.Message = err.Error()
+		if _, ok := err.(*util.TimeoutError); ok {
+			r.JSON(http.StatusServiceUnavailable, monitor_response)
+			return
+		}
 		r.JSON(http.StatusBadRequest, monitor_response)
 		return
 	}
