@@ -10,13 +10,14 @@ import (
 	"github.com/go-martini/martini"
 )
 
+// ACL implements AccessControlList ability
 func ACL(allowIPs []string) martini.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
-		raw_host, _, err := net.SplitHostPort(req.RemoteAddr)
+		rawHost, _, err := net.SplitHostPort(req.RemoteAddr)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
-		host := net.ParseIP(raw_host)
+		host := net.ParseIP(rawHost)
 		if host == nil {
 			http.Error(res, "Unable to parse remote address", http.StatusForbidden)
 			return
@@ -28,27 +29,27 @@ func ACL(allowIPs []string) martini.Handler {
 		}
 
 		// Validate IP Addresss
-		for _, raw_ip := range allowIPs {
-			ip, ip_net, err := net.ParseCIDR(raw_ip)
+		for _, rawIP := range allowIPs {
+			ip, ipNet, err := net.ParseCIDR(rawIP)
 			if err != nil {
-				ip_net = nil
-				ip = net.ParseIP(raw_ip)
+				ipNet = nil
+				ip = net.ParseIP(rawIP)
 				if ip == nil {
-					http.Error(res, fmt.Sprintf("ACL format error: %s", raw_ip), http.StatusServiceUnavailable)
+					http.Error(res, fmt.Sprintf("ACL format error: %s", rawIP), http.StatusServiceUnavailable)
 					return
 				}
 			}
 			if ip.Equal(host) {
 				// OK! (Equal)
 				if !Production {
-					log.Printf("%s <=> %s", raw_host, raw_ip)
+					log.Printf("%s <=> %s", rawHost, rawIP)
 				}
 				return
 			}
-			if ip_net != nil && ip_net.Contains(host) {
+			if ipNet != nil && ipNet.Contains(host) {
 				// OK! (Range)
 				if !Production {
-					log.Printf("%s <=> %s", raw_host, raw_ip)
+					log.Printf("%s <=> %s", rawHost, rawIP)
 				}
 				return
 			}
@@ -58,6 +59,7 @@ func ACL(allowIPs []string) martini.Handler {
 	}
 }
 
+// Logger implements custom logger
 func Logger() martini.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context, martiniLog *log.Logger) {
 		start := time.Now()

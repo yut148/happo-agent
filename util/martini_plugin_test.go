@@ -14,13 +14,13 @@ import (
 
 func TestACL0(t *testing.T) {
 	const IP = "12.12.12.12"
-	const BODY_STR = "success"
+	const bodyStr = "success"
 
 	m := martini.Classic()
 	m.Use(ACL([]string{"FAIL"}))
 
 	m.Get(("/test"), func() string {
-		return BODY_STR
+		return bodyStr
 	})
 
 	res := httptest.NewRecorder()
@@ -33,13 +33,13 @@ func TestACL0(t *testing.T) {
 
 func TestACL1(t *testing.T) {
 	const IP = "12.12.12.12"
-	const BODY_STR = "success"
+	const bodyStr = "success"
 
 	m := martini.Classic()
 	m.Use(ACL([]string{IP}))
 
 	m.Get(("/test"), func() string {
-		return BODY_STR
+		return bodyStr
 	})
 
 	res := httptest.NewRecorder()
@@ -52,13 +52,13 @@ func TestACL1(t *testing.T) {
 
 func TestACL2(t *testing.T) {
 	const IP = "12.12.12.12"
-	const BODY_STR = "success"
+	const bodyStr = "success"
 
 	m := martini.Classic()
 	m.Use(ACL([]string{IP}))
 
 	m.Get(("/test"), func() string {
-		return BODY_STR
+		return bodyStr
 	})
 
 	res := httptest.NewRecorder()
@@ -67,18 +67,18 @@ func TestACL2(t *testing.T) {
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusOK)
-	assert.EqualValues(t, res.Body.String(), BODY_STR)
+	assert.EqualValues(t, res.Body.String(), bodyStr)
 }
 
 func TestACL3(t *testing.T) {
 	const IP = "12.12.12.12"
-	const BODY_STR = "success"
+	const bodyStr = "success"
 
 	m := martini.Classic()
 	m.Use(ACL([]string{IP}))
 
 	m.Get(("/test"), func() string {
-		return BODY_STR
+		return bodyStr
 	})
 
 	res := httptest.NewRecorder()
@@ -87,19 +87,19 @@ func TestACL3(t *testing.T) {
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusOK)
-	assert.EqualValues(t, res.Body.String(), BODY_STR)
+	assert.EqualValues(t, res.Body.String(), bodyStr)
 }
 
 func TestACL4(t *testing.T) {
 	const IP = "12.12.12.12"
-	const IP_SCOPE = "12.12.12.0/24"
-	const BODY_STR = "success"
+	const ipScope = "12.12.12.0/24"
+	const bodyStr = "success"
 
 	m := martini.Classic()
-	m.Use(ACL([]string{IP_SCOPE}))
+	m.Use(ACL([]string{ipScope}))
 
 	m.Get(("/test"), func() string {
-		return BODY_STR
+		return bodyStr
 	})
 
 	res := httptest.NewRecorder()
@@ -108,19 +108,19 @@ func TestACL4(t *testing.T) {
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusOK)
-	assert.EqualValues(t, res.Body.String(), BODY_STR)
+	assert.EqualValues(t, res.Body.String(), bodyStr)
 }
 
 func TestACL5(t *testing.T) {
 	const IP = "12.12.12.12"
-	const IP_SCOPE = "192.168.0.0/24"
-	const BODY_STR = "success"
+	const ipScope = "192.168.0.0/24"
+	const bodyStr = "success"
 
 	m := martini.Classic()
-	m.Use(ACL([]string{IP_SCOPE}))
+	m.Use(ACL([]string{ipScope}))
 
 	m.Get(("/test"), func() string {
-		return BODY_STR
+		return bodyStr
 	})
 
 	res := httptest.NewRecorder()
