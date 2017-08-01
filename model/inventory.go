@@ -14,27 +14,28 @@ import (
 
 // --- Method
 
-func Inventory(inventory_request lib.InventoryRequest, r render.Render, params martini.Params) {
-	var inventory_response lib.InventoryResponse
+// Inventory execute command and collect inventory
+func Inventory(inventoryRequest lib.InventoryRequest, r render.Render, params martini.Params) {
+	var inventoryResponse lib.InventoryResponse
 
 	if !util.Production {
-		log.Printf("Inventory Command: %s %s\n", inventory_request.Command, inventory_request.CommandOption)
+		log.Printf("Inventory Command: %s %s\n", inventoryRequest.Command, inventoryRequest.CommandOption)
 	}
 
-	exitstatus, out, err := util.ExecCommandCombinedOutput(inventory_request.Command, inventory_request.CommandOption)
+	exitstatus, out, err := util.ExecCommandCombinedOutput(inventoryRequest.Command, inventoryRequest.CommandOption)
 	if err != nil {
-		r.JSON(http.StatusExpectationFailed, inventory_response)
+		r.JSON(http.StatusExpectationFailed, inventoryResponse)
 		return
 	}
 
 	if exitstatus != 0 {
-		inventory_response.ReturnCode = exitstatus
-		inventory_response.ReturnValue = out
-		r.JSON(http.StatusBadRequest, inventory_response)
+		inventoryResponse.ReturnCode = exitstatus
+		inventoryResponse.ReturnValue = out
+		r.JSON(http.StatusBadRequest, inventoryResponse)
 		return
 	}
-	inventory_response.ReturnCode = exitstatus
-	inventory_response.ReturnValue = out
+	inventoryResponse.ReturnCode = exitstatus
+	inventoryResponse.ReturnValue = out
 
-	r.JSON(http.StatusOK, inventory_response)
+	r.JSON(http.StatusOK, inventoryResponse)
 }

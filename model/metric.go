@@ -10,17 +10,20 @@ import (
 )
 
 // --- Package Variables
+
+// MetricConfigFile is filepath of metric config file
 var MetricConfigFile string
 
-func Metric(metric_request lib.MetricRequest, r render.Render) {
-	var metric_response lib.MetricResponse
+// Metric returns collected metrics
+func Metric(metricRequest lib.MetricRequest, r render.Render) {
+	var metricResponse lib.MetricResponse
 
-	metric_response.MetricData = collect.GetCollectedMetricsWithLimit(60) // FIXME to prefer value. now 60 times = 1hour
+	metricResponse.MetricData = collect.GetCollectedMetricsWithLimit(60) // FIXME to prefer value. now 60 times = 1hour
 
-	r.JSON(http.StatusOK, metric_response)
+	r.JSON(http.StatusOK, metricResponse)
 }
 
-//MetricAppend store metrics to local dbms
+// MetricAppend store metrics to local dbms
 func MetricAppend(request lib.MetricAppendRequest, r render.Render) {
 	var response lib.MetricAppendResponse
 
@@ -36,19 +39,21 @@ func MetricAppend(request lib.MetricAppendRequest, r render.Render) {
 	r.JSON(http.StatusOK, response)
 }
 
-func MetricConfigUpdate(metric_request lib.MetricConfigUpdateRequest, r render.Render) {
-	var metric_response lib.MetricConfigUpdateResponse
+// MetricConfigUpdate save metric collect config
+func MetricConfigUpdate(metricRequest lib.MetricConfigUpdateRequest, r render.Render) {
+	var metricResponse lib.MetricConfigUpdateResponse
 
-	err := collect.SaveMetricConfig(metric_request.Config, MetricConfigFile)
+	err := collect.SaveMetricConfig(metricRequest.Config, MetricConfigFile)
 	if err != nil {
-		metric_response.Status = "NG"
+		metricResponse.Status = "NG"
 	} else {
-		metric_response.Status = "OK"
+		metricResponse.Status = "OK"
 	}
 
-	r.JSON(http.StatusOK, metric_response)
+	r.JSON(http.StatusOK, metricResponse)
 }
 
+// MetricDataBufferStatus returns collected metrics status
 func MetricDataBufferStatus(r render.Render) {
 	r.JSON(http.StatusOK, collect.GetMetricDataBufferStatus())
 }

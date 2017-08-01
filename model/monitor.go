@@ -20,9 +20,9 @@ import (
 
 // --- Constant Values
 
-const ERROR_LOG_COMMANDS = "w,ps auxwwf,ss -anp,lsof"
-const ERROR_LOG_OUTPUT_PATH = "/tmp"
-const ERROR_LOG_OUTPUT_FILENAME = "snapshot_%s.log"
+const errorLogCommands = "w,ps auxwwf,ss -anp,lsof"
+const errorLogOutputPath = "/tmp"
+const errorLogOutputFilename = "snapshot_%s.log"
 
 var (
 	saveStateChan   = make(chan bool)
@@ -51,38 +51,39 @@ func init() {
 	}()
 }
 
-func Monitor(monitor_request lib.MonitorRequest, r render.Render) {
-	var monitor_response lib.MonitorResponse
+// Monitor execute monitor command and returns result
+func Monitor(monitorRequest lib.MonitorRequest, r render.Render) {
+	var monitorResponse lib.MonitorResponse
 
 	if !util.Production {
-		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitor_request.PluginName, monitor_request.PluginOption))
+		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitorRequest.PluginName, monitorRequest.PluginOption))
 	}
-	ret, message, err := execPluginCommand(monitor_request.PluginName, monitor_request.PluginOption)
+	ret, message, err := execPluginCommand(monitorRequest.PluginName, monitorRequest.PluginOption)
 	if err != nil {
-		monitor_response.ReturnValue = lib.MONITOR_ERROR
-		monitor_response.Message = err.Error()
+		monitorResponse.ReturnValue = lib.MONITOR_ERROR
+		monitorResponse.Message = err.Error()
 		if _, ok := err.(*util.TimeoutError); ok {
-			r.JSON(http.StatusServiceUnavailable, monitor_response)
+			r.JSON(http.StatusServiceUnavailable, monitorResponse)
 			return
 		}
-		r.JSON(http.StatusBadRequest, monitor_response)
+		r.JSON(http.StatusBadRequest, monitorResponse)
 		return
 	}
 	if ret != 0 {
 		saveStateChan <- true
 	}
 
-	monitor_response.ReturnValue = ret
-	monitor_response.Message = message
+	monitorResponse.ReturnValue = ret
+	monitorResponse.Message = message
 
-	r.JSON(http.StatusOK, monitor_response)
+	r.JSON(http.StatusOK, monitorResponse)
 }
 
-func execPluginCommand(plugin_name string, plugin_option string) (int, string, error) {
+func execPluginCommand(pluginName string, pluginOption string) (int, string, error) {
 	var plugin string
 
-	for _, base_path := range strings.Split(lib.NAGIOS_PLUGIN_PATHS, ",") {
-		plugin = path.Join(base_path, plugin_name)
+	for _, basePath := range strings.Split(lib.NAGIOS_PLUGIN_PATHS, ",") {
+		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {
 			if !util.Production {
@@ -92,7 +93,7 @@ func execPluginCommand(plugin_name string, plugin_option string) (int, string, e
 		}
 	}
 
-	exitstatus, stdout, _, err := util.ExecCommand(plugin, plugin_option)
+	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
 	if err != nil {
 		return lib.MONITOR_UNKNOWN, "", err
@@ -102,17 +103,17 @@ func execPluginCommand(plugin_name string, plugin_option string) (int, string, e
 }
 
 func saveMachineState() error {
-	logged_time := time.Now()
+	loggedTime := time.Now()
 
 	result := ""
-	for _, cmd := range strings.Split(ERROR_LOG_COMMANDS, ",") {
+	for _, cmd := range strings.Split(errorLogCommands, ",") {
 		cmd := strings.Split(cmd, " ")
 		if len(cmd) == 1 {
 			cmd = append(cmd, "")
 		}
 		exitstatus, stdout, _, err := util.ExecCommand(cmd[0], cmd[1])
 		if exitstatus == 0 && err == nil {
-			result += fmt.Sprintf("********** %s %s (%s) **********\n", cmd[0], cmd[1], logged_time.Format(time.RFC3339))
+			result += fmt.Sprintf("********** %s %s (%s) **********\n", cmd[0], cmd[1], loggedTime.Format(time.RFC3339))
 			result += stdout
 			result += "\n\n"
 		}
@@ -124,7 +125,7 @@ func saveMachineState() error {
 	}
 
 	transaction.Put(
-		[]byte(fmt.Sprintf("s-%d", logged_time.Unix())),
+		[]byte(fmt.Sprintf("s-%d", loggedTime.Unix())),
 		[]byte(result),
 		nil)
 	err = transaction.Commit()
@@ -138,7 +139,7 @@ func saveMachineState() error {
 	if err != nil {
 		log.Println(err)
 	}
-	oldestThreshold := logged_time.Add(time.Duration(-1*db.MachineStateMaxLifetimeSeconds) * time.Second)
+	oldestThreshold := loggedTime.Add(time.Duration(-1*db.MachineStateMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
 		&leveldbUtil.Range{
 			Start: []byte("s-0"),

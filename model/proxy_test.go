@@ -19,12 +19,12 @@ import (
 )
 
 func TestPostToAgent1(t *testing.T) {
-	const STUB_RESPONSE = "OK"
+	const stubResponse = "OK"
 
 	ts := httptest.NewTLSServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, STUB_RESPONSE)
+				fmt.Fprintln(w, stubResponse)
 			}))
 	defer ts.Close()
 	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
@@ -32,10 +32,10 @@ func TestPostToAgent1(t *testing.T) {
 	host := found[2]
 	port, _ := strconv.Atoi(found[3])
 
-	json_data := []byte("{}")
-	status_code, response, err := postToAgent(host, port, "test", json_data)
-	assert.EqualValues(t, status_code, http.StatusOK)
-	assert.Contains(t, response, STUB_RESPONSE)
+	jsonData := []byte("{}")
+	statusCode, response, err := postToAgent(host, port, "test", jsonData)
+	assert.EqualValues(t, statusCode, http.StatusOK)
+	assert.Contains(t, response, stubResponse)
 	assert.Nil(t, err)
 }
 
@@ -55,10 +55,10 @@ func TestPostToAgent2(t *testing.T) {
 
 	timeout := _httpClient.Timeout
 	_httpClient.Timeout = 1 * time.Millisecond
-	status_code, response, err := postToAgent(host, port, "test", []byte("{}"))
+	statusCode, response, err := postToAgent(host, port, "test", []byte("{}"))
 	_httpClient.Timeout = timeout
 
-	assert.EqualValues(t, status_code, http.StatusGatewayTimeout)
+	assert.EqualValues(t, statusCode, http.StatusGatewayTimeout)
 	assert.Contains(t, response, "")
 	assert.True(t, err.(net.Error).Timeout())
 }
@@ -100,9 +100,9 @@ func TestPostToAgent4(t *testing.T) {
 	found := re.FindStringSubmatch(ts.URL)
 	host := found[2]
 	port, _ := strconv.Atoi(found[3])
-	status_code, response, err := postToAgent(host, port, "test", []byte("{}"))
+	statusCode, response, err := postToAgent(host, port, "test", []byte("{}"))
 
-	assert.EqualValues(t, status_code, http.StatusServiceUnavailable)
+	assert.EqualValues(t, statusCode, http.StatusServiceUnavailable)
 	assert.Contains(t, response, "error response")
 	assert.Nil(t, err)
 }
@@ -128,13 +128,13 @@ func TestProxy1(t *testing.T) {
 	host := found[2]
 	port, _ := strconv.Atoi(found[3])
 
-	requestJson := fmt.Sprintf(`{
+	requestJSON := fmt.Sprintf(`{
 		"proxy_hostport": ["%s:%d"],
 		"request_type": "monitor",
 		"request_json":
 			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
 	}`, host, port)
-	reader := bytes.NewReader([]byte(requestJson))
+	reader := bytes.NewReader([]byte(requestJSON))
 
 	req, _ := http.NewRequest("POST", "/proxy", reader)
 	req.Header.Set("Content-Type", "application/json")
@@ -172,13 +172,13 @@ func TestProxy2(t *testing.T) {
 	host := found[2]
 	port, _ := strconv.Atoi(found[3])
 
-	requestJson := fmt.Sprintf(`{
+	requestJSON := fmt.Sprintf(`{
 		"proxy_hostport": ["%s:%d"],
 		"request_type": "monitor",
 		"request_json":
 			"{\"apikey\": \"\", \"plugin_name\": \"xxx\", \"plugin_option\": \"\"}"
 	}`, host, port)
-	reader := bytes.NewReader([]byte(requestJson))
+	reader := bytes.NewReader([]byte(requestJSON))
 
 	req, _ := http.NewRequest("POST", "/proxy", reader)
 	req.Header.Set("Content-Type", "application/json")
@@ -221,13 +221,13 @@ func TestProxy3(t *testing.T) {
 	host := found[2]
 	port, _ := strconv.Atoi(found[3])
 
-	requestJson := fmt.Sprintf(`{
+	requestJSON := fmt.Sprintf(`{
 		"proxy_hostport": ["%s:%d","127.0.0.1:6777"],
 		"request_type": "monitor",
 		"request_json":
 			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
 	}`, host, port)
-	reader := bytes.NewReader([]byte(requestJson))
+	reader := bytes.NewReader([]byte(requestJSON))
 
 	req, _ := http.NewRequest("POST", "/proxy", reader)
 	req.Header.Set("Content-Type", "application/json")
@@ -265,13 +265,13 @@ func TestProxy4(t *testing.T) {
 	host := found[2]
 	port, _ := strconv.Atoi(found[3])
 
-	requestJson := fmt.Sprintf(`{
+	requestJSON := fmt.Sprintf(`{
 		"proxy_hostport": ["%s:%d","127.0.0.1:6777"],
 		"request_type": "monitor",
 		"request_json":
 			"{\"apikey\": \"\", \"plugin_name\": \"xxx\", \"plugin_option\": \"\"}"
 	}`, host, port)
-	reader := bytes.NewReader([]byte(requestJson))
+	reader := bytes.NewReader([]byte(requestJSON))
 
 	req, _ := http.NewRequest("POST", "/proxy", reader)
 	req.Header.Set("Content-Type", "application/json")
