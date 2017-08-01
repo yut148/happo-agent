@@ -7,8 +7,6 @@ import:
 - package: github.com/codegangsta/martini-contrib
 - package: github.com/go-martini/martini
   version: ^1.0.0
-- package: github.com/heartbeatsjp/happo-lib
-  version: ^0.9.6
 - package: github.com/martini-contrib/binding
 - package: golang.org/x/net
   subpackages:
