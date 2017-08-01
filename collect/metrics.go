@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
+	"github.com/heartbeatsjp/happo-agent/lib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	"github.com/heartbeatsjp/happo-lib"
 	leveldbErrors "github.com/syndtr/goleveldb/leveldb/errors"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
@@ -26,7 +26,7 @@ import (
 
 // メインクラス
 func Metrics(config_path string) error {
-	var metrics_data_buffer []happo_agent.MetricsData
+	var metrics_data_buffer []lib.MetricsData
 
 	metric_list, err := GetMetricConfig(config_path)
 	if err != nil {
@@ -48,7 +48,7 @@ func Metrics(config_path string) error {
 				return err
 			}
 
-			var metrics happo_agent.MetricsData
+			var metrics lib.MetricsData
 			metrics.Host_Name = metric_host_list.Hostname
 			metrics.Timestamp = timestamp
 			metrics.Metrics = metric_data
@@ -62,7 +62,7 @@ func Metrics(config_path string) error {
 }
 
 //SaveMetrics save metrics to dbms
-func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
+func SaveMetrics(now time.Time, metricsData []lib.MetricsData) error {
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
@@ -74,7 +74,7 @@ func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 		[]byte(fmt.Sprintf("m-%d", now.Unix())),
 		nil)
 	if err != leveldbErrors.ErrNotFound {
-		savedMetricsData := []happo_agent.MetricsData{}
+		savedMetricsData := []lib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(got))
 		dec.Decode(&savedMetricsData)
 		metricsData = append(savedMetricsData, metricsData...)
@@ -116,7 +116,7 @@ func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 
 		// logging
 		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		expired := []happo_agent.MetricsData{}
+		expired := []lib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&expired)
 		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
@@ -132,23 +132,23 @@ func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 }
 
 // 取得済みのメトリックを返します
-func GetCollectedMetrics() []happo_agent.MetricsData {
+func GetCollectedMetrics() []lib.MetricsData {
 	return GetCollectedMetricsWithLimit(-1)
 }
 
 // GetCollectedMetricsWithLimit returns collected metrics. with max `limit`
-func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
+func GetCollectedMetricsWithLimit(limit int) []lib.MetricsData {
 	/*
 		limit > 0 works fine. (otherwise, means unlimited)
 	*/
-	var collectedMetricsData []happo_agent.MetricsData
+	var collectedMetricsData []lib.MetricsData
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Println(err)
 	}
 
-	var metricsData []happo_agent.MetricsData
+	var metricsData []lib.MetricsData
 	var dec *gob.Decoder
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix([]byte("m-")),
@@ -159,7 +159,7 @@ func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
 		key := iter.Key()
 		value := iter.Value()
 
-		metricsData = []happo_agent.MetricsData{}
+		metricsData = []lib.MetricsData{}
 		dec = gob.NewDecoder(bytes.NewReader(value))
 		err = dec.Decode(&metricsData)
 		if err != nil {
@@ -187,7 +187,7 @@ func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
 func getMetrics(plugin_name string, plugin_option string) (string, error) {
 	var plugin string
 
-	for _, base_path := range strings.Split(happo_agent.SENSU_PLUGIN_PATHS, ",") {
+	for _, base_path := range strings.Split(lib.SENSU_PLUGIN_PATHS, ",") {
 		plugin = path.Join(base_path, plugin_name)
 		_, err := os.Stat(plugin)
 		if err == nil {
@@ -251,8 +251,8 @@ func ParseMetricData(raw_metricdata string) (map[string]float64, int64, error) {
 }
 
 // 取得するメトリックをリストアップします
-func GetMetricConfig(config_file string) (happo_agent.MetricConfig, error) {
-	var metric_config happo_agent.MetricConfig
+func GetMetricConfig(config_file string) (lib.MetricConfig, error) {
+	var metric_config lib.MetricConfig
 
 	buf, err := ioutil.ReadFile(config_file)
 	if err != nil {
@@ -267,7 +267,7 @@ func GetMetricConfig(config_file string) (happo_agent.MetricConfig, error) {
 }
 
 // 取得したいメトリックの情報を保存します
-func SaveMetricConfig(config happo_agent.MetricConfig, config_file string) error {
+func SaveMetricConfig(config lib.MetricConfig, config_file string) error {
 	buf, err := yaml.Marshal(&config)
 	if err != nil {
 		return err

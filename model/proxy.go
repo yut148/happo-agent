@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 )
 
 // --- Global Variables
@@ -24,7 +24,7 @@ var tr = &http.Transport{
 }
 var _httpClient = &http.Client{Transport: tr}
 
-func Proxy(proxy_request happo_agent.ProxyRequest, r render.Render) (int, string) {
+func Proxy(proxy_request lib.ProxyRequest, r render.Render) (int, string) {
 	var next_hostport string
 	var request_type string
 	var request_json []byte
@@ -44,17 +44,17 @@ func Proxy(proxy_request happo_agent.ProxyRequest, r render.Render) (int, string
 	}
 	next_hostdata := strings.Split(next_hostport, ":")
 	next_host := next_hostdata[0]
-	next_port := happo_agent.DEFAULT_AGENT_PORT
+	next_port := lib.DEFAULT_AGENT_PORT
 	if len(next_hostdata) == 2 {
 		next_port, err = strconv.Atoi(next_hostdata[1])
 		if err != nil {
-			next_port = happo_agent.DEFAULT_AGENT_PORT
+			next_port = lib.DEFAULT_AGENT_PORT
 		}
 	}
 	resp_code, response, err := postToAgent(next_host, next_port, request_type, request_json)
 	if err != nil {
-		var monitor_response happo_agent.MonitorResponse
-		monitor_response.Return_Value = happo_agent.MONITOR_UNKNOWN
+		var monitor_response lib.MonitorResponse
+		monitor_response.Return_Value = lib.MONITOR_UNKNOWN
 		monitor_response.Message = err.Error()
 		err_jsondata, _ := json.Marshal(monitor_response)
 		response = string(err_jsondata[:])

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +40,7 @@ func TestExecCommand2(t *testing.T) {
 
 func TestExecCommand3(t *testing.T) {
 	command := "sleep"
-	option := fmt.Sprintf("%d", happo_agent.COMMAND_TIMEOUT+1)
+	option := fmt.Sprintf("%d", lib.COMMAND_TIMEOUT+1)
 
 	exit_code, stdout, stderr, err := ExecCommand(command, option)
 	assert.EqualValues(t, exit_code, -1)
@@ -80,7 +80,7 @@ func TestExecCommandCombinedOutput2(t *testing.T) {
 
 func TestExecCommandCombinedOutput3(t *testing.T) {
 	command := "sleep"
-	option := fmt.Sprintf("%d", happo_agent.COMMAND_TIMEOUT+1)
+	option := fmt.Sprintf("%d", lib.COMMAND_TIMEOUT+1)
 
 	exit_code, out, err := ExecCommandCombinedOutput(command, option)
 	assert.EqualValues(t, exit_code, -1)

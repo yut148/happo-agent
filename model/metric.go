@@ -6,14 +6,14 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/collect"
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 )
 
 // --- Package Variables
 var MetricConfigFile string
 
-func Metric(metric_request happo_agent.MetricRequest, r render.Render) {
-	var metric_response happo_agent.MetricResponse
+func Metric(metric_request lib.MetricRequest, r render.Render) {
+	var metric_response lib.MetricResponse
 
 	metric_response.MetricData = collect.GetCollectedMetricsWithLimit(60) // FIXME to prefer value. now 60 times = 1hour
 
@@ -21,8 +21,8 @@ func Metric(metric_request happo_agent.MetricRequest, r render.Render) {
 }
 
 //MetricAppend store metrics to local dbms
-func MetricAppend(request happo_agent.MetricAppendRequest, r render.Render) {
-	var response happo_agent.MetricAppendResponse
+func MetricAppend(request lib.MetricAppendRequest, r render.Render) {
+	var response lib.MetricAppendResponse
 
 	err := collect.SaveMetrics(time.Now(), request.MetricData)
 	if err != nil {
@@ -36,8 +36,8 @@ func MetricAppend(request happo_agent.MetricAppendRequest, r render.Render) {
 	r.JSON(http.StatusOK, response)
 }
 
-func MetricConfigUpdate(metric_request happo_agent.MetricConfigUpdateRequest, r render.Render) {
-	var metric_response happo_agent.MetricConfigUpdateResponse
+func MetricConfigUpdate(metric_request lib.MetricConfigUpdateRequest, r render.Render) {
+	var metric_response lib.MetricConfigUpdateResponse
 
 	err := collect.SaveMetricConfig(metric_request.Config, MetricConfigFile)
 	if err != nil {

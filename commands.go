@@ -7,7 +7,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/command"
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 )
 
 var GlobalFlags = []cli.Flag{}
@@ -15,7 +15,7 @@ var GlobalFlags = []cli.Flag{}
 var daemonFlags = []cli.Flag{
 	cli.IntFlag{
 		Name:  "port, P",
-		Value: happo_agent.DEFAULT_AGENT_PORT,
+		Value: lib.DEFAULT_AGENT_PORT,
 		Usage: "Listen port number",
 	},
 	cli.StringSliceFlag{
@@ -25,17 +25,17 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "public-key, B",
-		Value: happo_agent.TLS_PUBLIC_KEY,
+		Value: lib.TLS_PUBLIC_KEY,
 		Usage: "TLS public key file path",
 	},
 	cli.StringFlag{
 		Name:  "private-key, R",
-		Value: happo_agent.TLS_PRIVATE_KEY,
+		Value: lib.TLS_PRIVATE_KEY,
 		Usage: "TLS private key file path",
 	},
 	cli.StringFlag{
 		Name:  "metric-config, M",
-		Value: happo_agent.CONFIG_METRIC,
+		Value: lib.CONFIG_METRIC,
 		Usage: "Metric config file path",
 	},
 	cli.StringFlag{
@@ -45,12 +45,12 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.IntFlag{
 		Name:  "max-connections, X",
-		Value: happo_agent.MAX_CONNECTIONS,
+		Value: lib.MAX_CONNECTIONS,
 		Usage: "CPU profile output.",
 	},
 	cli.IntFlag{
 		Name:  "command-timeout, T",
-		Value: happo_agent.COMMAND_TIMEOUT,
+		Value: lib.COMMAND_TIMEOUT,
 		Usage: "Command execution timeout.",
 	},
 	cli.StringFlag{
@@ -121,12 +121,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Value: lib.DEFAULT_AGENT_PORT,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: happo_agent.API_ENDPOINT,
+				Value: lib.API_ENDPOINT,
 				Usage: "Endpoint address",
 			},
 		},
@@ -146,12 +146,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Value: lib.DEFAULT_AGENT_PORT,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: happo_agent.API_ENDPOINT,
+				Value: lib.API_ENDPOINT,
 				Usage: "Endpoint address",
 			},
 		},
@@ -171,12 +171,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Value: lib.DEFAULT_AGENT_PORT,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: happo_agent.API_ENDPOINT,
+				Value: lib.API_ENDPOINT,
 				Usage: "Endpoint address",
 			},
 		},

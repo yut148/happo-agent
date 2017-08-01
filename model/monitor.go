@@ -13,8 +13,8 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/db"
+	"github.com/heartbeatsjp/happo-agent/lib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	"github.com/heartbeatsjp/happo-lib"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -51,15 +51,15 @@ func init() {
 	}()
 }
 
-func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
-	var monitor_response happo_agent.MonitorResponse
+func Monitor(monitor_request lib.MonitorRequest, r render.Render) {
+	var monitor_response lib.MonitorResponse
 
 	if !util.Production {
 		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitor_request.Plugin_Name, monitor_request.Plugin_Option))
 	}
 	ret, message, err := execPluginCommand(monitor_request.Plugin_Name, monitor_request.Plugin_Option)
 	if err != nil {
-		monitor_response.Return_Value = happo_agent.MONITOR_ERROR
+		monitor_response.Return_Value = lib.MONITOR_ERROR
 		monitor_response.Message = err.Error()
 		if _, ok := err.(*util.TimeoutError); ok {
 			r.JSON(http.StatusServiceUnavailable, monitor_response)
@@ -81,7 +81,7 @@ func Monitor(monitor_request happo_agent.MonitorRequest, r render.Render) {
 func execPluginCommand(plugin_name string, plugin_option string) (int, string, error) {
 	var plugin string
 
-	for _, base_path := range strings.Split(happo_agent.NAGIOS_PLUGIN_PATHS, ",") {
+	for _, base_path := range strings.Split(lib.NAGIOS_PLUGIN_PATHS, ",") {
 		plugin = path.Join(base_path, plugin_name)
 		_, err := os.Stat(plugin)
 		if err == nil {
@@ -95,7 +95,7 @@ func execPluginCommand(plugin_name string, plugin_option string) (int, string, e
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, plugin_option)
 
 	if err != nil {
-		return happo_agent.MONITOR_UNKNOWN, "", err
+		return lib.MONITOR_UNKNOWN, "", err
 	}
 
 	return exitstatus, stdout, nil
@@ -168,8 +168,8 @@ func isPermitSaveState() bool {
 	defer lastRunnedMutex.Unlock()
 
 	duration := time.Now().Unix() - lastRunned
-	if duration < happo_agent.ERROR_LOG_INTERVAL_SEC {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, happo_agent.ERROR_LOG_INTERVAL_SEC))
+	if duration < lib.ERROR_LOG_INTERVAL_SEC {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, lib.ERROR_LOG_INTERVAL_SEC))
 		return false
 	}
 	lastRunned = time.Now().Unix()

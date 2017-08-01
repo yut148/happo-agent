@@ -6,16 +6,16 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
+	"github.com/heartbeatsjp/happo-agent/lib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	"github.com/heartbeatsjp/happo-lib"
 )
 
 // --- Constant Values
 
 // --- Method
 
-func Inventory(inventory_request happo_agent.InventoryRequest, r render.Render, params martini.Params) {
-	var inventory_response happo_agent.InventoryResponse
+func Inventory(inventory_request lib.InventoryRequest, r render.Render, params martini.Params) {
+	var inventory_response lib.InventoryResponse
 
 	if !util.Production {
 		log.Printf("Inventory Command: %s %s\n", inventory_request.Command, inventory_request.CommandOption)
