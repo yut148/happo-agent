@@ -9,10 +9,11 @@ import (
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
+// CmdAdd implements subcommand `add`
 func CmdAdd(c *cli.Context) error {
 
-	manage_request, err := util.BindManageParameter(c)
-	data, err := json.Marshal(manage_request)
+	manageRequest, err := util.BindManageParameter(c)
+	data, err := json.Marshal(manageRequest)
 	if err != nil {
 		return cli.NewExitError(err.Error(), 1)
 	}

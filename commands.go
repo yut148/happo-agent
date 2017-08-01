@@ -8,6 +8,7 @@ import (
 	"github.com/heartbeatsjp/happo-agent/command"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/lib"
+	_ "net/http/pprof"
 )
 
 var GlobalFlags = []cli.Flag{}
@@ -134,7 +135,7 @@ var Commands = []cli.Command{
 	{
 		Name:   "is_added",
 		Usage:  "Checking database who added the host.",
-		Action: command.CmdIs_added,
+		Action: command.CmdIsAdded,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "group_name, g",

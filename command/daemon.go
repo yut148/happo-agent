@@ -16,8 +16,6 @@ import (
 
 	"golang.org/x/net/netutil"
 
-	_ "net/http/pprof"
-
 	"github.com/client9/reopen"
 	"github.com/codegangsta/cli"
 	"github.com/codegangsta/martini-contrib/render"
@@ -42,6 +40,8 @@ type daemonListener struct {
 }
 
 // --- functions
+
+// CmdDaemonWrapper implements subcommand `daemon`
 func CmdDaemonWrapper(c *cli.Context) {
 	args := os.Args
 	args[1] = "_daemon"
@@ -71,11 +71,11 @@ func CmdDaemonWrapper(c *cli.Context) {
 		cmd = exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		envHappoUserId := os.Getenv("HAPPO_USER_ID")
-		if envHappoUserId != "" {
-			uid, err := strconv.Atoi(envHappoUserId)
+		envHappoUserID := os.Getenv("HAPPO_USER_ID")
+		if envHappoUserID != "" {
+			uid, err := strconv.Atoi(envHappoUserID)
 			if err != nil {
-				log.Print("HAPPO_USER_ID ", envHappoUserId)
+				log.Print("HAPPO_USER_ID ", envHappoUserID)
 				log.Fatal(err)
 			}
 			cmd.SysProcAttr = &syscall.SysProcAttr{}
@@ -109,7 +109,7 @@ func customClassic() *martini.ClassicMartini {
 	return &martini.ClassicMartini{m, r}
 }
 
-// Daemon mode (agent mode)
+// CmdDaemon implements subcommand `_daemon`
 func CmdDaemon(c *cli.Context) {
 
 	fp, err := reopen.NewFileWriter(c.String("logfile"))
@@ -202,10 +202,10 @@ func CmdDaemon(c *cli.Context) {
 	}()
 
 	// Metric collect timer
-	time_metrics := time.NewTicker(time.Minute).C
+	timeMetrics := time.NewTicker(time.Minute).C
 	for {
 		select {
-		case <-time_metrics:
+		case <-timeMetrics:
 			err := collect.Metrics(c.String("metric-config"))
 			if err != nil {
 				log.Fatal(err)
@@ -224,7 +224,7 @@ func (l *daemonListener) listenAndServe() error {
 		return err
 	}
 
-	tls_config := &tls.Config{
+	tlsConfig := &tls.Config{
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			// tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -240,16 +240,16 @@ func (l *daemonListener) listenAndServe() error {
 	if err != nil {
 		return err
 	}
-	limit_listener := netutil.LimitListener(listener, l.MaxConnections)
-	tls_listener := tls.NewListener(limit_listener, tls_config)
+	limitListener := netutil.LimitListener(listener, l.MaxConnections)
+	tlsListener := tls.NewListener(limitListener, tlsConfig)
 
-	http_config := &http.Server{
-		TLSConfig:    tls_config,
+	httpConfig := &http.Server{
+		TLSConfig:    tlsConfig,
 		Addr:         l.Port,
 		Handler:      l.Handler,
 		ReadTimeout:  time.Duration(l.Timeout) * time.Second,
 		WriteTimeout: time.Duration(l.Timeout) * time.Second,
 	}
 
-	return http_config.Serve(tls_listener)
+	return httpConfig.Serve(tlsListener)
 }

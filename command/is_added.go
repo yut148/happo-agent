@@ -10,11 +10,11 @@ import (
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
-// Check host database
-func CmdIs_added(c *cli.Context) {
+// CmdIsAdded implements subcommand `is_added`. Check host database
+func CmdIsAdded(c *cli.Context) {
 
-	manage_request, err := util.BindManageParameter(c)
-	data, err := json.Marshal(manage_request)
+	manageRequest, err := util.BindManageParameter(c)
+	data, err := json.Marshal(manageRequest)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
