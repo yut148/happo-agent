@@ -55,11 +55,11 @@ func Monitor(monitor_request lib.MonitorRequest, r render.Render) {
 	var monitor_response lib.MonitorResponse
 
 	if !util.Production {
-		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitor_request.Plugin_Name, monitor_request.Plugin_Option))
+		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitor_request.PluginName, monitor_request.PluginOption))
 	}
-	ret, message, err := execPluginCommand(monitor_request.Plugin_Name, monitor_request.Plugin_Option)
+	ret, message, err := execPluginCommand(monitor_request.PluginName, monitor_request.PluginOption)
 	if err != nil {
-		monitor_response.Return_Value = lib.MONITOR_ERROR
+		monitor_response.ReturnValue = lib.MONITOR_ERROR
 		monitor_response.Message = err.Error()
 		if _, ok := err.(*util.TimeoutError); ok {
 			r.JSON(http.StatusServiceUnavailable, monitor_response)
@@ -72,7 +72,7 @@ func Monitor(monitor_request lib.MonitorRequest, r render.Render) {
 		saveStateChan <- true
 	}
 
-	monitor_response.Return_Value = ret
+	monitor_response.ReturnValue = ret
 	monitor_response.Message = message
 
 	r.JSON(http.StatusOK, monitor_response)

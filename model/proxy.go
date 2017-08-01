@@ -30,15 +30,15 @@ func Proxy(proxy_request lib.ProxyRequest, r render.Render) (int, string) {
 	var request_json []byte
 	var err error
 
-	next_hostport = proxy_request.Proxy_HostPort[0]
+	next_hostport = proxy_request.ProxyHostPort[0]
 
-	if len(proxy_request.Proxy_HostPort) == 1 {
+	if len(proxy_request.ProxyHostPort) == 1 {
 		// last proxy
 		request_type = proxy_request.RequestType
 		request_json = proxy_request.RequestJSON
 	} else {
 		// more proxies
-		proxy_request.Proxy_HostPort = proxy_request.Proxy_HostPort[1:]
+		proxy_request.ProxyHostPort = proxy_request.ProxyHostPort[1:]
 		request_type = "proxy"
 		request_json, _ = json.Marshal(proxy_request) // ここではエラーは出ない(出るとしたら上位でずっこけている
 	}
@@ -54,7 +54,7 @@ func Proxy(proxy_request lib.ProxyRequest, r render.Render) (int, string) {
 	resp_code, response, err := postToAgent(next_host, next_port, request_type, request_json)
 	if err != nil {
 		var monitor_response lib.MonitorResponse
-		monitor_response.Return_Value = lib.MONITOR_UNKNOWN
+		monitor_response.ReturnValue = lib.MONITOR_UNKNOWN
 		monitor_response.Message = err.Error()
 		err_jsondata, _ := json.Marshal(monitor_response)
 		response = string(err_jsondata[:])

@@ -44,7 +44,7 @@ func CmdAppendMetric(c *cli.Context) error {
 	}
 
 	var m lib.MetricsData
-	m.Host_Name = hostname
+	m.HostName = hostname
 	m.Timestamp = timestamp
 	m.Metrics = metricData
 	metricsDataSlice = append(metricsDataSlice, m)
@@ -56,7 +56,7 @@ func CmdAppendMetric(c *cli.Context) error {
 
 	var metricAppendRequest lib.MetricAppendRequest
 
-	metricAppendRequest.Api_Key = c.String("api-key")
+	metricAppendRequest.APIKey = c.String("api-key")
 	metricAppendRequest.MetricData = metricsDataSlice
 
 	data, err := json.Marshal(metricAppendRequest)

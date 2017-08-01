@@ -20,19 +20,19 @@ var CONFIG_DATA = lib.MetricConfig{
 	Metrics: []struct {
 		Hostname string `yaml:"hostname"`
 		Plugins  []struct {
-			Plugin_Name   string `yaml:"plugin_name"`
-			Plugin_Option string `yaml:"plugin_option"`
+			PluginName   string `yaml:"plugin_name"`
+			PluginOption string `yaml:"plugin_option"`
 		} `yaml:"plugins"`
 	}{
 		{
 			Hostname: "localhost",
 			Plugins: []struct {
-				Plugin_Name   string `yaml:"plugin_name"`
-				Plugin_Option string `yaml:"plugin_option"`
+				PluginName   string `yaml:"plugin_name"`
+				PluginOption string `yaml:"plugin_option"`
 			}{
 				{
-					Plugin_Name:   "metrics_test_plugin",
-					Plugin_Option: "",
+					PluginName:   "metrics_test_plugin",
+					PluginOption: "",
 				},
 			},
 		},
@@ -132,12 +132,12 @@ func TestSaveMetricConfig1(t *testing.T) {
 func TestSaveMetrics1(t *testing.T) {
 	var err error
 	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
 	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
@@ -154,12 +154,12 @@ func TestSaveMetrics1(t *testing.T) {
 func TestSaveMetrics2(t *testing.T) {
 	var err error
 	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
 	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
@@ -175,12 +175,12 @@ func TestSaveMetrics2(t *testing.T) {
 func TestSaveMetrics3(t *testing.T) {
 	var err error
 	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
 	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host2", Timestamp: 201, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{Host_Name: "host2", Timestamp: 202, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+		lib.MetricsData{HostName: "host2", Timestamp: 201, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 202, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
@@ -196,12 +196,12 @@ func TestSaveMetrics3(t *testing.T) {
 func TestSaveMetrics4(t *testing.T) {
 	var err error
 	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
 	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
@@ -219,12 +219,12 @@ func TestGetMetricDataBufferStatus1(t *testing.T) {
 	var err error
 	var savedMetricData map[string]int64
 	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
 	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	//cleanup

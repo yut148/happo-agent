@@ -37,7 +37,7 @@ func Metrics(config_path string) error {
 	for _, metric_host_list := range metric_list.Metrics {
 		for _, metric_plugin := range metric_host_list.Plugins {
 			metric_total_count++
-			raw_metrics, err := getMetrics(metric_plugin.Plugin_Name, metric_plugin.Plugin_Option)
+			raw_metrics, err := getMetrics(metric_plugin.PluginName, metric_plugin.PluginOption)
 			if err != nil {
 				return err
 			} else if raw_metrics == "" {
@@ -49,7 +49,7 @@ func Metrics(config_path string) error {
 			}
 
 			var metrics lib.MetricsData
-			metrics.Host_Name = metric_host_list.Hostname
+			metrics.HostName = metric_host_list.Hostname
 			metrics.Timestamp = timestamp
 			metrics.Metrics = metric_data
 			metrics_data_buffer = append(metrics_data_buffer, metrics)

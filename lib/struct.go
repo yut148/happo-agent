@@ -4,7 +4,7 @@ package lib
 
 // metric buffer
 type MetricsData struct {
-	Host_Name string             `json:"hostname"`
+	HostName  string             `json:"hostname"`
 	Timestamp int64              `json:"timestamp"`
 	Metrics   map[string]float64 `json:"metrics"`
 }
@@ -23,45 +23,45 @@ type InventoryData struct {
 
 // /proxy
 type ProxyRequest struct {
-	Proxy_HostPort []string `json:"proxy_hostport"`
-	RequestType    string   `json:"request_type"`
-	RequestJSON    []byte   `json:"request_json"`
+	ProxyHostPort []string `json:"proxy_hostport"`
+	RequestType   string   `json:"request_type"`
+	RequestJSON   []byte   `json:"request_json"`
 }
 
 // /monitor API
 type MonitorRequest struct {
-	Api_Key       string `json:"apikey"`
-	Plugin_Name   string `json:"plugin_name"  binding:"required"`
-	Plugin_Option string `json:"plugin_option"`
+	APIKey       string `json:"apikey"`
+	PluginName   string `json:"plugin_name"  binding:"required"`
+	PluginOption string `json:"plugin_option"`
 }
 
 // /metric API
 type MetricRequest struct {
-	Api_Key string `json:"apikey"`
+	APIKey string `json:"apikey"`
 }
 
 // /metric/append API
 type MetricAppendRequest struct {
-	Api_Key    string        `json:"apikey"`
+	APIKey     string        `json:"apikey"`
 	MetricData []MetricsData `json:"metric_data"`
 }
 
 // /metric/config/update API
 type MetricConfigUpdateRequest struct {
-	Api_Key string       `json:"apikey"`
-	Config  MetricConfig `json:"config"`
+	APIKey string       `json:"apikey"`
+	Config MetricConfig `json:"config"`
 }
 
 // /inventory API
 type InventoryRequest struct {
-	Api_Key       string `json:"apikey"`
+	APIKey        string `json:"apikey"`
 	Command       string `json:"command"`
 	CommandOption string `json:"command_option"`
 }
 
 // Manage API
 type ManageRequest struct {
-	Api_Key  string           `json:"apikey"`
+	APIKey   string           `json:"apikey"`
 	Hostdata CrawlConfigAgent `json:"hostdata"`
 }
 
@@ -69,8 +69,8 @@ type ManageRequest struct {
 
 // /monitor API
 type MonitorResponse struct {
-	Return_Value int    `json:"return_value"`
-	Message      string `json:"message"`
+	ReturnValue int    `json:"return_value"`
+	Message     string `json:"message"`
 }
 
 // /metric API
