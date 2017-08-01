@@ -7,8 +7,8 @@ type MetricConfig struct {
 	Metrics []struct {
 		Hostname string `yaml:"hostname"`
 		Plugins  []struct {
-			PluginName   string `yaml:"plugin_name"`
-			PluginOption string `yaml:"plugin_option"`
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
 		} `yaml:"plugins"`
 	} `yaml:"metrics"`
 }
