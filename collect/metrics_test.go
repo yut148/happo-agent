@@ -18,17 +18,17 @@ const TestPlugin = "metrics_test_plugin"
 
 var ConfigData = lib.MetricConfig{
 	Metrics: []struct {
-		Hostname string `yaml:"hostname"`
+		Hostname string `yaml:"hostname" json:"Hostname"`
 		Plugins  []struct {
-			PluginName   string `yaml:"plugin_name"`
-			PluginOption string `yaml:"plugin_option"`
-		} `yaml:"plugins"`
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		} `yaml:"plugins" json:"Plugins"`
 	}{
 		{
 			Hostname: "localhost",
 			Plugins: []struct {
-				PluginName   string `yaml:"plugin_name"`
-				PluginOption string `yaml:"plugin_option"`
+				PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+				PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
 			}{
 				{
 					PluginName:   "metrics_test_plugin",

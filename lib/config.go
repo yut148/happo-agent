@@ -5,12 +5,12 @@ package lib
 // MetricConfig is struct of metric collection config yaml file
 type MetricConfig struct {
 	Metrics []struct {
-		Hostname string `yaml:"hostname"`
+		Hostname string `yaml:"hostname" json:"Hostname"`
 		Plugins  []struct {
 			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
 			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
-		} `yaml:"plugins"`
-	} `yaml:"metrics"`
+		} `yaml:"plugins" json:"Plugins"`
+	} `yaml:"metrics" json:"Metrics"`
 }
 
 // CrawlConfigAgent is struct of actual crawl operation
