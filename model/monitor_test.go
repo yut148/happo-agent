@@ -36,10 +36,10 @@ func TestMonitor1(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":0,"message":"Output of monitor_test_plugin. exit status is 0\n"}`,
+		res.Body.String(),
 	)
 }
 
@@ -63,10 +63,10 @@ func TestMonitor2(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":1,"message":"Output of monitor_test_plugin. exit status is 1\n"}`,
+		res.Body.String(),
 	)
 }
 
@@ -90,10 +90,10 @@ func TestMonitor3(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":2,"message":"Output of monitor_test_plugin. exit status is 2\n"}`,
+		res.Body.String(),
 	)
 }
 
@@ -117,10 +117,10 @@ func TestMonitor4(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":3,"message":"Output of monitor_test_plugin. exit status is 3\n"}`,
+		res.Body.String(),
 	)
 }
 
@@ -144,7 +144,7 @@ func TestMonitor5(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusServiceUnavailable)
+	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
 	assert.Regexp(t,
 		regexp.MustCompile(`^{"return_value":2,"message":"Exec timeout: .*monitor_test_sleep .*"}$`),
 		res.Body.String(),
@@ -171,9 +171,9 @@ func TestMonitor6(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":127,"message":""}`,
+		res.Body.String(),
 	)
 }

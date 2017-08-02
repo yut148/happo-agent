@@ -15,7 +15,7 @@ func TestExecCommand1(t *testing.T) {
 	option := "'hoge'"
 
 	exitCode, stdout, stderr, err := ExecCommand(command, option)
-	assert.EqualValues(t, exitCode, 0)
+	assert.EqualValues(t, 0, exitCode)
 	assert.Contains(t, stdout, "hoge")
 	assert.Contains(t, stderr, "")
 	assert.Nil(t, err)
@@ -29,7 +29,7 @@ func TestExecCommand2(t *testing.T) {
 	option := "'hoge' >&2"
 
 	exitCode, stdout, stderr, err := ExecCommand(command, option)
-	assert.EqualValues(t, exitCode, 0)
+	assert.EqualValues(t, 0, exitCode)
 	assert.Contains(t, stdout, "")
 	assert.Contains(t, stderr, "hoge")
 	assert.Nil(t, err)
@@ -43,7 +43,7 @@ func TestExecCommand3(t *testing.T) {
 	option := fmt.Sprintf("%d", lib.DefaultCommandTimeout+1)
 
 	exitCode, stdout, stderr, err := ExecCommand(command, option)
-	assert.EqualValues(t, exitCode, -1)
+	assert.EqualValues(t, -1, exitCode)
 	assert.Contains(t, stdout, "")
 	assert.Contains(t, stderr, "")
 	assert.NotNil(t, err)
@@ -57,7 +57,7 @@ func TestExecCommandCombinedOutput1(t *testing.T) {
 	option := "'hoge'"
 
 	exitCode, out, err := ExecCommandCombinedOutput(command, option)
-	assert.EqualValues(t, exitCode, 0)
+	assert.EqualValues(t, 0, exitCode)
 	assert.Contains(t, out, "hoge")
 	assert.Nil(t, err)
 
@@ -70,7 +70,7 @@ func TestExecCommandCombinedOutput2(t *testing.T) {
 	option := "'hoge' >&2"
 
 	exitCode, out, err := ExecCommandCombinedOutput(command, option)
-	assert.EqualValues(t, exitCode, 0)
+	assert.EqualValues(t, 0, exitCode)
 	assert.Contains(t, out, "hoge")
 	assert.Nil(t, err)
 
@@ -83,7 +83,7 @@ func TestExecCommandCombinedOutput3(t *testing.T) {
 	option := fmt.Sprintf("%d", lib.DefaultCommandTimeout+1)
 
 	exitCode, out, err := ExecCommandCombinedOutput(command, option)
-	assert.EqualValues(t, exitCode, -1)
+	assert.EqualValues(t, -1, exitCode)
 	assert.Contains(t, out, "")
 	assert.NotNil(t, err)
 
@@ -96,7 +96,7 @@ func TestExecCommand4(t *testing.T) {
 	option := "-c 'echo -n 1.STDOUT. ; echo -n 2.STDERR. >&2 ; echo -n 3.STDOUT. ; echo -n 4.STDERR. >&2 ; exit 0'"
 
 	exitCode, out, err := ExecCommandCombinedOutput(command, option)
-	assert.EqualValues(t, exitCode, 0)
+	assert.EqualValues(t, 0, exitCode)
 	assert.Contains(t, out, "1.STDOUT.2.STDERR.3.STDOUT.4.STDERR.")
 	assert.Nil(t, err)
 
@@ -124,10 +124,10 @@ func TestBuildMetricAppendAPIRequest1(t *testing.T) {
 	}
 	]}`))
 	assert.True(t, (client.Transport.(*http.Transport)).TLSClientConfig.InsecureSkipVerify)
-	assert.Equal(t, req.URL.Scheme, "https")
-	assert.Equal(t, req.URL.Host, "127.0.0.2:6777")
-	assert.Equal(t, req.URL.Path, "/metric/append")
-	assert.Equal(t, req.Method, "POST")
-	assert.Equal(t, req.Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, "https", req.URL.Scheme)
+	assert.Equal(t, "127.0.0.2:6777", req.URL.Host)
+	assert.Equal(t, "/metric/append", req.URL.Path)
+	assert.Equal(t, "POST", req.Method)
+	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	assert.Nil(t, err)
 }

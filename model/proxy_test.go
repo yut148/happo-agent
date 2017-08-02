@@ -34,7 +34,7 @@ func TestPostToAgent1(t *testing.T) {
 
 	jsonData := []byte("{}")
 	statusCode, response, err := postToAgent(host, port, "test", jsonData)
-	assert.EqualValues(t, statusCode, http.StatusOK)
+	assert.EqualValues(t, http.StatusOK, statusCode)
 	assert.Contains(t, response, stubResponse)
 	assert.Nil(t, err)
 }
@@ -58,7 +58,7 @@ func TestPostToAgent2(t *testing.T) {
 	statusCode, response, err := postToAgent(host, port, "test", []byte("{}"))
 	_httpClient.Timeout = timeout
 
-	assert.EqualValues(t, statusCode, http.StatusGatewayTimeout)
+	assert.EqualValues(t, http.StatusGatewayTimeout, statusCode)
 	assert.Contains(t, response, "")
 	assert.True(t, err.(net.Error).Timeout())
 }
@@ -102,7 +102,7 @@ func TestPostToAgent4(t *testing.T) {
 	port, _ := strconv.Atoi(found[3])
 	statusCode, response, err := postToAgent(host, port, "test", []byte("{}"))
 
-	assert.EqualValues(t, statusCode, http.StatusServiceUnavailable)
+	assert.EqualValues(t, http.StatusServiceUnavailable, statusCode)
 	assert.Contains(t, response, "error response")
 	assert.Nil(t, err)
 }
@@ -144,10 +144,10 @@ func TestProxy1(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":0,"message":"ok"}`,
+		res.Body.String(),
 	)
 }
 
@@ -193,10 +193,10 @@ func TestProxy2(t *testing.T) {
 
 	_httpClient.Timeout = timeout
 
-	assert.Equal(t, res.Code, http.StatusGatewayTimeout)
+	assert.Equal(t, http.StatusGatewayTimeout, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		fmt.Sprintf(`{"return_value":3,"message":"Post https://%s:%d/monitor: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"}`, host, port),
+		res.Body.String(),
 	)
 }
 
@@ -237,10 +237,10 @@ func TestProxy3(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, res.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		`{"return_value":0,"message":"ok"}`,
+		res.Body.String(),
 	)
 }
 
@@ -286,9 +286,9 @@ func TestProxy4(t *testing.T) {
 
 	_httpClient.Timeout = timeout
 
-	assert.Equal(t, res.Code, http.StatusGatewayTimeout)
+	assert.Equal(t, http.StatusGatewayTimeout, res.Code)
 	assert.Equal(t,
-		res.Body.String(),
 		fmt.Sprintf(`{"return_value":3,"message":"Post https://%s:%d/proxy: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"}`, host, port),
+		res.Body.String(),
 	)
 }

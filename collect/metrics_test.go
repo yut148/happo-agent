@@ -82,15 +82,15 @@ func TestParseMetricData1(t *testing.T) {
 	RetAssert := map[string]float64{"hoge": 10}
 
 	ret, timestamp, err := ParseMetricData("hoge	10	1")
-	assert.EqualValues(t, ret, RetAssert)
-	assert.EqualValues(t, timestamp, 1)
+	assert.EqualValues(t, RetAssert, ret)
+	assert.EqualValues(t, 1, timestamp)
 	assert.Nil(t, err)
 }
 
 func TestParseMetricData2(t *testing.T) {
 	ret, timestamp, err := ParseMetricData("hoge	foo	bar")
 	assert.Nil(t, ret)
-	assert.EqualValues(t, timestamp, 0)
+	assert.EqualValues(t, 0, timestamp)
 	assert.NotNil(t, err)
 }
 
@@ -98,14 +98,14 @@ func TestParseMetricData3(t *testing.T) {
 	RetAssert := map[string]float64{}
 
 	ret, timestamp, err := ParseMetricData("hoge")
-	assert.EqualValues(t, ret, RetAssert)
-	assert.EqualValues(t, timestamp, 0)
+	assert.EqualValues(t, RetAssert, ret)
+	assert.EqualValues(t, 0, timestamp)
 	assert.Nil(t, err)
 }
 
 func TestGetMetricConfig1(t *testing.T) {
 	config, err := GetMetricConfig(TestConfigFile)
-	assert.EqualValues(t, config, ConfigData)
+	assert.EqualValues(t, ConfigData, config)
 	assert.Nil(t, err)
 }
 
@@ -116,7 +116,7 @@ func TestGetMetricConfig2(t *testing.T) {
 
 func TestGetMetricConfig3(t *testing.T) {
 	ret, err := GetMetricConfig("/proc/cpuinfo")
-	assert.NotEqual(t, ret, ConfigData)
+	assert.NotEqual(t, ConfigData, ret)
 	assert.Nil(t, err)
 }
 
@@ -125,7 +125,7 @@ func TestSaveMetricConfig1(t *testing.T) {
 	assert.Nil(t, err)
 
 	config, err := GetMetricConfig(TestConfigFile)
-	assert.EqualValues(t, config, ConfigData)
+	assert.EqualValues(t, ConfigData, config)
 	assert.Nil(t, err)
 }
 
@@ -143,12 +143,12 @@ func TestSaveMetrics1(t *testing.T) {
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
 	assert.Nil(t, err)
 	got := GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, metricsData1)
+	assert.Equal(t, metricsData1, got)
 
 	err = SaveMetrics(time.Unix(1002, 0), metricsData2)
 	assert.Nil(t, err)
 	got = GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, metricsData2)
+	assert.Equal(t, metricsData2, got)
 }
 
 func TestSaveMetrics2(t *testing.T) {
@@ -169,7 +169,7 @@ func TestSaveMetrics2(t *testing.T) {
 	assert.Nil(t, err)
 
 	got := GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, append(metricsData1, metricsData2...))
+	assert.Equal(t, append(metricsData1, metricsData2...), got)
 }
 
 func TestSaveMetrics3(t *testing.T) {
@@ -190,7 +190,7 @@ func TestSaveMetrics3(t *testing.T) {
 	assert.Nil(t, err)
 
 	got := GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, append(metricsData1, metricsData2...))
+	assert.Equal(t, append(metricsData1, metricsData2...), got)
 }
 
 func TestSaveMetrics4(t *testing.T) {
@@ -212,7 +212,7 @@ func TestSaveMetrics4(t *testing.T) {
 
 	got := GetCollectedMetricsWithLimit(-1)
 	//metricsData1 must expired
-	assert.Equal(t, got, metricsData2)
+	assert.Equal(t, metricsData2, got)
 }
 
 func TestGetMetricDataBufferStatus1(t *testing.T) {
@@ -231,32 +231,32 @@ func TestGetMetricDataBufferStatus1(t *testing.T) {
 	GetCollectedMetricsWithLimit(-1)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(0))
-	assert.Equal(t, savedMetricData["capacity"], int64(0))
+	assert.Equal(t, int64(0), savedMetricData["length"])
+	assert.Equal(t, int64(0), savedMetricData["capacity"])
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
 	assert.Nil(t, err)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(1))
-	assert.Equal(t, savedMetricData["capacity"], int64(1))
-	assert.Equal(t, savedMetricData["oldest_timestamp"], int64(1000))
-	assert.Equal(t, savedMetricData["newest_timestamp"], int64(1000))
+	assert.Equal(t, int64(1), savedMetricData["length"])
+	assert.Equal(t, int64(1), savedMetricData["capacity"])
+	assert.Equal(t, int64(1000), savedMetricData["oldest_timestamp"])
+	assert.Equal(t, int64(1000), savedMetricData["newest_timestamp"])
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData2)
 	assert.Nil(t, err)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(2))
-	assert.Equal(t, savedMetricData["capacity"], int64(2))
-	assert.Equal(t, savedMetricData["oldest_timestamp"], int64(1000))
-	assert.Equal(t, savedMetricData["newest_timestamp"], int64(1001))
+	assert.Equal(t, int64(2), savedMetricData["length"])
+	assert.Equal(t, int64(2), savedMetricData["capacity"])
+	assert.Equal(t, int64(1000), savedMetricData["oldest_timestamp"])
+	assert.Equal(t, int64(1001), savedMetricData["newest_timestamp"])
 
 	GetCollectedMetricsWithLimit(-1)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(0))
-	assert.Equal(t, savedMetricData["capacity"], int64(0))
+	assert.Equal(t, int64(0), savedMetricData["length"])
+	assert.Equal(t, int64(0), savedMetricData["capacity"])
 }
 
 func TestMain(m *testing.M) {

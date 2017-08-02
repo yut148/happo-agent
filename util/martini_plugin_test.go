@@ -28,7 +28,7 @@ func TestACL0(t *testing.T) {
 	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
-	assert.EqualValues(t, res.Code, http.StatusServiceUnavailable)
+	assert.EqualValues(t, http.StatusServiceUnavailable, res.Code)
 }
 
 func TestACL1(t *testing.T) {
@@ -47,7 +47,7 @@ func TestACL1(t *testing.T) {
 	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
-	assert.EqualValues(t, res.Code, http.StatusForbidden)
+	assert.EqualValues(t, http.StatusForbidden, res.Code)
 }
 
 func TestACL2(t *testing.T) {
@@ -66,8 +66,8 @@ func TestACL2(t *testing.T) {
 	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
-	assert.EqualValues(t, res.Code, http.StatusOK)
-	assert.EqualValues(t, res.Body.String(), bodyStr)
+	assert.EqualValues(t, http.StatusOK, res.Code)
+	assert.EqualValues(t, bodyStr, res.Body.String())
 }
 
 func TestACL3(t *testing.T) {
@@ -86,8 +86,8 @@ func TestACL3(t *testing.T) {
 	req.RemoteAddr = fmt.Sprintf("%s:%d", "127.0.0.1", lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
-	assert.EqualValues(t, res.Code, http.StatusOK)
-	assert.EqualValues(t, res.Body.String(), bodyStr)
+	assert.EqualValues(t, http.StatusOK, res.Code)
+	assert.EqualValues(t, bodyStr, res.Body.String())
 }
 
 func TestACL4(t *testing.T) {
@@ -107,8 +107,8 @@ func TestACL4(t *testing.T) {
 	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
-	assert.EqualValues(t, res.Code, http.StatusOK)
-	assert.EqualValues(t, res.Body.String(), bodyStr)
+	assert.EqualValues(t, http.StatusOK, res.Code)
+	assert.EqualValues(t, bodyStr, res.Body.String())
 }
 
 func TestACL5(t *testing.T) {
@@ -128,5 +128,5 @@ func TestACL5(t *testing.T) {
 	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
-	assert.EqualValues(t, res.Code, http.StatusForbidden)
+	assert.EqualValues(t, http.StatusForbidden, res.Code)
 }
