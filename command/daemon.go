@@ -106,7 +106,10 @@ func customClassic() *martini.ClassicMartini {
 	m.Use(martini.Static("public"))
 	m.MapTo(r, (*martini.Routes)(nil))
 	m.Action(r.Handle)
-	return &martini.ClassicMartini{m, r}
+	classic := new(martini.ClassicMartini)
+	classic.Martini = m
+	classic.Router = r
+	return classic
 }
 
 // CmdDaemon implements subcommand `_daemon`
