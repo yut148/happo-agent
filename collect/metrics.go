@@ -187,7 +187,7 @@ func GetCollectedMetricsWithLimit(limit int) []lib.MetricsData {
 func getMetrics(pluginName string, pluginOption string) (string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(lib.SENSU_PLUGIN_PATHS, ",") {
+	for _, basePath := range strings.Split(lib.DefaultSensuPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {

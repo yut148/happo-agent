@@ -60,7 +60,7 @@ func Monitor(monitorRequest lib.MonitorRequest, r render.Render) {
 	}
 	ret, message, err := execPluginCommand(monitorRequest.PluginName, monitorRequest.PluginOption)
 	if err != nil {
-		monitorResponse.ReturnValue = lib.MONITOR_ERROR
+		monitorResponse.ReturnValue = lib.MonitorError
 		monitorResponse.Message = err.Error()
 		if _, ok := err.(*util.TimeoutError); ok {
 			r.JSON(http.StatusServiceUnavailable, monitorResponse)
@@ -82,7 +82,7 @@ func Monitor(monitorRequest lib.MonitorRequest, r render.Render) {
 func execPluginCommand(pluginName string, pluginOption string) (int, string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(lib.NAGIOS_PLUGIN_PATHS, ",") {
+	for _, basePath := range strings.Split(lib.DefaultNagiosPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {
@@ -96,7 +96,7 @@ func execPluginCommand(pluginName string, pluginOption string) (int, string, err
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
 	if err != nil {
-		return lib.MONITOR_UNKNOWN, "", err
+		return lib.MonitorUnknown, "", err
 	}
 
 	return exitstatus, stdout, nil
@@ -169,8 +169,8 @@ func isPermitSaveState() bool {
 	defer lastRunnedMutex.Unlock()
 
 	duration := time.Now().Unix() - lastRunned
-	if duration < lib.ERROR_LOG_INTERVAL_SEC {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, lib.ERROR_LOG_INTERVAL_SEC))
+	if duration < lib.ErrorLogIntervalSeconds {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, lib.ErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()

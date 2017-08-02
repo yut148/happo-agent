@@ -44,14 +44,14 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 
 	commandTimeout := CommandTimeout
 	if commandTimeout == -1 {
-		commandTimeout = lib.COMMAND_TIMEOUT
+		commandTimeout = lib.DefaultCommandTimeout
 	}
 
 	commandWithOptions := fmt.Sprintf("%s %s", command, option)
 	tio := &timeout.Timeout{
 		Cmd:       exec.Command("/bin/sh", "-c", commandWithOptions),
 		Duration:  commandTimeout * time.Second,
-		KillAfter: lib.COMMAND_KILLAFTER * time.Second,
+		KillAfter: lib.CommandKillAfterSeconds * time.Second,
 	}
 	exitStatus, stdout, stderr, err := tio.Run()
 
@@ -67,14 +67,14 @@ func ExecCommandCombinedOutput(command string, option string) (int, string, erro
 
 	commandTimeout := CommandTimeout
 	if commandTimeout == -1 {
-		commandTimeout = lib.COMMAND_TIMEOUT
+		commandTimeout = lib.DefaultCommandTimeout
 	}
 
 	commandWithOptions := fmt.Sprintf("%s %s", command, option)
 	tio := &timeout.Timeout{
 		Cmd:       exec.Command("/bin/sh", "-c", commandWithOptions),
 		Duration:  commandTimeout * time.Second,
-		KillAfter: lib.COMMAND_KILLAFTER * time.Second,
+		KillAfter: lib.CommandKillAfterSeconds * time.Second,
 	}
 	out := &bytes.Buffer{}
 	tio.Cmd.Stdout = out

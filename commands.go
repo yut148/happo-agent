@@ -17,7 +17,7 @@ var GlobalFlags = []cli.Flag{}
 var daemonFlags = []cli.Flag{
 	cli.IntFlag{
 		Name:  "port, P",
-		Value: lib.DEFAULT_AGENT_PORT,
+		Value: lib.DefaultAgentPort,
 		Usage: "Listen port number",
 	},
 	cli.StringSliceFlag{
@@ -27,17 +27,17 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "public-key, B",
-		Value: lib.TLS_PUBLIC_KEY,
+		Value: lib.DefaultTLSPublicKey,
 		Usage: "TLS public key file path",
 	},
 	cli.StringFlag{
 		Name:  "private-key, R",
-		Value: lib.TLS_PRIVATE_KEY,
+		Value: lib.DefaultTLSPrivateKey,
 		Usage: "TLS private key file path",
 	},
 	cli.StringFlag{
 		Name:  "metric-config, M",
-		Value: lib.CONFIG_METRIC,
+		Value: lib.DefaultMetricsConfigPath,
 		Usage: "Metric config file path",
 	},
 	cli.StringFlag{
@@ -47,12 +47,12 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.IntFlag{
 		Name:  "max-connections, X",
-		Value: lib.MAX_CONNECTIONS,
+		Value: lib.DefaultServerMaxConnections,
 		Usage: "CPU profile output.",
 	},
 	cli.IntFlag{
 		Name:  "command-timeout, T",
-		Value: lib.COMMAND_TIMEOUT,
+		Value: lib.DefaultCommandTimeout,
 		Usage: "Command execution timeout.",
 	},
 	cli.StringFlag{
@@ -124,12 +124,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: lib.DEFAULT_AGENT_PORT,
+				Value: lib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: lib.API_ENDPOINT,
+				Value: lib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -149,12 +149,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: lib.DEFAULT_AGENT_PORT,
+				Value: lib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: lib.API_ENDPOINT,
+				Value: lib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -174,12 +174,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: lib.DEFAULT_AGENT_PORT,
+				Value: lib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: lib.API_ENDPOINT,
+				Value: lib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},

@@ -184,7 +184,7 @@ func CmdDaemon(c *cli.Context) {
 	var lis daemonListener
 	lis.Port = fmt.Sprintf(":%d", c.Int("port"))
 	lis.Handler = m
-	lis.Timeout = lib.HTTP_TIMEOUT
+	lis.Timeout = lib.DefaultServerHTTPTimeout
 	if lis.Timeout < int(c.Int64("proxy-timeout-seconds")) {
 		lis.Timeout = int(c.Int64("proxy-timeout-seconds"))
 	}

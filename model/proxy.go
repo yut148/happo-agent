@@ -45,17 +45,17 @@ func Proxy(proxyRequest lib.ProxyRequest, r render.Render) (int, string) {
 	}
 	nextHostdata := strings.Split(nextHostport, ":")
 	nextHost := nextHostdata[0]
-	nextPort := lib.DEFAULT_AGENT_PORT
+	nextPort := lib.DefaultAgentPort
 	if len(nextHostdata) == 2 {
 		nextPort, err = strconv.Atoi(nextHostdata[1])
 		if err != nil {
-			nextPort = lib.DEFAULT_AGENT_PORT
+			nextPort = lib.DefaultAgentPort
 		}
 	}
 	respCode, response, err := postToAgent(nextHost, nextPort, requestType, requestJSON)
 	if err != nil {
 		var monitorResponse lib.MonitorResponse
-		monitorResponse.ReturnValue = lib.MONITOR_UNKNOWN
+		monitorResponse.ReturnValue = lib.MonitorUnknown
 		monitorResponse.Message = err.Error()
 		errJSONData, _ := json.Marshal(monitorResponse)
 		response = string(errJSONData[:])

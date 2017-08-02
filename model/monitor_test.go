@@ -135,7 +135,7 @@ func TestMonitor5(t *testing.T) {
 		"apikey": "",
 		"plugin_name": "monitor_test_sleep",
 		"plugin_option": "%d"
-	}`, lib.COMMAND_TIMEOUT+1)))
+	}`, lib.DefaultCommandTimeout+1)))
 	req, _ := http.NewRequest("POST", "/monitor", reader)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -162,7 +162,7 @@ func TestMonitor6(t *testing.T) {
 		"apikey": "",
 		"plugin_name": "notfound",
 		"plugin_option": "%d"
-	}`, lib.COMMAND_TIMEOUT+1)))
+	}`, lib.DefaultCommandTimeout+1)))
 	req, _ := http.NewRequest("POST", "/monitor", reader)
 	req.Header.Set("Content-Type", "application/json")
 

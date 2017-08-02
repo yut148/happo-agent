@@ -40,7 +40,7 @@ func TestExecCommand2(t *testing.T) {
 
 func TestExecCommand3(t *testing.T) {
 	command := "sleep"
-	option := fmt.Sprintf("%d", lib.COMMAND_TIMEOUT+1)
+	option := fmt.Sprintf("%d", lib.DefaultCommandTimeout+1)
 
 	exitCode, stdout, stderr, err := ExecCommand(command, option)
 	assert.EqualValues(t, exitCode, -1)
@@ -80,7 +80,7 @@ func TestExecCommandCombinedOutput2(t *testing.T) {
 
 func TestExecCommandCombinedOutput3(t *testing.T) {
 	command := "sleep"
-	option := fmt.Sprintf("%d", lib.COMMAND_TIMEOUT+1)
+	option := fmt.Sprintf("%d", lib.DefaultCommandTimeout+1)
 
 	exitCode, out, err := ExecCommandCombinedOutput(command, option)
 	assert.EqualValues(t, exitCode, -1)

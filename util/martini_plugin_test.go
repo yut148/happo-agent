@@ -25,7 +25,7 @@ func TestACL0(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DEFAULT_AGENT_PORT)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusServiceUnavailable)
@@ -44,7 +44,7 @@ func TestACL1(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DEFAULT_AGENT_PORT)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusForbidden)
@@ -63,7 +63,7 @@ func TestACL2(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DEFAULT_AGENT_PORT)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusOK)
@@ -83,7 +83,7 @@ func TestACL3(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", "127.0.0.1", lib.DEFAULT_AGENT_PORT)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", "127.0.0.1", lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusOK)
@@ -104,7 +104,7 @@ func TestACL4(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DEFAULT_AGENT_PORT)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusOK)
@@ -125,7 +125,7 @@ func TestACL5(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DEFAULT_AGENT_PORT)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, res.Code, http.StatusForbidden)
