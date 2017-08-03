@@ -17,6 +17,7 @@ build:
     - script: 
         name: "goimports"
         code: |
+            go get golang.org/x/tools/cmd/goimports
             GOFILES=$(glide novendor -x | grep -vE '^\.$' | while read line ; do find $line -name '*.go' -type f ;done ; ls *.go)
             goimports -d -e ${GOFILES}
             if [[ $(goimports -d -e ${GOFILES}) == "" ]]; then echo pass; else echo failed; exit 1; fi
