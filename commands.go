@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/command"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/lib"
-	_ "net/http/pprof"
 )
 
 // GlobalFlags are global level options
