@@ -7,12 +7,14 @@ import (
 	"sync"
 )
 
+// LogWriter is custom log writer
 type LogWriter struct {
 	fp *os.File
 	sync.Mutex
 	filename string
 }
 
+// NewLogWriter returns new LogWriter pointer
 func NewLogWriter(filename string) *LogWriter {
 	w := &LogWriter{filename: filename}
 	err := w.ReOpen()
@@ -23,6 +25,7 @@ func NewLogWriter(filename string) *LogWriter {
 	return w
 }
 
+// ReOpen do reopen logs for rotation
 func (w *LogWriter) ReOpen() error {
 	w.Lock()
 	defer w.Unlock()
@@ -36,10 +39,12 @@ func (w *LogWriter) ReOpen() error {
 	return err
 }
 
+// Close close LogWriter
 func (w *LogWriter) Close() error {
 	return w.fp.Close()
 }
 
+// File returns fp
 func (w *LogWriter) File() *os.File {
 	return w.fp
 }

@@ -7,8 +7,11 @@ import (
 )
 
 var (
-	DB                             *leveldb.DB
-	MetricsMaxLifetimeSeconds      int64
+	// DB is leveldb.DB
+	DB *leveldb.DB
+	// MetricsMaxLifetimeSeconds is as variable name
+	MetricsMaxLifetimeSeconds int64
+	// MachineStateMaxLifetimeSeconds is as variable name
 	MachineStateMaxLifetimeSeconds int64
 )
 
@@ -17,6 +20,7 @@ func init() {
 	MachineStateMaxLifetimeSeconds = 3 * 86400 //default is 3 days
 }
 
+// Open open leveldb file
 func Open(dbfile string) {
 	var err error
 	DB, err = leveldb.OpenFile(dbfile, nil)
@@ -25,6 +29,7 @@ func Open(dbfile string) {
 	}
 }
 
+// Close close leveldb file
 func Close() {
 	var err error
 	err = DB.Close()

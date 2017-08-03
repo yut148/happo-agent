@@ -15,6 +15,21 @@ build:
         name: "glide install"
         code: "glide install"
     - script: 
+        name: "goimports"
+        code: |
+            go get -u golang.org/x/tools/cmd/goimports
+            GOFILES=$(glide novendor -x | grep -vE '^\.$' | while read line ; do find $line -name '*.go' -type f ;done ; ls *.go)
+            goimports -d -e ${GOFILES}
+            if [[ $(goimports -d -e ${GOFILES}) == "" ]]; then echo pass; else echo failed; exit 1; fi
+    - script: 
+        name: "golint"
+        code: |
+            go get -u github.com/golang/lint/golint
+            for d in $(glide novendor); do golint -set_exit_status $d; done
+    - script: 
+        name: "go vet"
+        code: "go vet $(glide novendor)"
+    - script: 
         name: "install test plugin"
         code: |
             install -m 755 collect/metrics_test_plugin /usr/local/bin/metrics_test_plugin

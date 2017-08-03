@@ -6,33 +6,33 @@ import (
 	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/storage"
 )
 
-const TEST_CONFIG_FILE = "./metrics_test.yaml"
-const TEST_PLUGIN = "metrics_test_plugin"
+const TestConfigFile = "./metrics_test.yaml"
+const TestPlugin = "metrics_test_plugin"
 
-var CONFIG_DATA = happo_agent.MetricConfig{
+var ConfigData = lib.MetricConfig{
 	Metrics: []struct {
-		Hostname string `yaml:"hostname"`
+		Hostname string `yaml:"hostname" json:"Hostname"`
 		Plugins  []struct {
-			Plugin_Name   string `yaml:"plugin_name"`
-			Plugin_Option string `yaml:"plugin_option"`
-		} `yaml:"plugins"`
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		} `yaml:"plugins" json:"Plugins"`
 	}{
 		{
 			Hostname: "localhost",
 			Plugins: []struct {
-				Plugin_Name   string `yaml:"plugin_name"`
-				Plugin_Option string `yaml:"plugin_option"`
+				PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+				PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
 			}{
 				{
-					Plugin_Name:   "metrics_test_plugin",
-					Plugin_Option: "",
+					PluginName:   "metrics_test_plugin",
+					PluginOption: "",
 				},
 			},
 		},
@@ -40,12 +40,12 @@ var CONFIG_DATA = happo_agent.MetricConfig{
 }
 
 func TestMetrics1(t *testing.T) {
-	err := Metrics(TEST_CONFIG_FILE)
+	err := Metrics(TestConfigFile)
 	assert.Nil(t, err)
 }
 
 func TestGetCollectedMetrics1(t *testing.T) {
-	err := Metrics(TEST_CONFIG_FILE)
+	err := Metrics(TestConfigFile)
 	assert.Nil(t, err)
 
 	ret := GetCollectedMetrics()
@@ -54,10 +54,10 @@ func TestGetCollectedMetrics1(t *testing.T) {
 }
 
 func TestGetCollectedMetricsWithLimit1(t *testing.T) {
-	err := Metrics(TEST_CONFIG_FILE)
+	err := Metrics(TestConfigFile)
 	assert.Nil(t, err)
 	time.Sleep(1 * time.Second)
-	err = Metrics(TEST_CONFIG_FILE)
+	err = Metrics(TestConfigFile)
 	assert.Nil(t, err)
 
 	ret := GetCollectedMetricsWithLimit(1)
@@ -67,7 +67,7 @@ func TestGetCollectedMetricsWithLimit1(t *testing.T) {
 }
 
 func TestGetMetrics1(t *testing.T) {
-	ret, err := getMetrics(TEST_PLUGIN, "")
+	ret, err := getMetrics(TestPlugin, "")
 	assert.NotNil(t, ret)
 	assert.Contains(t, ret, "usr.local.bin.metrics_test_plugin")
 	assert.Nil(t, err)
@@ -79,33 +79,33 @@ func TestGetMetrics2(t *testing.T) {
 }
 
 func TestParseMetricData1(t *testing.T) {
-	RET_ASSERT := map[string]float64{"hoge": 10}
+	RetAssert := map[string]float64{"hoge": 10}
 
 	ret, timestamp, err := ParseMetricData("hoge	10	1")
-	assert.EqualValues(t, ret, RET_ASSERT)
-	assert.EqualValues(t, timestamp, 1)
+	assert.EqualValues(t, RetAssert, ret)
+	assert.EqualValues(t, 1, timestamp)
 	assert.Nil(t, err)
 }
 
 func TestParseMetricData2(t *testing.T) {
 	ret, timestamp, err := ParseMetricData("hoge	foo	bar")
 	assert.Nil(t, ret)
-	assert.EqualValues(t, timestamp, 0)
+	assert.EqualValues(t, 0, timestamp)
 	assert.NotNil(t, err)
 }
 
 func TestParseMetricData3(t *testing.T) {
-	RET_ASSERT := map[string]float64{}
+	RetAssert := map[string]float64{}
 
 	ret, timestamp, err := ParseMetricData("hoge")
-	assert.EqualValues(t, ret, RET_ASSERT)
-	assert.EqualValues(t, timestamp, 0)
+	assert.EqualValues(t, RetAssert, ret)
+	assert.EqualValues(t, 0, timestamp)
 	assert.Nil(t, err)
 }
 
 func TestGetMetricConfig1(t *testing.T) {
-	config, err := GetMetricConfig(TEST_CONFIG_FILE)
-	assert.EqualValues(t, config, CONFIG_DATA)
+	config, err := GetMetricConfig(TestConfigFile)
+	assert.EqualValues(t, ConfigData, config)
 	assert.Nil(t, err)
 }
 
@@ -116,50 +116,50 @@ func TestGetMetricConfig2(t *testing.T) {
 
 func TestGetMetricConfig3(t *testing.T) {
 	ret, err := GetMetricConfig("/proc/cpuinfo")
-	assert.NotEqual(t, ret, CONFIG_DATA)
+	assert.NotEqual(t, ConfigData, ret)
 	assert.Nil(t, err)
 }
 
 func TestSaveMetricConfig1(t *testing.T) {
-	err := SaveMetricConfig(CONFIG_DATA, TEST_CONFIG_FILE)
+	err := SaveMetricConfig(ConfigData, TestConfigFile)
 	assert.Nil(t, err)
 
-	config, err := GetMetricConfig(TEST_CONFIG_FILE)
-	assert.EqualValues(t, config, CONFIG_DATA)
+	config, err := GetMetricConfig(TestConfigFile)
+	assert.EqualValues(t, ConfigData, config)
 	assert.Nil(t, err)
 }
 
 func TestSaveMetrics1(t *testing.T) {
 	var err error
-	metricsData1 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
 	assert.Nil(t, err)
 	got := GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, metricsData1)
+	assert.Equal(t, metricsData1, got)
 
 	err = SaveMetrics(time.Unix(1002, 0), metricsData2)
 	assert.Nil(t, err)
 	got = GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, metricsData2)
+	assert.Equal(t, metricsData2, got)
 }
 
 func TestSaveMetrics2(t *testing.T) {
 	var err error
-	metricsData1 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
@@ -169,18 +169,18 @@ func TestSaveMetrics2(t *testing.T) {
 	assert.Nil(t, err)
 
 	got := GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, append(metricsData1, metricsData2...))
+	assert.Equal(t, append(metricsData1, metricsData2...), got)
 }
 
 func TestSaveMetrics3(t *testing.T) {
 	var err error
-	metricsData1 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 201, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 202, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host2", Timestamp: 201, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 202, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
@@ -190,18 +190,18 @@ func TestSaveMetrics3(t *testing.T) {
 	assert.Nil(t, err)
 
 	got := GetCollectedMetricsWithLimit(-1)
-	assert.Equal(t, got, append(metricsData1, metricsData2...))
+	assert.Equal(t, append(metricsData1, metricsData2...), got)
 }
 
 func TestSaveMetrics4(t *testing.T) {
 	var err error
-	metricsData1 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
@@ -212,51 +212,51 @@ func TestSaveMetrics4(t *testing.T) {
 
 	got := GetCollectedMetricsWithLimit(-1)
 	//metricsData1 must expired
-	assert.Equal(t, got, metricsData2)
+	assert.Equal(t, metricsData2, got)
 }
 
 func TestGetMetricDataBufferStatus1(t *testing.T) {
 	var err error
 	var savedMetricData map[string]int64
-	metricsData1 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		happo_agent.MetricsData{Host_Name: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []happo_agent.MetricsData{
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		happo_agent.MetricsData{Host_Name: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []lib.MetricsData{
+		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	//cleanup
 	GetCollectedMetricsWithLimit(-1)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(0))
-	assert.Equal(t, savedMetricData["capacity"], int64(0))
+	assert.Equal(t, int64(0), savedMetricData["length"])
+	assert.Equal(t, int64(0), savedMetricData["capacity"])
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
 	assert.Nil(t, err)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(1))
-	assert.Equal(t, savedMetricData["capacity"], int64(1))
-	assert.Equal(t, savedMetricData["oldest_timestamp"], int64(1000))
-	assert.Equal(t, savedMetricData["newest_timestamp"], int64(1000))
+	assert.Equal(t, int64(1), savedMetricData["length"])
+	assert.Equal(t, int64(1), savedMetricData["capacity"])
+	assert.Equal(t, int64(1000), savedMetricData["oldest_timestamp"])
+	assert.Equal(t, int64(1000), savedMetricData["newest_timestamp"])
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData2)
 	assert.Nil(t, err)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(2))
-	assert.Equal(t, savedMetricData["capacity"], int64(2))
-	assert.Equal(t, savedMetricData["oldest_timestamp"], int64(1000))
-	assert.Equal(t, savedMetricData["newest_timestamp"], int64(1001))
+	assert.Equal(t, int64(2), savedMetricData["length"])
+	assert.Equal(t, int64(2), savedMetricData["capacity"])
+	assert.Equal(t, int64(1000), savedMetricData["oldest_timestamp"])
+	assert.Equal(t, int64(1001), savedMetricData["newest_timestamp"])
 
 	GetCollectedMetricsWithLimit(-1)
 
 	savedMetricData = GetMetricDataBufferStatus()
-	assert.Equal(t, savedMetricData["length"], int64(0))
-	assert.Equal(t, savedMetricData["capacity"], int64(0))
+	assert.Equal(t, int64(0), savedMetricData["length"])
+	assert.Equal(t, int64(0), savedMetricData["capacity"])
 }
 
 func TestMain(m *testing.M) {

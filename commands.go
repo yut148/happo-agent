@@ -4,18 +4,21 @@ import (
 	"fmt"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/command"
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 )
 
+// GlobalFlags are global level options
 var GlobalFlags = []cli.Flag{}
 
 var daemonFlags = []cli.Flag{
 	cli.IntFlag{
 		Name:  "port, P",
-		Value: happo_agent.DEFAULT_AGENT_PORT,
+		Value: lib.DefaultAgentPort,
 		Usage: "Listen port number",
 	},
 	cli.StringSliceFlag{
@@ -25,17 +28,17 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "public-key, B",
-		Value: happo_agent.TLS_PUBLIC_KEY,
+		Value: lib.DefaultTLSPublicKey,
 		Usage: "TLS public key file path",
 	},
 	cli.StringFlag{
 		Name:  "private-key, R",
-		Value: happo_agent.TLS_PRIVATE_KEY,
+		Value: lib.DefaultTLSPrivateKey,
 		Usage: "TLS private key file path",
 	},
 	cli.StringFlag{
 		Name:  "metric-config, M",
-		Value: happo_agent.CONFIG_METRIC,
+		Value: lib.DefaultMetricsConfigPath,
 		Usage: "Metric config file path",
 	},
 	cli.StringFlag{
@@ -45,12 +48,12 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.IntFlag{
 		Name:  "max-connections, X",
-		Value: happo_agent.MAX_CONNECTIONS,
+		Value: lib.DefaultServerMaxConnections,
 		Usage: "CPU profile output.",
 	},
 	cli.IntFlag{
 		Name:  "command-timeout, T",
-		Value: happo_agent.COMMAND_TIMEOUT,
+		Value: lib.DefaultCommandTimeout,
 		Usage: "Command execution timeout.",
 	},
 	cli.StringFlag{
@@ -84,6 +87,7 @@ var daemonFlags = []cli.Flag{
 	},
 }
 
+// Commands is list of subcommand
 var Commands = []cli.Command{
 	{
 		Name:   "_daemon",
@@ -121,12 +125,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Value: lib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: happo_agent.API_ENDPOINT,
+				Value: lib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -134,7 +138,7 @@ var Commands = []cli.Command{
 	{
 		Name:   "is_added",
 		Usage:  "Checking database who added the host.",
-		Action: command.CmdIs_added,
+		Action: command.CmdIsAdded,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "group_name, g",
@@ -146,12 +150,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Value: lib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: happo_agent.API_ENDPOINT,
+				Value: lib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -171,12 +175,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: happo_agent.DEFAULT_AGENT_PORT,
+				Value: lib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: happo_agent.API_ENDPOINT,
+				Value: lib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -218,6 +222,7 @@ var Commands = []cli.Command{
 	},
 }
 
+// CommandNotFound implements action when subcommand not found
 func CommandNotFound(c *cli.Context, command string) {
 	fmt.Fprintf(os.Stderr, "%s: '%s' is not a %s command. See '%s --help'.", c.App.Name, command, c.App.Name, c.App.Name)
 	os.Exit(2)

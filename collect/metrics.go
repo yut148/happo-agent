@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
+	"github.com/heartbeatsjp/happo-agent/lib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	"github.com/heartbeatsjp/happo-lib"
 	leveldbErrors "github.com/syndtr/goleveldb/leveldb/errors"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
@@ -24,45 +24,45 @@ import (
 
 // --- Method
 
-// メインクラス
-func Metrics(config_path string) error {
-	var metrics_data_buffer []happo_agent.MetricsData
+// Metrics is main function of metric collection
+func Metrics(configPath string) error {
+	var metricsDataBuffer []lib.MetricsData
 
-	metric_list, err := GetMetricConfig(config_path)
+	metricList, err := GetMetricConfig(configPath)
 	if err != nil {
 		return err
 	}
 
-	metric_total_count := 0
-	for _, metric_host_list := range metric_list.Metrics {
-		for _, metric_plugin := range metric_host_list.Plugins {
-			metric_total_count++
-			raw_metrics, err := getMetrics(metric_plugin.Plugin_Name, metric_plugin.Plugin_Option)
+	metricTotalCount := 0
+	for _, metricHostList := range metricList.Metrics {
+		for _, metricPlugin := range metricHostList.Plugins {
+			metricTotalCount++
+			rawMetrics, err := getMetrics(metricPlugin.PluginName, metricPlugin.PluginOption)
 			if err != nil {
 				return err
-			} else if raw_metrics == "" {
+			} else if rawMetrics == "" {
 				continue
 			}
-			metric_data, timestamp, err := ParseMetricData(raw_metrics)
+			metricData, timestamp, err := ParseMetricData(rawMetrics)
 			if err != nil {
 				return err
 			}
 
-			var metrics happo_agent.MetricsData
-			metrics.Host_Name = metric_host_list.Hostname
+			var metrics lib.MetricsData
+			metrics.HostName = metricHostList.Hostname
 			metrics.Timestamp = timestamp
-			metrics.Metrics = metric_data
-			metrics_data_buffer = append(metrics_data_buffer, metrics)
+			metrics.Metrics = metricData
+			metricsDataBuffer = append(metricsDataBuffer, metrics)
 		}
 	}
 
 	now := time.Now()
-	err = SaveMetrics(now, metrics_data_buffer)
+	err = SaveMetrics(now, metricsDataBuffer)
 	return err
 }
 
 //SaveMetrics save metrics to dbms
-func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
+func SaveMetrics(now time.Time, metricsData []lib.MetricsData) error {
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
@@ -74,7 +74,7 @@ func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 		[]byte(fmt.Sprintf("m-%d", now.Unix())),
 		nil)
 	if err != leveldbErrors.ErrNotFound {
-		savedMetricsData := []happo_agent.MetricsData{}
+		savedMetricsData := []lib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(got))
 		dec.Decode(&savedMetricsData)
 		metricsData = append(savedMetricsData, metricsData...)
@@ -116,7 +116,7 @@ func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 
 		// logging
 		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		expired := []happo_agent.MetricsData{}
+		expired := []lib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&expired)
 		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
@@ -131,24 +131,24 @@ func SaveMetrics(now time.Time, metricsData []happo_agent.MetricsData) error {
 	return nil
 }
 
-// 取得済みのメトリックを返します
-func GetCollectedMetrics() []happo_agent.MetricsData {
+// GetCollectedMetrics returns collected metrics. with no limit
+func GetCollectedMetrics() []lib.MetricsData {
 	return GetCollectedMetricsWithLimit(-1)
 }
 
 // GetCollectedMetricsWithLimit returns collected metrics. with max `limit`
-func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
+func GetCollectedMetricsWithLimit(limit int) []lib.MetricsData {
 	/*
 		limit > 0 works fine. (otherwise, means unlimited)
 	*/
-	var collectedMetricsData []happo_agent.MetricsData
+	var collectedMetricsData []lib.MetricsData
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Println(err)
 	}
 
-	var metricsData []happo_agent.MetricsData
+	var metricsData []lib.MetricsData
 	var dec *gob.Decoder
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix([]byte("m-")),
@@ -159,7 +159,7 @@ func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
 		key := iter.Key()
 		value := iter.Value()
 
-		metricsData = []happo_agent.MetricsData{}
+		metricsData = []lib.MetricsData{}
 		dec = gob.NewDecoder(bytes.NewReader(value))
 		err = dec.Decode(&metricsData)
 		if err != nil {
@@ -183,12 +183,12 @@ func GetCollectedMetricsWithLimit(limit int) []happo_agent.MetricsData {
 	return collectedMetricsData
 }
 
-// メトリック取得
-func getMetrics(plugin_name string, plugin_option string) (string, error) {
+// getMetrics exec sensu plugin and get metrics
+func getMetrics(pluginName string, pluginOption string) (string, error) {
 	var plugin string
 
-	for _, base_path := range strings.Split(happo_agent.SENSU_PLUGIN_PATHS, ",") {
-		plugin = path.Join(base_path, plugin_name)
+	for _, basePath := range strings.Split(lib.DefaultSensuPluginPaths, ",") {
+		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {
 			if !util.Production {
@@ -206,7 +206,7 @@ func getMetrics(plugin_name string, plugin_option string) (string, error) {
 	if !util.Production {
 		log.Println("Execute metric plugin:" + plugin)
 	}
-	exitstatus, stdout, _, err := util.ExecCommand(plugin, plugin_option)
+	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
 	if err != nil {
 		return "", err
@@ -219,12 +219,12 @@ func getMetrics(plugin_name string, plugin_option string) (string, error) {
 	return stdout, nil
 }
 
-// Sensu形式のメトリックをパースします
-func ParseMetricData(raw_metricdata string) (map[string]float64, int64, error) {
-	var timestamp int64 = 0
+// ParseMetricData parse sensu-stype metrics output
+func ParseMetricData(rawMetricdata string) (map[string]float64, int64, error) {
+	var timestamp int64
 	results := make(map[string]float64)
 
-	for _, line := range strings.Split(raw_metricdata, "\n") {
+	for _, line := range strings.Split(rawMetricdata, "\n") {
 		items := strings.Split(line, "\t")
 		if len(items) != 3 {
 			continue
@@ -234,12 +234,12 @@ func ParseMetricData(raw_metricdata string) (map[string]float64, int64, error) {
 			return nil, 0, errors.New("Failed to parse values: " + line)
 		}
 
-		timestamp_value, err := strconv.ParseInt(items[2], 10, 64)
+		timestampValue, err := strconv.ParseInt(items[2], 10, 64)
 		if err != nil {
 			return nil, 0, errors.New("Failed to parse values: " + line)
 		}
-		if timestamp < timestamp_value {
-			timestamp = timestamp_value
+		if timestamp < timestampValue {
+			timestamp = timestampValue
 		}
 
 		key := items[0]
@@ -250,30 +250,30 @@ func ParseMetricData(raw_metricdata string) (map[string]float64, int64, error) {
 	return results, timestamp, nil
 }
 
-// 取得するメトリックをリストアップします
-func GetMetricConfig(config_file string) (happo_agent.MetricConfig, error) {
-	var metric_config happo_agent.MetricConfig
+// GetMetricConfig returns required metrics from config file
+func GetMetricConfig(configFile string) (lib.MetricConfig, error) {
+	var metricConfig lib.MetricConfig
 
-	buf, err := ioutil.ReadFile(config_file)
+	buf, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return metric_config, err
+		return metricConfig, err
 	}
-	err = yaml.Unmarshal(buf, &metric_config)
+	err = yaml.Unmarshal(buf, &metricConfig)
 	if err != nil {
-		return metric_config, err
+		return metricConfig, err
 	}
 
-	return metric_config, nil
+	return metricConfig, nil
 }
 
-// 取得したいメトリックの情報を保存します
-func SaveMetricConfig(config happo_agent.MetricConfig, config_file string) error {
+// SaveMetricConfig save metric config to config file
+func SaveMetricConfig(config lib.MetricConfig, configFile string) error {
 	buf, err := yaml.Marshal(&config)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(config_file, buf, os.ModePerm)
+	err = ioutil.WriteFile(configFile, buf, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -281,6 +281,7 @@ func SaveMetricConfig(config happo_agent.MetricConfig, config_file string) error
 	return nil
 }
 
+// GetMetricDataBufferStatus returns metric collection status
 func GetMetricDataBufferStatus() map[string]int64 {
 
 	transaction, err := db.DB.OpenTransaction()
@@ -308,29 +309,29 @@ func GetMetricDataBufferStatus() map[string]int64 {
 	length := i
 	capacity := i
 
-	oldest_timestamp := int64(0)
-	newest_timestamp := int64(0)
+	oldestTimestamp := int64(0)
+	newestTimestamp := int64(0)
 	if i > 0 {
 		firstUnixTime, err := strconv.Atoi(strings.SplitN(string(firstKey), "-", 2)[1])
 		if err != nil {
 			log.Println(err)
 		} else {
-			oldest_timestamp = int64(firstUnixTime)
+			oldestTimestamp = int64(firstUnixTime)
 		}
 
 		lastUnixTime, err := strconv.Atoi(strings.SplitN(string(lastKey), "-", 2)[1])
 		if err != nil {
 			log.Println(err)
 		} else {
-			newest_timestamp = int64(lastUnixTime)
+			newestTimestamp = int64(lastUnixTime)
 		}
 	}
 
 	result := map[string]int64{
 		"length":           int64(length),
 		"capacity":         int64(capacity),
-		"oldest_timestamp": oldest_timestamp,
-		"newest_timestamp": newest_timestamp,
+		"oldest_timestamp": oldestTimestamp,
+		"newest_timestamp": newestTimestamp,
 	}
 
 	return result

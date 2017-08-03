@@ -9,8 +9,8 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/collect"
+	"github.com/heartbeatsjp/happo-agent/lib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	"github.com/heartbeatsjp/happo-lib"
 )
 
 //CmdAppendMetric is action of subcommand append_metric
@@ -33,7 +33,7 @@ func CmdAppendMetric(c *cli.Context) error {
 		}
 	}
 
-	var metricsDataSlice []happo_agent.MetricsData
+	var metricsDataSlice []lib.MetricsData
 	read, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
@@ -43,8 +43,8 @@ func CmdAppendMetric(c *cli.Context) error {
 		return err
 	}
 
-	var m happo_agent.MetricsData
-	m.Host_Name = hostname
+	var m lib.MetricsData
+	m.HostName = hostname
 	m.Timestamp = timestamp
 	m.Metrics = metricData
 	metricsDataSlice = append(metricsDataSlice, m)
@@ -54,9 +54,9 @@ func CmdAppendMetric(c *cli.Context) error {
 		return nil
 	}
 
-	var metricAppendRequest happo_agent.MetricAppendRequest
+	var metricAppendRequest lib.MetricAppendRequest
 
-	metricAppendRequest.Api_Key = c.String("api-key")
+	metricAppendRequest.APIKey = c.String("api-key")
 	metricAppendRequest.MetricData = metricsDataSlice
 
 	data, err := json.Marshal(metricAppendRequest)

@@ -10,6 +10,7 @@ import (
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
+// ListMachieState returns saved machine states
 func ListMachieState(r render.Render) {
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
@@ -35,6 +36,7 @@ func ListMachieState(r render.Render) {
 	r.JSON(http.StatusOK, map[string][]string{"keys": keys})
 }
 
+// GetMachineState returns saved specified machine state
 func GetMachineState(r render.Render, params martini.Params) {
 	key := params["key"]
 

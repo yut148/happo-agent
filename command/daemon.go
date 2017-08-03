@@ -16,8 +16,6 @@ import (
 
 	"golang.org/x/net/netutil"
 
-	_ "net/http/pprof"
-
 	"github.com/client9/reopen"
 	"github.com/codegangsta/cli"
 	"github.com/codegangsta/martini-contrib/render"
@@ -25,9 +23,9 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/collect"
 	"github.com/heartbeatsjp/happo-agent/db"
+	"github.com/heartbeatsjp/happo-agent/lib"
 	"github.com/heartbeatsjp/happo-agent/model"
 	"github.com/heartbeatsjp/happo-agent/util"
-	"github.com/heartbeatsjp/happo-lib"
 	"github.com/martini-contrib/binding"
 )
 
@@ -42,6 +40,8 @@ type daemonListener struct {
 }
 
 // --- functions
+
+// CmdDaemonWrapper implements subcommand `daemon`
 func CmdDaemonWrapper(c *cli.Context) {
 	args := os.Args
 	args[1] = "_daemon"
@@ -71,11 +71,11 @@ func CmdDaemonWrapper(c *cli.Context) {
 		cmd = exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		envHappoUserId := os.Getenv("HAPPO_USER_ID")
-		if envHappoUserId != "" {
-			uid, err := strconv.Atoi(envHappoUserId)
+		envHappoUserID := os.Getenv("HAPPO_USER_ID")
+		if envHappoUserID != "" {
+			uid, err := strconv.Atoi(envHappoUserID)
 			if err != nil {
-				log.Print("HAPPO_USER_ID ", envHappoUserId)
+				log.Print("HAPPO_USER_ID ", envHappoUserID)
 				log.Fatal(err)
 			}
 			cmd.SysProcAttr = &syscall.SysProcAttr{}
@@ -106,10 +106,13 @@ func customClassic() *martini.ClassicMartini {
 	m.Use(martini.Static("public"))
 	m.MapTo(r, (*martini.Routes)(nil))
 	m.Action(r.Handle)
-	return &martini.ClassicMartini{m, r}
+	classic := new(martini.ClassicMartini)
+	classic.Martini = m
+	classic.Router = r
+	return classic
 }
 
-// Daemon mode (agent mode)
+// CmdDaemon implements subcommand `_daemon`
 func CmdDaemon(c *cli.Context) {
 
 	fp, err := reopen.NewFileWriter(c.String("logfile"))
@@ -170,12 +173,12 @@ func CmdDaemon(c *cli.Context) {
 	util.CommandTimeout = time.Duration(c.Int("command-timeout"))
 	model.MetricConfigFile = c.String("metric-config")
 
-	m.Post("/proxy", binding.Json(happo_agent.ProxyRequest{}), model.Proxy)
-	m.Post("/inventory", binding.Json(happo_agent.InventoryRequest{}), model.Inventory)
-	m.Post("/monitor", binding.Json(happo_agent.MonitorRequest{}), model.Monitor)
-	m.Post("/metric", binding.Json(happo_agent.MetricRequest{}), model.Metric)
-	m.Post("/metric/append", binding.Json(happo_agent.MetricAppendRequest{}), model.MetricAppend)
-	m.Post("/metric/config/update", binding.Json(happo_agent.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
+	m.Post("/proxy", binding.Json(lib.ProxyRequest{}), model.Proxy)
+	m.Post("/inventory", binding.Json(lib.InventoryRequest{}), model.Inventory)
+	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), model.Monitor)
+	m.Post("/metric", binding.Json(lib.MetricRequest{}), model.Metric)
+	m.Post("/metric/append", binding.Json(lib.MetricAppendRequest{}), model.MetricAppend)
+	m.Post("/metric/config/update", binding.Json(lib.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
 	m.Get("/machine-state/", model.ListMachieState)
 	m.Get("/machine-state/:key", model.GetMachineState)
@@ -184,7 +187,7 @@ func CmdDaemon(c *cli.Context) {
 	var lis daemonListener
 	lis.Port = fmt.Sprintf(":%d", c.Int("port"))
 	lis.Handler = m
-	lis.Timeout = happo_agent.HTTP_TIMEOUT
+	lis.Timeout = lib.DefaultServerHTTPTimeout
 	if lis.Timeout < int(c.Int64("proxy-timeout-seconds")) {
 		lis.Timeout = int(c.Int64("proxy-timeout-seconds"))
 	}
@@ -202,10 +205,10 @@ func CmdDaemon(c *cli.Context) {
 	}()
 
 	// Metric collect timer
-	time_metrics := time.NewTicker(time.Minute).C
+	timeMetrics := time.NewTicker(time.Minute).C
 	for {
 		select {
-		case <-time_metrics:
+		case <-timeMetrics:
 			err := collect.Metrics(c.String("metric-config"))
 			if err != nil {
 				log.Fatal(err)
@@ -224,7 +227,7 @@ func (l *daemonListener) listenAndServe() error {
 		return err
 	}
 
-	tls_config := &tls.Config{
+	tlsConfig := &tls.Config{
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			// tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -240,16 +243,16 @@ func (l *daemonListener) listenAndServe() error {
 	if err != nil {
 		return err
 	}
-	limit_listener := netutil.LimitListener(listener, l.MaxConnections)
-	tls_listener := tls.NewListener(limit_listener, tls_config)
+	limitListener := netutil.LimitListener(listener, l.MaxConnections)
+	tlsListener := tls.NewListener(limitListener, tlsConfig)
 
-	http_config := &http.Server{
-		TLSConfig:    tls_config,
+	httpConfig := &http.Server{
+		TLSConfig:    tlsConfig,
 		Addr:         l.Port,
 		Handler:      l.Handler,
 		ReadTimeout:  time.Duration(l.Timeout) * time.Second,
 		WriteTimeout: time.Duration(l.Timeout) * time.Second,
 	}
 
-	return http_config.Serve(tls_listener)
+	return httpConfig.Serve(tlsListener)
 }

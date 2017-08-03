@@ -11,16 +11,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 
 	"github.com/Songmu/timeout"
 	"github.com/codegangsta/cli"
 )
 
 // Global Variables
+
+// CommandTimeout is command execution timeout sec
 var CommandTimeout time.Duration = -1
+
+// Production is flag. when production use, set true
 var Production bool
 
+// TimeoutError is error struct show error is timeout
 type TimeoutError struct {
 	Message string
 }
@@ -34,40 +39,42 @@ func init() {
 	Production = strings.ToLower(os.Getenv("MARTINI_ENV")) == "production"
 }
 
+// ExecCommand execute command with specified timeout behavior
 func ExecCommand(command string, option string) (int, string, string, error) {
 
-	command_timeout := CommandTimeout
-	if command_timeout == -1 {
-		command_timeout = happo_agent.COMMAND_TIMEOUT
+	commandTimeout := CommandTimeout
+	if commandTimeout == -1 {
+		commandTimeout = lib.DefaultCommandTimeout
 	}
 
-	command_with_options := fmt.Sprintf("%s %s", command, option)
+	commandWithOptions := fmt.Sprintf("%s %s", command, option)
 	tio := &timeout.Timeout{
-		Cmd:       exec.Command("/bin/sh", "-c", command_with_options),
-		Duration:  command_timeout * time.Second,
-		KillAfter: happo_agent.COMMAND_KILLAFTER * time.Second,
+		Cmd:       exec.Command("/bin/sh", "-c", commandWithOptions),
+		Duration:  commandTimeout * time.Second,
+		KillAfter: lib.CommandKillAfterSeconds * time.Second,
 	}
 	exitStatus, stdout, stderr, err := tio.Run()
 
 	if err == nil && exitStatus.IsTimedOut() {
-		err = &TimeoutError{"Exec timeout: " + command_with_options}
+		err = &TimeoutError{"Exec timeout: " + commandWithOptions}
 	}
 
 	return exitStatus.GetChildExitCode(), stdout, stderr, err
 }
 
+// ExecCommandCombinedOutput execute command with specified timeout behavior
 func ExecCommandCombinedOutput(command string, option string) (int, string, error) {
 
-	command_timeout := CommandTimeout
-	if command_timeout == -1 {
-		command_timeout = happo_agent.COMMAND_TIMEOUT
+	commandTimeout := CommandTimeout
+	if commandTimeout == -1 {
+		commandTimeout = lib.DefaultCommandTimeout
 	}
 
-	command_with_options := fmt.Sprintf("%s %s", command, option)
+	commandWithOptions := fmt.Sprintf("%s %s", command, option)
 	tio := &timeout.Timeout{
-		Cmd:       exec.Command("/bin/sh", "-c", command_with_options),
-		Duration:  command_timeout * time.Second,
-		KillAfter: happo_agent.COMMAND_KILLAFTER * time.Second,
+		Cmd:       exec.Command("/bin/sh", "-c", commandWithOptions),
+		Duration:  commandTimeout * time.Second,
+		KillAfter: lib.CommandKillAfterSeconds * time.Second,
 	}
 	out := &bytes.Buffer{}
 	tio.Cmd.Stdout = out
@@ -77,33 +84,35 @@ func ExecCommandCombinedOutput(command string, option string) (int, string, erro
 	exitStatus := <-ch
 
 	if err == nil && exitStatus.IsTimedOut() {
-		err = &TimeoutError{"Exec timeout: " + command_with_options}
+		err = &TimeoutError{"Exec timeout: " + commandWithOptions}
 	}
 
 	return exitStatus.GetChildExitCode(), out.String(), err
 
 }
 
-func BindManageParameter(c *cli.Context) (happo_agent.ManageRequest, error) {
-	var hostinfo happo_agent.CrawlConfigAgent
-	var manage_request happo_agent.ManageRequest
+// BindManageParameter build and return ManageRequest
+func BindManageParameter(c *cli.Context) (lib.ManageRequest, error) {
+	var hostinfo lib.CrawlConfigAgent
+	var manageRequest lib.ManageRequest
 
 	hostinfo.GroupName = c.String("group_name")
 	if hostinfo.GroupName == "" {
-		return manage_request, errors.New("group_name is null")
+		return manageRequest, errors.New("group_name is null")
 	}
 	hostinfo.IP = c.String("ip")
 	if hostinfo.GroupName == "" {
-		return manage_request, errors.New("ip is null")
+		return manageRequest, errors.New("ip is null")
 	}
 	hostinfo.Hostname = c.String("hostname")
 	hostinfo.Port = c.Int("port")
 	hostinfo.Proxies = c.StringSlice("proxy")
-	manage_request.Hostdata = hostinfo
+	manageRequest.Hostdata = hostinfo
 
-	return manage_request, nil
+	return manageRequest, nil
 }
 
+// RequestToManageAPI send request to ManageAPI
 func RequestToManageAPI(endpoint string, path string, postdata []byte) (*http.Response, error) {
 	uri := fmt.Sprintf("%s%s", endpoint, path)
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(postdata))
@@ -115,6 +124,7 @@ func RequestToManageAPI(endpoint string, path string, postdata []byte) (*http.Re
 	return http.DefaultTransport.RoundTrip(req)
 }
 
+// RequestToMetricAppendAPI send request to MetricAppendPI
 func RequestToMetricAppendAPI(endpoint string, postdata []byte) (*http.Response, error) {
 	client, req, err := buildMetricAppendAPIRequest(endpoint, postdata)
 	if err != nil {

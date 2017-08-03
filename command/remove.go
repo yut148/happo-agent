@@ -9,10 +9,11 @@ import (
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
+// CmdRemove implements subcommand `remove`
 func CmdRemove(c *cli.Context) {
 
-	manage_request, err := util.BindManageParameter(c)
-	data, err := json.Marshal(manage_request)
+	manageRequest, err := util.BindManageParameter(c)
+	data, err := json.Marshal(manageRequest)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

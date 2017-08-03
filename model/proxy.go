@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
-	"github.com/heartbeatsjp/happo-lib"
+	"github.com/heartbeatsjp/happo-agent/lib"
 )
 
 // --- Global Variables
@@ -24,47 +24,48 @@ var tr = &http.Transport{
 }
 var _httpClient = &http.Client{Transport: tr}
 
-func Proxy(proxy_request happo_agent.ProxyRequest, r render.Render) (int, string) {
-	var next_hostport string
-	var request_type string
-	var request_json []byte
+// Proxy do http reqest to next happo-agent
+func Proxy(proxyRequest lib.ProxyRequest, r render.Render) (int, string) {
+	var nextHostport string
+	var requestType string
+	var requestJSON []byte
 	var err error
 
-	next_hostport = proxy_request.Proxy_HostPort[0]
+	nextHostport = proxyRequest.ProxyHostPort[0]
 
-	if len(proxy_request.Proxy_HostPort) == 1 {
+	if len(proxyRequest.ProxyHostPort) == 1 {
 		// last proxy
-		request_type = proxy_request.RequestType
-		request_json = proxy_request.RequestJSON
+		requestType = proxyRequest.RequestType
+		requestJSON = proxyRequest.RequestJSON
 	} else {
 		// more proxies
-		proxy_request.Proxy_HostPort = proxy_request.Proxy_HostPort[1:]
-		request_type = "proxy"
-		request_json, _ = json.Marshal(proxy_request) // ここではエラーは出ない(出るとしたら上位でずっこけている
+		proxyRequest.ProxyHostPort = proxyRequest.ProxyHostPort[1:]
+		requestType = "proxy"
+		requestJSON, _ = json.Marshal(proxyRequest) // ここではエラーは出ない(出るとしたら上位でずっこけている
 	}
-	next_hostdata := strings.Split(next_hostport, ":")
-	next_host := next_hostdata[0]
-	next_port := happo_agent.DEFAULT_AGENT_PORT
-	if len(next_hostdata) == 2 {
-		next_port, err = strconv.Atoi(next_hostdata[1])
+	nextHostdata := strings.Split(nextHostport, ":")
+	nextHost := nextHostdata[0]
+	nextPort := lib.DefaultAgentPort
+	if len(nextHostdata) == 2 {
+		nextPort, err = strconv.Atoi(nextHostdata[1])
 		if err != nil {
-			next_port = happo_agent.DEFAULT_AGENT_PORT
+			nextPort = lib.DefaultAgentPort
 		}
 	}
-	resp_code, response, err := postToAgent(next_host, next_port, request_type, request_json)
+	respCode, response, err := postToAgent(nextHost, nextPort, requestType, requestJSON)
 	if err != nil {
-		var monitor_response happo_agent.MonitorResponse
-		monitor_response.Return_Value = happo_agent.MONITOR_UNKNOWN
-		monitor_response.Message = err.Error()
-		err_jsondata, _ := json.Marshal(monitor_response)
-		response = string(err_jsondata[:])
+		var monitorResponse lib.MonitorResponse
+		monitorResponse.ReturnValue = lib.MonitorUnknown
+		monitorResponse.Message = err.Error()
+		errJSONData, _ := json.Marshal(monitorResponse)
+		response = string(errJSONData[:])
 	}
 
-	return resp_code, response
+	return respCode, response
 }
 
-func postToAgent(host string, port int, request_type string, jsonData []byte) (int, string, error) {
-	uri := fmt.Sprintf("https://%s:%d/%s", host, port, request_type)
+func postToAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+	uri := fmt.Sprintf("https://%s:%d/%s", host, port, requestType)
 	log.Printf("Proxy to: %s", uri)
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
@@ -84,6 +85,7 @@ func postToAgent(host string, port int, request_type string, jsonData []byte) (i
 	return resp.StatusCode, string(body[:]), nil
 }
 
+// SetProxyTimeout set timeout of _httpClient
 func SetProxyTimeout(timeoutSeconds int64) {
 	_httpClient.Timeout = time.Duration(timeoutSeconds) * time.Second
 }
