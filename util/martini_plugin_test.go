@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 
 	"github.com/go-martini/martini"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func TestACL0(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DefaultAgentPort)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", halib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, http.StatusServiceUnavailable, res.Code)
@@ -44,7 +44,7 @@ func TestACL1(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", lib.DefaultAgentPort)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", "192.168.0.1", halib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, http.StatusForbidden, res.Code)
@@ -63,7 +63,7 @@ func TestACL2(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, halib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, http.StatusOK, res.Code)
@@ -83,7 +83,7 @@ func TestACL3(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", "127.0.0.1", lib.DefaultAgentPort)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", "127.0.0.1", halib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, http.StatusOK, res.Code)
@@ -104,7 +104,7 @@ func TestACL4(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, halib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, http.StatusOK, res.Code)
@@ -125,7 +125,7 @@ func TestACL5(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/test", nil)
-	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, lib.DefaultAgentPort)
+	req.RemoteAddr = fmt.Sprintf("%s:%d", IP, halib.DefaultAgentPort)
 
 	m.ServeHTTP(res, req)
 	assert.EqualValues(t, http.StatusForbidden, res.Code)

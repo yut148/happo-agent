@@ -13,7 +13,7 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
@@ -52,15 +52,15 @@ func init() {
 }
 
 // Monitor execute monitor command and returns result
-func Monitor(monitorRequest lib.MonitorRequest, r render.Render) {
-	var monitorResponse lib.MonitorResponse
+func Monitor(monitorRequest halib.MonitorRequest, r render.Render) {
+	var monitorResponse halib.MonitorResponse
 
 	if !util.Production {
 		log.Println(fmt.Sprintf("Plugin Name: %s, Option: %s", monitorRequest.PluginName, monitorRequest.PluginOption))
 	}
 	ret, message, err := execPluginCommand(monitorRequest.PluginName, monitorRequest.PluginOption)
 	if err != nil {
-		monitorResponse.ReturnValue = lib.MonitorError
+		monitorResponse.ReturnValue = halib.MonitorError
 		monitorResponse.Message = err.Error()
 		if _, ok := err.(*util.TimeoutError); ok {
 			r.JSON(http.StatusServiceUnavailable, monitorResponse)
@@ -82,7 +82,7 @@ func Monitor(monitorRequest lib.MonitorRequest, r render.Render) {
 func execPluginCommand(pluginName string, pluginOption string) (int, string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(lib.DefaultNagiosPluginPaths, ",") {
+	for _, basePath := range strings.Split(halib.DefaultNagiosPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {
@@ -96,7 +96,7 @@ func execPluginCommand(pluginName string, pluginOption string) (int, string, err
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
 	if err != nil {
-		return lib.MonitorUnknown, "", err
+		return halib.MonitorUnknown, "", err
 	}
 
 	return exitstatus, stdout, nil
@@ -169,8 +169,8 @@ func isPermitSaveState() bool {
 	defer lastRunnedMutex.Unlock()
 
 	duration := time.Now().Unix() - lastRunned
-	if duration < lib.ErrorLogIntervalSeconds {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, lib.ErrorLogIntervalSeconds))
+	if duration < halib.ErrorLogIntervalSeconds {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, halib.ErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()

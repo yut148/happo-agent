@@ -23,7 +23,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/collect"
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/model"
 	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/martini-contrib/binding"
@@ -173,12 +173,12 @@ func CmdDaemon(c *cli.Context) {
 	util.CommandTimeout = time.Duration(c.Int("command-timeout"))
 	model.MetricConfigFile = c.String("metric-config")
 
-	m.Post("/proxy", binding.Json(lib.ProxyRequest{}), model.Proxy)
-	m.Post("/inventory", binding.Json(lib.InventoryRequest{}), model.Inventory)
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), model.Monitor)
-	m.Post("/metric", binding.Json(lib.MetricRequest{}), model.Metric)
-	m.Post("/metric/append", binding.Json(lib.MetricAppendRequest{}), model.MetricAppend)
-	m.Post("/metric/config/update", binding.Json(lib.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), model.Proxy)
+	m.Post("/inventory", binding.Json(halib.InventoryRequest{}), model.Inventory)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), model.Monitor)
+	m.Post("/metric", binding.Json(halib.MetricRequest{}), model.Metric)
+	m.Post("/metric/append", binding.Json(halib.MetricAppendRequest{}), model.MetricAppend)
+	m.Post("/metric/config/update", binding.Json(halib.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
 	m.Get("/machine-state/", model.ListMachieState)
 	m.Get("/machine-state/:key", model.GetMachineState)
@@ -187,7 +187,7 @@ func CmdDaemon(c *cli.Context) {
 	var lis daemonListener
 	lis.Port = fmt.Sprintf(":%d", c.Int("port"))
 	lis.Handler = m
-	lis.Timeout = lib.DefaultServerHTTPTimeout
+	lis.Timeout = halib.DefaultServerHTTPTimeout
 	if lis.Timeout < int(c.Int64("proxy-timeout-seconds")) {
 		lis.Timeout = int(c.Int64("proxy-timeout-seconds"))
 	}

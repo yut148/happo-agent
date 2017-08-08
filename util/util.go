@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 
 	"github.com/Songmu/timeout"
 	"github.com/codegangsta/cli"
@@ -44,14 +44,14 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 
 	commandTimeout := CommandTimeout
 	if commandTimeout == -1 {
-		commandTimeout = lib.DefaultCommandTimeout
+		commandTimeout = halib.DefaultCommandTimeout
 	}
 
 	commandWithOptions := fmt.Sprintf("%s %s", command, option)
 	tio := &timeout.Timeout{
 		Cmd:       exec.Command("/bin/sh", "-c", commandWithOptions),
 		Duration:  commandTimeout * time.Second,
-		KillAfter: lib.CommandKillAfterSeconds * time.Second,
+		KillAfter: halib.CommandKillAfterSeconds * time.Second,
 	}
 	exitStatus, stdout, stderr, err := tio.Run()
 
@@ -67,14 +67,14 @@ func ExecCommandCombinedOutput(command string, option string) (int, string, erro
 
 	commandTimeout := CommandTimeout
 	if commandTimeout == -1 {
-		commandTimeout = lib.DefaultCommandTimeout
+		commandTimeout = halib.DefaultCommandTimeout
 	}
 
 	commandWithOptions := fmt.Sprintf("%s %s", command, option)
 	tio := &timeout.Timeout{
 		Cmd:       exec.Command("/bin/sh", "-c", commandWithOptions),
 		Duration:  commandTimeout * time.Second,
-		KillAfter: lib.CommandKillAfterSeconds * time.Second,
+		KillAfter: halib.CommandKillAfterSeconds * time.Second,
 	}
 	out := &bytes.Buffer{}
 	tio.Cmd.Stdout = out
@@ -92,9 +92,9 @@ func ExecCommandCombinedOutput(command string, option string) (int, string, erro
 }
 
 // BindManageParameter build and return ManageRequest
-func BindManageParameter(c *cli.Context) (lib.ManageRequest, error) {
-	var hostinfo lib.CrawlConfigAgent
-	var manageRequest lib.ManageRequest
+func BindManageParameter(c *cli.Context) (halib.ManageRequest, error) {
+	var hostinfo halib.CrawlConfigAgent
+	var manageRequest halib.ManageRequest
 
 	hostinfo.GroupName = c.String("group_name")
 	if hostinfo.GroupName == "" {

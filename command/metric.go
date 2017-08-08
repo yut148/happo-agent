@@ -9,7 +9,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/collect"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
@@ -33,7 +33,7 @@ func CmdAppendMetric(c *cli.Context) error {
 		}
 	}
 
-	var metricsDataSlice []lib.MetricsData
+	var metricsDataSlice []halib.MetricsData
 	read, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func CmdAppendMetric(c *cli.Context) error {
 		return err
 	}
 
-	var m lib.MetricsData
+	var m halib.MetricsData
 	m.HostName = hostname
 	m.Timestamp = timestamp
 	m.Metrics = metricData
@@ -54,7 +54,7 @@ func CmdAppendMetric(c *cli.Context) error {
 		return nil
 	}
 
-	var metricAppendRequest lib.MetricAppendRequest
+	var metricAppendRequest halib.MetricAppendRequest
 
 	metricAppendRequest.APIKey = c.String("api-key")
 	metricAppendRequest.MetricData = metricsDataSlice

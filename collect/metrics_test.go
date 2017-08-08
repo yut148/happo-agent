@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -16,7 +16,7 @@ import (
 const TestConfigFile = "./metrics_test.yaml"
 const TestPlugin = "metrics_test_plugin"
 
-var ConfigData = lib.MetricConfig{
+var ConfigData = halib.MetricConfig{
 	Metrics: []struct {
 		Hostname string `yaml:"hostname" json:"Hostname"`
 		Plugins  []struct {
@@ -131,13 +131,13 @@ func TestSaveMetricConfig1(t *testing.T) {
 
 func TestSaveMetrics1(t *testing.T) {
 	var err error
-	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		halib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		halib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
@@ -153,13 +153,13 @@ func TestSaveMetrics1(t *testing.T) {
 
 func TestSaveMetrics2(t *testing.T) {
 	var err error
-	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		halib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		halib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData1)
@@ -174,13 +174,13 @@ func TestSaveMetrics2(t *testing.T) {
 
 func TestSaveMetrics3(t *testing.T) {
 	var err error
-	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		halib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host2", Timestamp: 201, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{HostName: "host2", Timestamp: 202, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host2", Timestamp: 201, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		halib.MetricsData{HostName: "host2", Timestamp: 202, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
@@ -195,13 +195,13 @@ func TestSaveMetrics3(t *testing.T) {
 
 func TestSaveMetrics4(t *testing.T) {
 	var err error
-	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		halib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		halib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
@@ -218,13 +218,13 @@ func TestSaveMetrics4(t *testing.T) {
 func TestGetMetricDataBufferStatus1(t *testing.T) {
 	var err error
 	var savedMetricData map[string]int64
-	metricsData1 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
-		lib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+	metricsData1 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host1", Timestamp: 101, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		halib.MetricsData{HostName: "host1", Timestamp: 102, Metrics: map[string]float64{"val1": 121, "val2": 122}},
 	}
-	metricsData2 := []lib.MetricsData{
-		lib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
-		lib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
+	metricsData2 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host2", Timestamp: 101, Metrics: map[string]float64{"val1": 211, "val2": 212}},
+		halib.MetricsData{HostName: "host2", Timestamp: 102, Metrics: map[string]float64{"val1": 221, "val2": 222}},
 	}
 
 	//cleanup

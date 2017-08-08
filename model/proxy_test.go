@@ -13,7 +13,7 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/martini-contrib/binding"
 	"github.com/stretchr/testify/assert"
 )
@@ -113,7 +113,7 @@ func TestProxy1(t *testing.T) {
 	//bastion
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/proxy", binding.Json(lib.ProxyRequest{}), Proxy)
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
 
 	//edge
 	ts := httptest.NewTLSServer(
@@ -157,7 +157,7 @@ func TestProxy2(t *testing.T) {
 	//bastion
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/proxy", binding.Json(lib.ProxyRequest{}), Proxy)
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
 
 	//edge
 	ts := httptest.NewTLSServer(
@@ -206,7 +206,7 @@ func TestProxy3(t *testing.T) {
 	//bastion
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/proxy", binding.Json(lib.ProxyRequest{}), Proxy)
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
 
 	//edge
 	ts := httptest.NewTLSServer(
@@ -250,7 +250,7 @@ func TestProxy4(t *testing.T) {
 	//bastion
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/proxy", binding.Json(lib.ProxyRequest{}), Proxy)
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
 
 	//edge
 	ts := httptest.NewTLSServer(

@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
 	leveldbErrors "github.com/syndtr/goleveldb/leveldb/errors"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
@@ -26,7 +26,7 @@ import (
 
 // Metrics is main function of metric collection
 func Metrics(configPath string) error {
-	var metricsDataBuffer []lib.MetricsData
+	var metricsDataBuffer []halib.MetricsData
 
 	metricList, err := GetMetricConfig(configPath)
 	if err != nil {
@@ -48,7 +48,7 @@ func Metrics(configPath string) error {
 				return err
 			}
 
-			var metrics lib.MetricsData
+			var metrics halib.MetricsData
 			metrics.HostName = metricHostList.Hostname
 			metrics.Timestamp = timestamp
 			metrics.Metrics = metricData
@@ -62,7 +62,7 @@ func Metrics(configPath string) error {
 }
 
 //SaveMetrics save metrics to dbms
-func SaveMetrics(now time.Time, metricsData []lib.MetricsData) error {
+func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
@@ -74,7 +74,7 @@ func SaveMetrics(now time.Time, metricsData []lib.MetricsData) error {
 		[]byte(fmt.Sprintf("m-%d", now.Unix())),
 		nil)
 	if err != leveldbErrors.ErrNotFound {
-		savedMetricsData := []lib.MetricsData{}
+		savedMetricsData := []halib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(got))
 		dec.Decode(&savedMetricsData)
 		metricsData = append(savedMetricsData, metricsData...)
@@ -116,7 +116,7 @@ func SaveMetrics(now time.Time, metricsData []lib.MetricsData) error {
 
 		// logging
 		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		expired := []lib.MetricsData{}
+		expired := []halib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&expired)
 		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
@@ -132,23 +132,23 @@ func SaveMetrics(now time.Time, metricsData []lib.MetricsData) error {
 }
 
 // GetCollectedMetrics returns collected metrics. with no limit
-func GetCollectedMetrics() []lib.MetricsData {
+func GetCollectedMetrics() []halib.MetricsData {
 	return GetCollectedMetricsWithLimit(-1)
 }
 
 // GetCollectedMetricsWithLimit returns collected metrics. with max `limit`
-func GetCollectedMetricsWithLimit(limit int) []lib.MetricsData {
+func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 	/*
 		limit > 0 works fine. (otherwise, means unlimited)
 	*/
-	var collectedMetricsData []lib.MetricsData
+	var collectedMetricsData []halib.MetricsData
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Println(err)
 	}
 
-	var metricsData []lib.MetricsData
+	var metricsData []halib.MetricsData
 	var dec *gob.Decoder
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix([]byte("m-")),
@@ -159,7 +159,7 @@ func GetCollectedMetricsWithLimit(limit int) []lib.MetricsData {
 		key := iter.Key()
 		value := iter.Value()
 
-		metricsData = []lib.MetricsData{}
+		metricsData = []halib.MetricsData{}
 		dec = gob.NewDecoder(bytes.NewReader(value))
 		err = dec.Decode(&metricsData)
 		if err != nil {
@@ -187,7 +187,7 @@ func GetCollectedMetricsWithLimit(limit int) []lib.MetricsData {
 func getMetrics(pluginName string, pluginOption string) (string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(lib.DefaultSensuPluginPaths, ",") {
+	for _, basePath := range strings.Split(halib.DefaultSensuPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {
@@ -251,8 +251,8 @@ func ParseMetricData(rawMetricdata string) (map[string]float64, int64, error) {
 }
 
 // GetMetricConfig returns required metrics from config file
-func GetMetricConfig(configFile string) (lib.MetricConfig, error) {
-	var metricConfig lib.MetricConfig
+func GetMetricConfig(configFile string) (halib.MetricConfig, error) {
+	var metricConfig halib.MetricConfig
 
 	buf, err := ioutil.ReadFile(configFile)
 	if err != nil {
@@ -267,7 +267,7 @@ func GetMetricConfig(configFile string) (lib.MetricConfig, error) {
 }
 
 // SaveMetricConfig save metric config to config file
-func SaveMetricConfig(config lib.MetricConfig, configFile string) error {
+func SaveMetricConfig(config halib.MetricConfig, configFile string) error {
 	buf, err := yaml.Marshal(&config)
 	if err != nil {
 		return err

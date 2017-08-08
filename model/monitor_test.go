@@ -11,7 +11,7 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/martini-contrib/binding"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +21,7 @@ func TestMonitor1(t *testing.T) {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), Monitor)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), Monitor)
 
 	reader := bytes.NewReader([]byte(`{
 		"apikey": "",
@@ -48,7 +48,7 @@ func TestMonitor2(t *testing.T) {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), Monitor)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), Monitor)
 
 	reader := bytes.NewReader([]byte(`{
 		"apikey": "",
@@ -75,7 +75,7 @@ func TestMonitor3(t *testing.T) {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), Monitor)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), Monitor)
 
 	reader := bytes.NewReader([]byte(`{
 		"apikey": "",
@@ -102,7 +102,7 @@ func TestMonitor4(t *testing.T) {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), Monitor)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), Monitor)
 
 	reader := bytes.NewReader([]byte(`{
 		"apikey": "",
@@ -129,13 +129,13 @@ func TestMonitor5(t *testing.T) {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), Monitor)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), Monitor)
 
 	reader := bytes.NewReader([]byte(fmt.Sprintf(`{
 		"apikey": "",
 		"plugin_name": "monitor_test_sleep",
 		"plugin_option": "%d"
-	}`, lib.DefaultCommandTimeout+1)))
+	}`, halib.DefaultCommandTimeout+1)))
 	req, _ := http.NewRequest("POST", "/monitor", reader)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -156,13 +156,13 @@ func TestMonitor6(t *testing.T) {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/monitor", binding.Json(lib.MonitorRequest{}), Monitor)
+	m.Post("/monitor", binding.Json(halib.MonitorRequest{}), Monitor)
 
 	reader := bytes.NewReader([]byte(fmt.Sprintf(`{
 		"apikey": "",
 		"plugin_name": "notfound",
 		"plugin_option": "%d"
-	}`, lib.DefaultCommandTimeout+1)))
+	}`, halib.DefaultCommandTimeout+1)))
 	req, _ := http.NewRequest("POST", "/monitor", reader)
 	req.Header.Set("Content-Type", "application/json")
 

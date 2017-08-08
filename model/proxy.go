@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 )
 
 // --- Global Variables
@@ -25,7 +25,7 @@ var tr = &http.Transport{
 var _httpClient = &http.Client{Transport: tr}
 
 // Proxy do http reqest to next happo-agent
-func Proxy(proxyRequest lib.ProxyRequest, r render.Render) (int, string) {
+func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 	var nextHostport string
 	var requestType string
 	var requestJSON []byte
@@ -45,17 +45,17 @@ func Proxy(proxyRequest lib.ProxyRequest, r render.Render) (int, string) {
 	}
 	nextHostdata := strings.Split(nextHostport, ":")
 	nextHost := nextHostdata[0]
-	nextPort := lib.DefaultAgentPort
+	nextPort := halib.DefaultAgentPort
 	if len(nextHostdata) == 2 {
 		nextPort, err = strconv.Atoi(nextHostdata[1])
 		if err != nil {
-			nextPort = lib.DefaultAgentPort
+			nextPort = halib.DefaultAgentPort
 		}
 	}
 	respCode, response, err := postToAgent(nextHost, nextPort, requestType, requestJSON)
 	if err != nil {
-		var monitorResponse lib.MonitorResponse
-		monitorResponse.ReturnValue = lib.MonitorUnknown
+		var monitorResponse halib.MonitorResponse
+		monitorResponse.ReturnValue = halib.MonitorUnknown
 		monitorResponse.Message = err.Error()
 		errJSONData, _ := json.Marshal(monitorResponse)
 		response = string(errJSONData[:])

@@ -6,7 +6,7 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
@@ -15,8 +15,8 @@ import (
 // --- Method
 
 // Inventory execute command and collect inventory
-func Inventory(inventoryRequest lib.InventoryRequest, r render.Render, params martini.Params) {
-	var inventoryResponse lib.InventoryResponse
+func Inventory(inventoryRequest halib.InventoryRequest, r render.Render, params martini.Params) {
+	var inventoryResponse halib.InventoryResponse
 
 	if !util.Production {
 		log.Printf("Inventory Command: %s %s\n", inventoryRequest.Command, inventoryRequest.CommandOption)

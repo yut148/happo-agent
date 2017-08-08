@@ -6,7 +6,7 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/collect"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 )
 
 // --- Package Variables
@@ -15,8 +15,8 @@ import (
 var MetricConfigFile string
 
 // Metric returns collected metrics
-func Metric(metricRequest lib.MetricRequest, r render.Render) {
-	var metricResponse lib.MetricResponse
+func Metric(metricRequest halib.MetricRequest, r render.Render) {
+	var metricResponse halib.MetricResponse
 
 	metricResponse.MetricData = collect.GetCollectedMetricsWithLimit(60) // FIXME to prefer value. now 60 times = 1hour
 
@@ -24,8 +24,8 @@ func Metric(metricRequest lib.MetricRequest, r render.Render) {
 }
 
 // MetricAppend store metrics to local dbms
-func MetricAppend(request lib.MetricAppendRequest, r render.Render) {
-	var response lib.MetricAppendResponse
+func MetricAppend(request halib.MetricAppendRequest, r render.Render) {
+	var response halib.MetricAppendResponse
 
 	err := collect.SaveMetrics(time.Now(), request.MetricData)
 	if err != nil {
@@ -40,8 +40,8 @@ func MetricAppend(request lib.MetricAppendRequest, r render.Render) {
 }
 
 // MetricConfigUpdate save metric collect config
-func MetricConfigUpdate(metricRequest lib.MetricConfigUpdateRequest, r render.Render) {
-	var metricResponse lib.MetricConfigUpdateResponse
+func MetricConfigUpdate(metricRequest halib.MetricConfigUpdateRequest, r render.Render) {
+	var metricResponse halib.MetricConfigUpdateResponse
 
 	err := collect.SaveMetricConfig(metricRequest.Config, MetricConfigFile)
 	if err != nil {

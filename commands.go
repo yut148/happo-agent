@@ -9,7 +9,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/heartbeatsjp/happo-agent/command"
 	"github.com/heartbeatsjp/happo-agent/db"
-	"github.com/heartbeatsjp/happo-agent/lib"
+	"github.com/heartbeatsjp/happo-agent/halib"
 )
 
 // GlobalFlags are global level options
@@ -18,7 +18,7 @@ var GlobalFlags = []cli.Flag{}
 var daemonFlags = []cli.Flag{
 	cli.IntFlag{
 		Name:  "port, P",
-		Value: lib.DefaultAgentPort,
+		Value: halib.DefaultAgentPort,
 		Usage: "Listen port number",
 	},
 	cli.StringSliceFlag{
@@ -28,17 +28,17 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "public-key, B",
-		Value: lib.DefaultTLSPublicKey,
+		Value: halib.DefaultTLSPublicKey,
 		Usage: "TLS public key file path",
 	},
 	cli.StringFlag{
 		Name:  "private-key, R",
-		Value: lib.DefaultTLSPrivateKey,
+		Value: halib.DefaultTLSPrivateKey,
 		Usage: "TLS private key file path",
 	},
 	cli.StringFlag{
 		Name:  "metric-config, M",
-		Value: lib.DefaultMetricsConfigPath,
+		Value: halib.DefaultMetricsConfigPath,
 		Usage: "Metric config file path",
 	},
 	cli.StringFlag{
@@ -48,12 +48,12 @@ var daemonFlags = []cli.Flag{
 	},
 	cli.IntFlag{
 		Name:  "max-connections, X",
-		Value: lib.DefaultServerMaxConnections,
+		Value: halib.DefaultServerMaxConnections,
 		Usage: "CPU profile output.",
 	},
 	cli.IntFlag{
 		Name:  "command-timeout, T",
-		Value: lib.DefaultCommandTimeout,
+		Value: halib.DefaultCommandTimeout,
 		Usage: "Command execution timeout.",
 	},
 	cli.StringFlag{
@@ -125,12 +125,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: lib.DefaultAgentPort,
+				Value: halib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: lib.DefaultAPIEndpoint,
+				Value: halib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -150,12 +150,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: lib.DefaultAgentPort,
+				Value: halib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: lib.DefaultAPIEndpoint,
+				Value: halib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
@@ -175,12 +175,12 @@ var Commands = []cli.Command{
 			},
 			cli.IntFlag{
 				Name:  "port, P",
-				Value: lib.DefaultAgentPort,
+				Value: halib.DefaultAgentPort,
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
 				Name:  "endpoint, e",
-				Value: lib.DefaultAPIEndpoint,
+				Value: halib.DefaultAPIEndpoint,
 				Usage: "Endpoint address",
 			},
 		},
