@@ -85,6 +85,12 @@ var daemonFlags = []cli.Flag{
 		Usage:  "/proxy timeout Seconds.",
 		EnvVar: "HAPPO_AGENT_PROXY_TIMEOUT_SECONDS",
 	},
+	cli.Int64Flag{
+		Name:   "error-log-interval-seconds",
+		Value:  halib.DefaultErrorLogIntervalSeconds,
+		Usage:  "Error log collection interval Seconds(when >0, disable error log collection).",
+		EnvVar: "HAPPO_AGENT_ERROR_LOG_INTERVAL_SECONDS",
+	},
 }
 
 // Commands is list of subcommand

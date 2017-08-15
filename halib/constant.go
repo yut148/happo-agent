@@ -24,8 +24,8 @@ const CommandKillAfterSeconds = 3
 // DefaultCommandTimeout command execution timeout(monitor, metric)
 const DefaultCommandTimeout = 10
 
-// DefaultErrorLogIntervalSeconds when monitor error(not MonitorOK), and ErrorLogIntervalSeconds past from previous error, save sate snapshot.
-const DefaultErrorLogIntervalSeconds = 600
+// DefaultErrorLogIntervalSeconds when monitor error(not MonitorOK), and ErrorLogIntervalSeconds past from previous error, save sate snapshot. when >0, disable error log collection
+const DefaultErrorLogIntervalSeconds = -1
 
 // DefaultTLSPrivateKey default TLS private key file path
 const DefaultTLSPrivateKey = "./happo-agent.key"

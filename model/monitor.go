@@ -28,11 +28,17 @@ var (
 	saveStateChan   = make(chan bool)
 	lastRunnedMutex = sync.Mutex{}
 	lastRunned      int64
+	// ErrorLogIntervalSeconds is error log collect interval
+	ErrorLogIntervalSeconds int64
 )
 
 // --- Method
 
 func init() {
+	if ErrorLogIntervalSeconds == 0 {
+		//unconfigured
+		ErrorLogIntervalSeconds = halib.DefaultErrorLogIntervalSeconds
+	}
 	lastRunned = 0
 	go func() {
 		for {
@@ -165,12 +171,16 @@ func saveMachineState() error {
 }
 
 func isPermitSaveState() bool {
+	if ErrorLogIntervalSeconds < 0 {
+		return false
+	}
+
 	lastRunnedMutex.Lock()
 	defer lastRunnedMutex.Unlock()
 
 	duration := time.Now().Unix() - lastRunned
-	if duration < halib.DefaultErrorLogIntervalSeconds {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, halib.DefaultErrorLogIntervalSeconds))
+	if duration < ErrorLogIntervalSeconds {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, ErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()
