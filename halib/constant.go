@@ -24,7 +24,7 @@ const CommandKillAfterSeconds = 3
 // DefaultCommandTimeout command execution timeout(monitor, metric)
 const DefaultCommandTimeout = 10
 
-// ErrorLogIntervalSeconds when monitor error(not MonitorOK), and ErrorLogIntervalSeconds past from previous error, save sate snapshot.
+// DefaultErrorLogIntervalSeconds when monitor error(not MonitorOK), and ErrorLogIntervalSeconds past from previous error, save sate snapshot.
 const DefaultErrorLogIntervalSeconds = 600
 
 // DefaultTLSPrivateKey default TLS private key file path
