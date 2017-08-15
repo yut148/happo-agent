@@ -175,6 +175,7 @@ func CmdDaemon(c *cli.Context) {
 
 	model.ErrorLogIntervalSeconds = c.Int64("error-log-interval-seconds")
 	model.NagiosPluginPaths = c.String("nagios-plugin-paths")
+	collect.SensuPluginPaths = c.String("sensu-plugin-paths")
 
 	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), model.Proxy)
 	m.Post("/inventory", binding.Json(halib.InventoryRequest{}), model.Inventory)

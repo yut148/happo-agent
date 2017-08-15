@@ -97,6 +97,12 @@ var daemonFlags = []cli.Flag{
 		Usage:  "nagios-plugin paths.",
 		EnvVar: "HAPPO_AGENT_NAGIOS_PLUGIN_PATHS",
 	},
+	cli.StringFlag{
+		Name:   "sensu-plugin-paths",
+		Value:  halib.DefaultSensuPluginPaths,
+		Usage:  "sensu-plugin paths.",
+		EnvVar: "HAPPO_AGENT_SENSU_PLUGIN_PATHS",
+	},
 }
 
 // Commands is list of subcommand
@@ -141,9 +147,10 @@ var Commands = []cli.Command{
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
-				Name:  "endpoint, e",
-				Value: halib.DefaultAPIEndpoint,
-				Usage: "Endpoint address",
+				Name:   "endpoint, e",
+				Value:  halib.DefaultAPIEndpoint,
+				Usage:  "API Endpoint address",
+				EnvVar: "HAPPO_AGENT_API_ENDPOINT",
 			},
 		},
 	},
@@ -166,9 +173,10 @@ var Commands = []cli.Command{
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
-				Name:  "endpoint, e",
-				Value: halib.DefaultAPIEndpoint,
-				Usage: "Endpoint address",
+				Name:   "endpoint, e",
+				Value:  halib.DefaultAPIEndpoint,
+				Usage:  "API Endpoint address",
+				EnvVar: "HAPPO_AGENT_API_ENDPOINT",
 			},
 		},
 	},
@@ -191,9 +199,10 @@ var Commands = []cli.Command{
 				Usage: "Listen port number",
 			},
 			cli.StringFlag{
-				Name:  "endpoint, e",
-				Value: halib.DefaultAPIEndpoint,
-				Usage: "Endpoint address",
+				Name:   "endpoint, e",
+				Value:  halib.DefaultAPIEndpoint,
+				Usage:  "API Endpoint address",
+				EnvVar: "HAPPO_AGENT_API_ENDPOINT",
 			},
 		},
 	},
