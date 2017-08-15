@@ -29,22 +29,14 @@ var (
 	lastRunnedMutex = sync.Mutex{}
 	lastRunned      int64
 	// ErrorLogIntervalSeconds is error log collect interval
-	ErrorLogIntervalSeconds int64
+	ErrorLogIntervalSeconds = halib.DefaultErrorLogIntervalSeconds
 	// NagiosPluginPaths is nagios plugin search paths. combined with `,`
-	NagiosPluginPaths string
+	NagiosPluginPaths = halib.DefaultNagiosPluginPaths
 )
 
 // --- Method
 
 func init() {
-	// init unconfigured variables
-	if ErrorLogIntervalSeconds == 0 {
-		ErrorLogIntervalSeconds = halib.DefaultErrorLogIntervalSeconds
-	}
-	if NagiosPluginPaths == "" {
-		NagiosPluginPaths = halib.DefaultNagiosPluginPaths
-	}
-
 	lastRunned = 0
 	go func() {
 		for {
