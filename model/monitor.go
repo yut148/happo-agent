@@ -28,6 +28,10 @@ var (
 	saveStateChan   = make(chan bool)
 	lastRunnedMutex = sync.Mutex{}
 	lastRunned      int64
+	// ErrorLogIntervalSeconds is error log collect interval
+	ErrorLogIntervalSeconds = int64(halib.DefaultErrorLogIntervalSeconds)
+	// NagiosPluginPaths is nagios plugin search paths. combined with `,`
+	NagiosPluginPaths = halib.DefaultNagiosPluginPaths
 )
 
 // --- Method
@@ -82,7 +86,7 @@ func Monitor(monitorRequest halib.MonitorRequest, r render.Render) {
 func execPluginCommand(pluginName string, pluginOption string) (int, string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(halib.DefaultNagiosPluginPaths, ",") {
+	for _, basePath := range strings.Split(NagiosPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {
@@ -165,12 +169,16 @@ func saveMachineState() error {
 }
 
 func isPermitSaveState() bool {
+	if ErrorLogIntervalSeconds < 0 {
+		return false
+	}
+
 	lastRunnedMutex.Lock()
 	defer lastRunnedMutex.Unlock()
 
 	duration := time.Now().Unix() - lastRunned
-	if duration < halib.ErrorLogIntervalSeconds {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, halib.ErrorLogIntervalSeconds))
+	if duration < ErrorLogIntervalSeconds {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, ErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()

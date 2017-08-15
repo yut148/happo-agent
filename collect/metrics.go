@@ -22,6 +22,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	// SensuPluginPaths is sensu plugin search paths. combined with `,`
+	SensuPluginPaths = halib.DefaultSensuPluginPaths
+)
+
 // --- Method
 
 // Metrics is main function of metric collection
@@ -187,7 +192,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 func getMetrics(pluginName string, pluginOption string) (string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(halib.DefaultSensuPluginPaths, ",") {
+	for _, basePath := range strings.Split(SensuPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {

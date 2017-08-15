@@ -4,32 +4,33 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // CmdIsAdded implements subcommand `is_added`. Check host database
-func CmdIsAdded(c *cli.Context) {
+func CmdIsAdded(c *cli.Context) error {
+	if c.String("endpoint") == halib.DefaultAPIEndpoint {
+		return cli.NewExitError("ERROR: endpoint must set with args or environment variable", 1)
+	}
 
 	manageRequest, err := util.BindManageParameter(c)
 	data, err := json.Marshal(manageRequest)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return cli.NewExitError(err.Error(), 1)
 	}
 
 	resp, err := util.RequestToManageAPI(c.String("endpoint"), "/manage/is_added", data)
 	if err != nil && resp == nil {
-		log.Fatalf(err.Error())
+		return cli.NewExitError(err.Error(), 1)
 	}
 	if resp.StatusCode == http.StatusNotFound {
-		log.Printf("Not found.")
-		os.Exit(1)
+		return cli.NewExitError("Not found.", 1)
 	} else if resp.StatusCode == http.StatusFound {
 		log.Printf("Found.")
-		os.Exit(0)
+		return nil
 	}
-	log.Printf("Unknown Status")
-	os.Exit(2)
+	return cli.NewExitError("Unknown Status", 2)
 }
