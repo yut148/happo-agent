@@ -29,7 +29,7 @@ var (
 	lastRunnedMutex = sync.Mutex{}
 	lastRunned      int64
 	// ErrorLogIntervalSeconds is error log collect interval
-	ErrorLogIntervalSeconds = halib.DefaultErrorLogIntervalSeconds
+	ErrorLogIntervalSeconds = int64(halib.DefaultErrorLogIntervalSeconds)
 	// NagiosPluginPaths is nagios plugin search paths. combined with `,`
 	NagiosPluginPaths = halib.DefaultNagiosPluginPaths
 )
