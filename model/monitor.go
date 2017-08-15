@@ -169,8 +169,8 @@ func isPermitSaveState() bool {
 	defer lastRunnedMutex.Unlock()
 
 	duration := time.Now().Unix() - lastRunned
-	if duration < halib.ErrorLogIntervalSeconds {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, halib.ErrorLogIntervalSeconds))
+	if duration < halib.DefaultErrorLogIntervalSeconds {
+		log.Println(fmt.Sprintf("Duration: %d < %d", duration, halib.DefaultErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()
