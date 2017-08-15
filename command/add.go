@@ -6,11 +6,15 @@ import (
 	"net/http"
 
 	"github.com/codegangsta/cli"
+	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // CmdAdd implements subcommand `add`
 func CmdAdd(c *cli.Context) error {
+	if c.String("endpoint") == halib.DefaultAPIEndpoint {
+		return cli.NewExitError("ERROR: endpoint must set with args or environment variable", 1)
+	}
 
 	manageRequest, err := util.BindManageParameter(c)
 	data, err := json.Marshal(manageRequest)
