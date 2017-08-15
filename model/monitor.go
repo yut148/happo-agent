@@ -30,15 +30,21 @@ var (
 	lastRunned      int64
 	// ErrorLogIntervalSeconds is error log collect interval
 	ErrorLogIntervalSeconds int64
+	// NagiosPluginPaths is nagios plugin search paths. combined with `,`
+	NagiosPluginPaths string
 )
 
 // --- Method
 
 func init() {
+	// init unconfigured variables
 	if ErrorLogIntervalSeconds == 0 {
-		//unconfigured
 		ErrorLogIntervalSeconds = halib.DefaultErrorLogIntervalSeconds
 	}
+	if NagiosPluginPaths == "" {
+		NagiosPluginPaths = halib.DefaultNagiosPluginPaths
+	}
+
 	lastRunned = 0
 	go func() {
 		for {
@@ -88,7 +94,7 @@ func Monitor(monitorRequest halib.MonitorRequest, r render.Render) {
 func execPluginCommand(pluginName string, pluginOption string) (int, string, error) {
 	var plugin string
 
-	for _, basePath := range strings.Split(halib.DefaultNagiosPluginPaths, ",") {
+	for _, basePath := range strings.Split(NagiosPluginPaths, ",") {
 		plugin = path.Join(basePath, pluginName)
 		_, err := os.Stat(plugin)
 		if err == nil {

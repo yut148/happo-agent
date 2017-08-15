@@ -91,6 +91,12 @@ var daemonFlags = []cli.Flag{
 		Usage:  "Error log collection interval Seconds(when >0, disable error log collection).",
 		EnvVar: "HAPPO_AGENT_ERROR_LOG_INTERVAL_SECONDS",
 	},
+	cli.StringFlag{
+		Name:   "nagios-plugin-paths",
+		Value:  halib.DefaultNagiosPluginPaths,
+		Usage:  "nagios-plugin paths.",
+		EnvVar: "HAPPO_AGENT_NAGIOS_PLUGIN_PATHS",
+	},
 }
 
 // Commands is list of subcommand
