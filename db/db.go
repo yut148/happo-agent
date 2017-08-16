@@ -1,8 +1,7 @@
 package db
 
 import (
-	"log"
-
+	"github.com/heartbeatsjp/happo-agent/util"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -22,6 +21,7 @@ func init() {
 
 // Open open leveldb file
 func Open(dbfile string) {
+	log := util.HappoAgentLogger()
 	var err error
 	DB, err = leveldb.OpenFile(dbfile, nil)
 	if err != nil {
@@ -31,6 +31,7 @@ func Open(dbfile string) {
 
 // Close close leveldb file
 func Close() {
+	log := util.HappoAgentLogger()
 	var err error
 	err = DB.Close()
 	if err != nil {

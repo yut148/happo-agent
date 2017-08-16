@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/halib"
+	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // --- Global Variables
@@ -65,6 +65,7 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 }
 
 func postToAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+	log := util.HappoAgentLogger()
 	uri := fmt.Sprintf("https://%s:%d/%s", host, port, requestType)
 	log.Printf("Proxy to: %s", uri)
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsonData))

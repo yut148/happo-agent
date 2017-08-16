@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strconv"
@@ -68,6 +67,7 @@ func Metrics(configPath string) error {
 
 //SaveMetrics save metrics to dbms
 func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
+	log := util.HappoAgentLogger()
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
@@ -146,6 +146,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 	/*
 		limit > 0 works fine. (otherwise, means unlimited)
 	*/
+	log := util.HappoAgentLogger()
 	var collectedMetricsData []halib.MetricsData
 
 	transaction, err := db.DB.OpenTransaction()
@@ -190,6 +191,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 
 // getMetrics exec sensu plugin and get metrics
 func getMetrics(pluginName string, pluginOption string) (string, error) {
+	log := util.HappoAgentLogger()
 	var plugin string
 
 	for _, basePath := range strings.Split(SensuPluginPaths, ",") {
@@ -197,19 +199,19 @@ func getMetrics(pluginName string, pluginOption string) (string, error) {
 		_, err := os.Stat(plugin)
 		if err == nil {
 			if !util.Production {
-				log.Println(plugin)
+				log.Debug(plugin)
 			}
 			break
 		}
 	}
 	_, err := os.Stat(plugin)
 	if err != nil {
-		log.Println("Plugin not found:" + plugin)
+		log.Error("Plugin not found:" + plugin)
 		return "", nil
 	}
 
 	if !util.Production {
-		log.Println("Execute metric plugin:" + plugin)
+		log.Debug("Execute metric plugin:" + plugin)
 	}
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
@@ -217,7 +219,7 @@ func getMetrics(pluginName string, pluginOption string) (string, error) {
 		return "", err
 	}
 	if exitstatus != 0 {
-		log.Println("Fail to get metrics:" + plugin)
+		log.Error("Fail to get metrics:" + plugin)
 		return "", nil
 	}
 
@@ -288,7 +290,7 @@ func SaveMetricConfig(config halib.MetricConfig, configFile string) error {
 
 // GetMetricDataBufferStatus returns metric collection status
 func GetMetricDataBufferStatus() map[string]int64 {
-
+	log := util.HappoAgentLogger()
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Println(err)

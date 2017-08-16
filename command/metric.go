@@ -2,8 +2,9 @@ package command
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
@@ -50,7 +51,7 @@ func CmdAppendMetric(c *cli.Context) error {
 	metricsDataSlice = append(metricsDataSlice, m)
 
 	if dryRun {
-		log.Println(metricsDataSlice)
+		fmt.Println(metricsDataSlice)
 		return nil
 	}
 
@@ -69,9 +70,9 @@ func CmdAppendMetric(c *cli.Context) error {
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Fatal(resp)
+		return errors.New(resp.Status)
 	}
-	log.Printf("Success.")
+	fmt.Println("Success.")
 
 	return nil
 }

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/codegangsta/martini-contrib/render"
@@ -16,6 +15,7 @@ import (
 
 // Inventory execute command and collect inventory
 func Inventory(inventoryRequest halib.InventoryRequest, r render.Render, params martini.Params) {
+	log := util.HappoAgentLogger()
 	var inventoryResponse halib.InventoryResponse
 
 	if !util.Production {

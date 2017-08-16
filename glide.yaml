@@ -15,6 +15,8 @@ import:
 - package: github.com/syndtr/goleveldb
   subpackages:
   - leveldb
+- package: github.com/Sirupsen/logrus
+  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.3
