@@ -15,7 +15,7 @@ func ListMachieState(r render.Render) {
 	log := util.HappoAgentLogger()
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		r.JSON(http.StatusNoContent, map[string]string{"error": err.Error()})
 		return
 	}
@@ -45,7 +45,7 @@ func GetMachineState(r render.Render, params martini.Params) {
 	val, err := db.DB.Get([]byte(key), nil)
 
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		r.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		return
 	}

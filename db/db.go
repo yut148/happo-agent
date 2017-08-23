@@ -35,6 +35,6 @@ func Close() {
 	var err error
 	err = DB.Close()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 }

@@ -72,7 +72,7 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	got, err := transaction.Get(
@@ -89,7 +89,7 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 	enc := gob.NewEncoder(&b)
 	err = enc.Encode(metricsData)
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	} else {
 		transaction.Put(
 			[]byte(fmt.Sprintf("m-%d", now.Unix())),
@@ -106,7 +106,7 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 	// retire old metrics
 	transaction, err = db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 	oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
@@ -124,13 +124,13 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 		expired := []halib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&expired)
-		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
+		log.Warn("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
 	}
 	iter.Release()
 
 	err = transaction.Commit()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	return nil
@@ -151,7 +151,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	var metricsData []halib.MetricsData
@@ -169,7 +169,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 		dec = gob.NewDecoder(bytes.NewReader(value))
 		err = dec.Decode(&metricsData)
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 			continue
 		}
 		collectedMetricsData = append(collectedMetricsData, metricsData...)
@@ -184,7 +184,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 
 	err = transaction.Commit()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 	return collectedMetricsData
 }
@@ -293,7 +293,7 @@ func GetMetricDataBufferStatus() map[string]int64 {
 	log := util.HappoAgentLogger()
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		return map[string]int64{}
 	}
 	iter := transaction.NewIterator(
@@ -321,14 +321,14 @@ func GetMetricDataBufferStatus() map[string]int64 {
 	if i > 0 {
 		firstUnixTime, err := strconv.Atoi(strings.SplitN(string(firstKey), "-", 2)[1])
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 		} else {
 			oldestTimestamp = int64(firstUnixTime)
 		}
 
 		lastUnixTime, err := strconv.Atoi(strings.SplitN(string(lastKey), "-", 2)[1])
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 		} else {
 			newestTimestamp = int64(lastUnixTime)
 		}

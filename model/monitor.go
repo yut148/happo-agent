@@ -182,7 +182,7 @@ func isPermitSaveState() bool {
 
 	duration := time.Now().Unix() - lastRunned
 	if duration < ErrorLogIntervalSeconds {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, ErrorLogIntervalSeconds))
+		log.Debug(fmt.Sprintf("Duration: %d < %d", duration, ErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()
