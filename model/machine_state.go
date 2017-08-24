@@ -1,20 +1,21 @@
 package model
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/db"
+	"github.com/heartbeatsjp/happo-agent/util"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // ListMachieState returns saved machine states
 func ListMachieState(r render.Render) {
+	log := util.HappoAgentLogger()
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		r.JSON(http.StatusNoContent, map[string]string{"error": err.Error()})
 		return
 	}
@@ -38,12 +39,13 @@ func ListMachieState(r render.Render) {
 
 // GetMachineState returns saved specified machine state
 func GetMachineState(r render.Render, params martini.Params) {
+	log := util.HappoAgentLogger()
 	key := params["key"]
 
 	val, err := db.DB.Get([]byte(key), nil)
 
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		r.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		return
 	}

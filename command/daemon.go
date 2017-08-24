@@ -3,7 +3,6 @@ package command
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -43,6 +42,8 @@ type daemonListener struct {
 
 // CmdDaemonWrapper implements subcommand `daemon`
 func CmdDaemonWrapper(c *cli.Context) {
+	log := util.HappoAgentLogger()
+
 	args := os.Args
 	args[1] = "_daemon"
 	started := []time.Time{}
@@ -75,8 +76,7 @@ func CmdDaemonWrapper(c *cli.Context) {
 		if envHappoUserID != "" {
 			uid, err := strconv.Atoi(envHappoUserID)
 			if err != nil {
-				log.Print("HAPPO_USER_ID ", envHappoUserID)
-				log.Fatal(err)
+				log.Fatal("HAPPO_USER_ID ", envHappoUserID, err)
 			}
 			cmd.SysProcAttr = &syscall.SysProcAttr{}
 			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid)}
@@ -101,7 +101,7 @@ func customClassic() *martini.ClassicMartini {
 	*/
 	r := martini.NewRouter()
 	m := martini.New()
-	m.Use(util.Logger())
+	m.Use(util.MartiniCustomLogger())
 	m.Use(martini.Recovery())
 	m.Use(martini.Static("public"))
 	m.MapTo(r, (*martini.Routes)(nil))
@@ -114,12 +114,19 @@ func customClassic() *martini.ClassicMartini {
 
 // CmdDaemon implements subcommand `_daemon`
 func CmdDaemon(c *cli.Context) {
+	log := util.HappoAgentLogger()
 
 	fp, err := reopen.NewFileWriter(c.String("logfile"))
 	if err != nil {
 		fmt.Println(err)
 	}
-	log.SetOutput(fp)
+	log.Info(fmt.Sprintf("switch log.Out to %s", c.String("logfile")))
+	if !util.Production {
+		log.Warn("MARTINI_ENV is not production. LogLevel force to debug")
+		util.SetLogLevel(util.HappoAgentLogLevelDebug)
+	}
+
+	log.Out = fp
 	sigHup := make(chan os.Signal, 1)
 	signal.Notify(sigHup, syscall.SIGHUP)
 	go func() {

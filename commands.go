@@ -10,10 +10,18 @@ import (
 	"github.com/heartbeatsjp/happo-agent/command"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
+	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // GlobalFlags are global level options
-var GlobalFlags = []cli.Flag{}
+var GlobalFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:   "log-level",
+		Value:  "warn",
+		Usage:  "log level(debug|info|warn)",
+		EnvVar: "HAPPO_AGENT_LOG_LEVEL",
+	},
+}
 
 var daemonFlags = []cli.Flag{
 	cli.IntFlag{
@@ -267,4 +275,10 @@ var Commands = []cli.Command{
 func CommandNotFound(c *cli.Context, command string) {
 	fmt.Fprintf(os.Stderr, "%s: '%s' is not a %s command. See '%s --help'.", c.App.Name, command, c.App.Name, c.App.Name)
 	os.Exit(2)
+}
+
+// CommandBefore implements action before run command
+func CommandBefore(c *cli.Context) error {
+	util.SetLogLevel(c.GlobalString("log-level"))
+	return nil
 }

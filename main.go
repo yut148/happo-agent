@@ -19,5 +19,7 @@ func main() {
 	app.Commands = Commands
 	app.CommandNotFound = CommandNotFound
 
+	app.Before = CommandBefore
+
 	app.Run(os.Args)
 }

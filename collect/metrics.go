@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strconv"
@@ -68,11 +67,12 @@ func Metrics(configPath string) error {
 
 //SaveMetrics save metrics to dbms
 func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
+	log := util.HappoAgentLogger()
 
 	// Save Metrics
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	got, err := transaction.Get(
@@ -89,7 +89,7 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 	enc := gob.NewEncoder(&b)
 	err = enc.Encode(metricsData)
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	} else {
 		transaction.Put(
 			[]byte(fmt.Sprintf("m-%d", now.Unix())),
@@ -106,7 +106,7 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 	// retire old metrics
 	transaction, err = db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 	oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
@@ -124,13 +124,13 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 		expired := []halib.MetricsData{}
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&expired)
-		log.Printf("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
+		log.Warn("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
 	}
 	iter.Release()
 
 	err = transaction.Commit()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	return nil
@@ -146,11 +146,12 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 	/*
 		limit > 0 works fine. (otherwise, means unlimited)
 	*/
+	log := util.HappoAgentLogger()
 	var collectedMetricsData []halib.MetricsData
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 
 	var metricsData []halib.MetricsData
@@ -168,7 +169,7 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 		dec = gob.NewDecoder(bytes.NewReader(value))
 		err = dec.Decode(&metricsData)
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 			continue
 		}
 		collectedMetricsData = append(collectedMetricsData, metricsData...)
@@ -183,13 +184,14 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 
 	err = transaction.Commit()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 	return collectedMetricsData
 }
 
 // getMetrics exec sensu plugin and get metrics
 func getMetrics(pluginName string, pluginOption string) (string, error) {
+	log := util.HappoAgentLogger()
 	var plugin string
 
 	for _, basePath := range strings.Split(SensuPluginPaths, ",") {
@@ -197,19 +199,19 @@ func getMetrics(pluginName string, pluginOption string) (string, error) {
 		_, err := os.Stat(plugin)
 		if err == nil {
 			if !util.Production {
-				log.Println(plugin)
+				log.Debug(plugin)
 			}
 			break
 		}
 	}
 	_, err := os.Stat(plugin)
 	if err != nil {
-		log.Println("Plugin not found:" + plugin)
+		log.Error("Plugin not found:" + plugin)
 		return "", nil
 	}
 
 	if !util.Production {
-		log.Println("Execute metric plugin:" + plugin)
+		log.Debug("Execute metric plugin:" + plugin)
 	}
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
@@ -217,7 +219,7 @@ func getMetrics(pluginName string, pluginOption string) (string, error) {
 		return "", err
 	}
 	if exitstatus != 0 {
-		log.Println("Fail to get metrics:" + plugin)
+		log.Error("Fail to get metrics:" + plugin)
 		return "", nil
 	}
 
@@ -288,10 +290,10 @@ func SaveMetricConfig(config halib.MetricConfig, configFile string) error {
 
 // GetMetricDataBufferStatus returns metric collection status
 func GetMetricDataBufferStatus() map[string]int64 {
-
+	log := util.HappoAgentLogger()
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		return map[string]int64{}
 	}
 	iter := transaction.NewIterator(
@@ -319,14 +321,14 @@ func GetMetricDataBufferStatus() map[string]int64 {
 	if i > 0 {
 		firstUnixTime, err := strconv.Atoi(strings.SplitN(string(firstKey), "-", 2)[1])
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 		} else {
 			oldestTimestamp = int64(firstUnixTime)
 		}
 
 		lastUnixTime, err := strconv.Atoi(strings.SplitN(string(lastKey), "-", 2)[1])
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 		} else {
 			newestTimestamp = int64(lastUnixTime)
 		}

@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"log"
+	stdlog "log"
 	"net"
 	"net/http"
 	"time"
@@ -13,6 +13,7 @@ import (
 // ACL implements AccessControlList ability
 func ACL(allowIPs []string) martini.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
+		log := HappoAgentLogger()
 		rawHost, _, err := net.SplitHostPort(req.RemoteAddr)
 		if err != nil {
 			log.Fatalln(err.Error())
@@ -54,14 +55,15 @@ func ACL(allowIPs []string) martini.Handler {
 				return
 			}
 		}
-
+		log.WithField("RemoteAddr", host.String()).Errorf("Access Denied")
 		http.Error(res, "Access Denied", http.StatusForbidden)
 	}
 }
 
-// Logger implements custom logger
-func Logger() martini.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c martini.Context, martiniLog *log.Logger) {
+// MartiniCustomLogger implements custom logger
+func MartiniCustomLogger() martini.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c martini.Context, martiniLog *stdlog.Logger) {
+		log := HappoAgentLogger()
 		start := time.Now()
 
 		addr := req.Header.Get("X-Real-IP")

@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -46,7 +45,8 @@ func init() {
 					if isPermitSaveState() {
 						err := saveMachineState()
 						if err != nil {
-							log.Println(fmt.Sprintf("ERROR while saveMachieState(): %s, %v", err, time.Now()))
+							log := util.HappoAgentLogger()
+							log.Errorf("while saveMachieState(): %s, %v", err, time.Now())
 						}
 					}
 				}()
@@ -57,6 +57,7 @@ func init() {
 
 // Monitor execute monitor command and returns result
 func Monitor(monitorRequest halib.MonitorRequest, r render.Render) {
+	log := util.HappoAgentLogger()
 	var monitorResponse halib.MonitorResponse
 
 	if !util.Production {
@@ -84,6 +85,7 @@ func Monitor(monitorRequest halib.MonitorRequest, r render.Render) {
 }
 
 func execPluginCommand(pluginName string, pluginOption string) (int, string, error) {
+	log := util.HappoAgentLogger()
 	var plugin string
 
 	for _, basePath := range strings.Split(NagiosPluginPaths, ",") {
@@ -107,6 +109,7 @@ func execPluginCommand(pluginName string, pluginOption string) (int, string, err
 }
 
 func saveMachineState() error {
+	log := util.HappoAgentLogger()
 	loggedTime := time.Now()
 
 	result := ""
@@ -141,7 +144,7 @@ func saveMachineState() error {
 	// retire old metrics
 	transaction, err = db.DB.OpenTransaction()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 	oldestThreshold := loggedTime.Add(time.Duration(-1*db.MachineStateMaxLifetimeSeconds) * time.Second)
 	iter := transaction.NewIterator(
@@ -155,7 +158,7 @@ func saveMachineState() error {
 
 		// logging
 		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		log.Printf("retire old metrics: key=%v(%v)\n", string(key), time.Unix(int64(unixTime), 0))
+		log.Warn("retire old metrics: key=%v(%v)\n", string(key), time.Unix(int64(unixTime), 0))
 		// if write value to log, log become too large...
 	}
 	iter.Release()
@@ -169,6 +172,7 @@ func saveMachineState() error {
 }
 
 func isPermitSaveState() bool {
+	log := util.HappoAgentLogger()
 	if ErrorLogIntervalSeconds < 0 {
 		return false
 	}
@@ -178,7 +182,7 @@ func isPermitSaveState() bool {
 
 	duration := time.Now().Unix() - lastRunned
 	if duration < ErrorLogIntervalSeconds {
-		log.Println(fmt.Sprintf("Duration: %d < %d", duration, ErrorLogIntervalSeconds))
+		log.Debug(fmt.Sprintf("Duration: %d < %d", duration, ErrorLogIntervalSeconds))
 		return false
 	}
 	lastRunned = time.Now().Unix()

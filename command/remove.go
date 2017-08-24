@@ -2,7 +2,7 @@ package command
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/codegangsta/cli"
@@ -29,6 +29,6 @@ func CmdRemove(c *cli.Context) error {
 	if resp.StatusCode != http.StatusOK {
 		return cli.NewExitError("Failed!", 1)
 	}
-	log.Printf("Success.")
+	fmt.Println("Success.")
 	return nil
 }

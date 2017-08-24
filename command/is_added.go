@@ -2,7 +2,7 @@ package command
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/codegangsta/cli"
@@ -29,7 +29,7 @@ func CmdIsAdded(c *cli.Context) error {
 	if resp.StatusCode == http.StatusNotFound {
 		return cli.NewExitError("Not found.", 1)
 	} else if resp.StatusCode == http.StatusFound {
-		log.Printf("Found.")
+		fmt.Println("Found.")
 		return nil
 	}
 	return cli.NewExitError("Unknown Status", 2)
