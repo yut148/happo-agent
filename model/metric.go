@@ -7,6 +7,7 @@ import (
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/collect"
 	"github.com/heartbeatsjp/happo-agent/halib"
+	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // --- Package Variables
@@ -53,7 +54,8 @@ func MetricConfigUpdate(metricRequest halib.MetricConfigUpdateRequest, r render.
 	r.JSON(http.StatusOK, metricResponse)
 }
 
-// MetricDataBufferStatus returns collected metrics status
+// MetricDataBufferStatus is obsoluted.
 func MetricDataBufferStatus(r render.Render) {
-	r.JSON(http.StatusOK, collect.GetMetricDataBufferStatus())
+	util.HappoAgentLogger().Warn("/metric/status is obsoluted. use /")
+	r.Redirect("/", http.StatusMovedPermanently)
 }

@@ -173,9 +173,8 @@ func CmdDaemon(c *cli.Context) {
 
 	model.SetProxyTimeout(c.Int64("proxy-timeout-seconds"))
 
-	m.Get("/", func() string {
-		return "OK"
-	})
+	model.AppVersion = c.App.Version
+	m.Get("/", model.Index)
 
 	util.CommandTimeout = time.Duration(c.Int("command-timeout"))
 	model.MetricConfigFile = c.String("metric-config")
