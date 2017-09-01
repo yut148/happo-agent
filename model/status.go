@@ -60,7 +60,7 @@ func Index(req *http.Request, r render.Render) {
 		AppVersion:         AppVersion,
 		UptimeSeconds:      int64(time.Since(startAt) / time.Second),
 		NumGoroutine:       runtime.NumGoroutine(),
-		MetricBufferStatus: collect.GetMetricDataBufferStatus(),
+		MetricBufferStatus: collect.GetMetricDataBufferStatus(extended),
 		Callers:            callers,
 	}
 	if extended {
