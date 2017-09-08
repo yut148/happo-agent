@@ -321,7 +321,6 @@ func GetMetricDataBufferStatus(extended bool) map[string]int64 {
 	transaction.Discard()
 
 	length := i
-	capacity := i
 
 	oldestTimestamp := int64(0)
 	newestTimestamp := int64(0)
@@ -344,7 +343,6 @@ func GetMetricDataBufferStatus(extended bool) map[string]int64 {
 	if extended {
 		result := map[string]int64{
 			"length":           int64(length),
-			"capacity":         int64(capacity),
 			"oldest_timestamp": oldestTimestamp,
 			"newest_timestamp": newestTimestamp,
 		}
