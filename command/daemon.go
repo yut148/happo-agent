@@ -144,6 +144,7 @@ func CmdDaemon(c *cli.Context) {
 			SSLRedirect:      true,
 			DisableProdCheck: true,
 		}))
+	m.Use(util.MartiniRequestStatus())
 
 	// CPU Profiling
 	if c.String("cpu-profile") != "" {
