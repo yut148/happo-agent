@@ -175,7 +175,9 @@ func CmdDaemon(c *cli.Context) {
 	model.SetProxyTimeout(c.Int64("proxy-timeout-seconds"))
 
 	model.AppVersion = c.App.Version
-	m.Get("/", model.Index)
+	m.Get("/", func() string {
+		return "OK"
+	})
 
 	util.CommandTimeout = time.Duration(c.Int("command-timeout"))
 	model.MetricConfigFile = c.String("metric-config")
@@ -191,6 +193,8 @@ func CmdDaemon(c *cli.Context) {
 	m.Post("/metric/append", binding.Json(halib.MetricAppendRequest{}), model.MetricAppend)
 	m.Post("/metric/config/update", binding.Json(halib.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
+	m.Get("/status", model.Status)
+	m.Get("/status/request", model.RequestStatus)
 	m.Get("/machine-state/", model.ListMachieState)
 	m.Get("/machine-state/:key", model.GetMachineState)
 

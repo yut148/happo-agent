@@ -34,8 +34,8 @@ type ExtendedAgentStatus struct {
 	MemStatus *runtime.MemStats
 }
 
-// Index implements / endpoint. returns status
-func Index(req *http.Request, r render.Render) {
+// Status implements /status endpoint. returns status
+func Status(req *http.Request, r render.Render) {
 	log := util.HappoAgentLogger()
 
 	extended := false
@@ -75,4 +75,11 @@ func Index(req *http.Request, r render.Render) {
 	} else {
 		r.JSON(http.StatusOK, agentStatus)
 	}
+}
+
+// RequestStatus implements /status/request endpoint. returns status
+func RequestStatus(req *http.Request, r render.Render) {
+	requestStatus := util.GetMartiniRequestStatus(time.Now())
+
+	r.JSON(http.StatusOK, requestStatus)
 }

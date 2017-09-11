@@ -56,6 +56,6 @@ func MetricConfigUpdate(metricRequest halib.MetricConfigUpdateRequest, r render.
 
 // MetricDataBufferStatus is obsoluted.
 func MetricDataBufferStatus(r render.Render) {
-	util.HappoAgentLogger().Warn("/metric/status is obsoluted. use /")
-	r.Redirect("/", http.StatusMovedPermanently)
+	util.HappoAgentLogger().Warn("/metric/status is obsoluted. use /status")
+	r.Redirect("/status", http.StatusMovedPermanently)
 }

@@ -103,3 +103,15 @@ type ManageResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
+
+// RequestStatusResponse is /status/request API
+type RequestStatusResponse struct {
+	Last1 []RequestStatusData `json:"last1"`
+	Last5 []RequestStatusData `json:"last5"`
+}
+
+// RequestStatusData is data part of RequestStatusResponse
+type RequestStatusData struct {
+	URL    string         `json:"url"`
+	Counts map[int]uint64 `json:"counts"`
+}

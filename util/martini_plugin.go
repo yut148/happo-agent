@@ -1,16 +1,16 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	stdlog "log"
 	"net"
 	"net/http"
-	"sort"
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-martini/martini"
+	"github.com/heartbeatsjp/happo-agent/halib"
 )
 
 // ACL implements AccessControlList ability
@@ -84,98 +84,141 @@ func MartiniCustomLogger() martini.Handler {
 	}
 }
 
+// RequestStatusManager manages RequestStatus
 type RequestStatusManager struct {
-	RequestStatuses map[int64]*RequestStatus
+	RequestStatus []struct {
+		When   int64
+		URI    string
+		Counts map[int]uint64
+	}
 	sync.Mutex
 }
-type RequestStatus struct {
-	RequestCountsMap map[string]*RequestCounts
-}
 
-type RequestCounts struct {
-	Counts map[int]uint64
-}
-
+// Append append log to manager
 func (m *RequestStatusManager) Append(when time.Time, uri string, status int) {
+	whenKey := when.Unix() // round to second
+
 	var found bool
-	var count uint64
-	var whenKey int64
-
-	whenKey = int64(when.Unix() / 60 * 60)
 
 	m.Lock()
 	defer m.Unlock()
 
-	if len(m.RequestStatuses) == 0 {
-		m.RequestStatuses = make(map[int64]*RequestStatus)
-	}
-	_, found = m.RequestStatuses[whenKey]
-	if !found {
-		m.RequestStatuses[whenKey] = &RequestStatus{}
-	}
-
-	if len(m.RequestStatuses[whenKey].RequestCountsMap) == 0 {
-		m.RequestStatuses[whenKey].RequestCountsMap = make(map[string]*RequestCounts)
-	}
-	_, found = m.RequestStatuses[whenKey].RequestCountsMap[uri]
-	if !found {
-		m.RequestStatuses[whenKey].RequestCountsMap[uri] = &RequestCounts{}
-	}
-
-	if len(m.RequestStatuses[whenKey].RequestCountsMap[uri].Counts) == 0 {
-		m.RequestStatuses[whenKey].RequestCountsMap[uri].Counts = make(map[int]uint64)
-	}
-	count, found = m.RequestStatuses[whenKey].RequestCountsMap[uri].Counts[status]
-	if !found {
-		count = 0
-		m.RequestStatuses[whenKey].RequestCountsMap[uri].Counts[status] = count
-	}
-
-	m.RequestStatuses[whenKey].RequestCountsMap[uri].Counts[status] = count + 1
-}
-
-func (m *RequestStatusManager) GarbageCollect(when time.Time) {
-	m.Lock()
-	defer m.Unlock()
-
-	for t, _ := range m.RequestStatuses {
-		if when.Unix()-t > 60*15 {
-			delete(m.RequestStatuses, t)
+	for _, requestStatus := range m.RequestStatus {
+		if requestStatus.When != whenKey {
+			continue
 		}
+		if requestStatus.URI != uri {
+			continue
+		}
+		found = true
+		if _, ok := requestStatus.Counts[status]; ok {
+			requestStatus.Counts[status] = requestStatus.Counts[status] + 1
+		} else {
+			requestStatus.Counts[status] = 1
+		}
+		break
+	}
+	if !found {
+		requestStatus := struct {
+			When   int64
+			URI    string
+			Counts map[int]uint64
+		}{When: whenKey, URI: uri}
+		requestStatus.Counts = make(map[int]uint64)
+		requestStatus.Counts[status] = 1
+		m.RequestStatus = append(m.RequestStatus, requestStatus)
 	}
 }
 
-func (m *RequestStatusManager) GetStatus(detail bool) map[string]map[string]map[int]int {
+// GarbageCollect runs gabage collection
+func (m *RequestStatusManager) GarbageCollect(when time.Time, lifetimeMinutes int64) {
 	m.Lock()
 	defer m.Unlock()
 
-	HappoAgentLogger().Debug(spew.Sdump(rsm.RequestStatuses))
-	var latestKey int64
-	var keys []int64
-	for t, _ := range m.RequestStatuses {
-		keys = append(keys, t)
+	var newRequestStatus []struct {
+		When   int64
+		URI    string
+		Counts map[int]uint64
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	//TODO
-	HappoAgentLogger().Debug(keys)
-
-	/*
-		{
-			"1min": {
-				"/": {200: 3, 403: 2},
-				"/?extended": {200: 1}},
-			"5min": {
-				"/": {200: 20, 403: 5},
-				"/?extended": {200: 3},
-				"/monitor": {200: 400, 500: 3}},
+	for _, requestStatus := range m.RequestStatus {
+		if when.Unix()-requestStatus.When <= lifetimeMinutes*60 {
+			newRequestStatus = append(newRequestStatus, requestStatus)
 		}
-	*/
+	}
+	m.RequestStatus = newRequestStatus
+}
+
+// GetStatus returns halib.RequestStatusResponse
+func (m *RequestStatusManager) GetStatus(fromWhen time.Time) halib.RequestStatusResponse {
+	m.Lock()
+	defer m.Unlock()
+
+	resp := halib.RequestStatusResponse{}
+
+	if len(m.RequestStatus) == 0 {
+		//no result
+		return resp
+	}
+
+	for _, requestStatus := range m.RequestStatus {
+		if fromWhen.Unix()-requestStatus.When <= 60 {
+			// 1 min target
+			foundURI := false
+			for _, respData := range resp.Last1 {
+				if respData.URL == requestStatus.URI {
+					foundURI = true
+					for k1, v1 := range requestStatus.Counts {
+						_, foundCountsKey := respData.Counts[k1]
+						if foundCountsKey {
+							respData.Counts[k1] = respData.Counts[k1] + v1
+						} else {
+							respData.Counts[k1] = v1
+						}
+					}
+				}
+			}
+			if !foundURI {
+				data := halib.RequestStatusData{URL: requestStatus.URI, Counts: make(map[int]uint64)}
+				for k, v := range requestStatus.Counts {
+					data.Counts[k] = v
+				}
+				resp.Last1 = append(resp.Last1, data)
+			}
+		}
+
+		if fromWhen.Unix()-requestStatus.When <= 300 {
+			// 5 min target
+			foundURI := false
+			for _, respData := range resp.Last5 {
+				if respData.URL == requestStatus.URI {
+					foundURI = true
+					for k1, v1 := range requestStatus.Counts {
+						_, foundCountsKey := respData.Counts[k1]
+						if foundCountsKey {
+							respData.Counts[k1] = respData.Counts[k1] + v1
+						} else {
+							respData.Counts[k1] = v1
+						}
+					}
+				}
+			}
+			if !foundURI {
+				data := halib.RequestStatusData{URL: requestStatus.URI, Counts: make(map[int]uint64)}
+				for k, v := range requestStatus.Counts {
+					data.Counts[k] = v
+				}
+				resp.Last5 = append(resp.Last5, data)
+			}
+		}
+	}
+	return resp
 }
 
 var (
 	rsm = &RequestStatusManager{}
 )
 
+// RequestStatusLog is data for chan
 type RequestStatusLog struct {
 	When   time.Time
 	URI    string
@@ -192,6 +235,8 @@ func MartiniRequestStatus() martini.Handler {
 			select {
 			case log := <-logChan:
 				rsm.Append(log.When, log.URI, log.Status)
+				b, _ := json.Marshal(rsm.GetStatus(time.Now()))
+				HappoAgentLogger().Debug(string(b))
 			}
 		}
 	}()
@@ -201,7 +246,7 @@ func MartiniRequestStatus() martini.Handler {
 		for {
 			select {
 			case <-time.Tick(1 * time.Minute):
-				rsm.GarbageCollect(time.Now())
+				rsm.GarbageCollect(time.Now(), 5)
 			}
 		}
 	}()
@@ -212,4 +257,9 @@ func MartiniRequestStatus() martini.Handler {
 		rw := res.(martini.ResponseWriter)
 		logChan <- RequestStatusLog{When: time.Now(), URI: req.RequestURI, Status: rw.Status()}
 	}
+}
+
+// GetMartiniRequestStatus implements recent request status
+func GetMartiniRequestStatus(fromWhen time.Time) halib.RequestStatusResponse {
+	return rsm.GetStatus(fromWhen)
 }
