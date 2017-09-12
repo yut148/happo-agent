@@ -104,6 +104,15 @@ type ManageResponse struct {
 	Message string `json:"message"`
 }
 
+// StatusResponse is /status API
+type StatusResponse struct {
+	AppVersion         string           `json:"app_version"`
+	UptimeSeconds      int64            `json:"uptime_seconds"`
+	NumGoroutine       int              `json:"num_goroutine"`
+	MetricBufferStatus map[string]int64 `json:"metric_buffer_status"`
+	Callers            []string         `json:"callers"`
+}
+
 // RequestStatusResponse is /status/request API
 type RequestStatusResponse struct {
 	Last1 []RequestStatusData `json:"last1"`

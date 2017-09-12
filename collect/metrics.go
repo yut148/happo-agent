@@ -308,7 +308,7 @@ func GetMetricDataBufferStatus(extended bool) map[string]int64 {
 		copy(firstKey, iter.Key())
 		i = i + 1
 		if extended {
-			// heavy... need long time
+			// heavy... need long time (Disk IO bound)
 			for iter.Next() {
 				i = i + 1
 			}
