@@ -1,13 +1,16 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	stdlog "log"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/go-martini/martini"
+	"github.com/heartbeatsjp/happo-agent/halib"
 )
 
 // ACL implements AccessControlList ability
@@ -79,4 +82,184 @@ func MartiniCustomLogger() martini.Handler {
 
 		log.Printf("Aceess: %s \"%s %s\" %d %d %d\n", addr, req.Method, req.RequestURI, rw.Status(), rw.Size(), time.Since(start)/time.Millisecond)
 	}
+}
+
+// RequestStatusManager manages RequestStatus
+type RequestStatusManager struct {
+	RequestStatus []struct {
+		When   int64
+		URI    string
+		Counts map[int]uint64
+	}
+	sync.Mutex
+}
+
+// Append append log to manager
+func (m *RequestStatusManager) Append(when time.Time, uri string, status int) {
+	whenKey := when.Unix() // round to second
+
+	var found bool
+
+	m.Lock()
+	defer m.Unlock()
+
+	for _, requestStatus := range m.RequestStatus {
+		if requestStatus.When != whenKey {
+			continue
+		}
+		if requestStatus.URI != uri {
+			continue
+		}
+		found = true
+		if _, ok := requestStatus.Counts[status]; ok {
+			requestStatus.Counts[status] = requestStatus.Counts[status] + 1
+		} else {
+			requestStatus.Counts[status] = 1
+		}
+		break
+	}
+	if !found {
+		requestStatus := struct {
+			When   int64
+			URI    string
+			Counts map[int]uint64
+		}{When: whenKey, URI: uri}
+		requestStatus.Counts = make(map[int]uint64)
+		requestStatus.Counts[status] = 1
+		m.RequestStatus = append(m.RequestStatus, requestStatus)
+	}
+}
+
+// GarbageCollect runs gabage collection
+func (m *RequestStatusManager) GarbageCollect(when time.Time, lifetimeMinutes int64) {
+	m.Lock()
+	defer m.Unlock()
+
+	var newRequestStatus []struct {
+		When   int64
+		URI    string
+		Counts map[int]uint64
+	}
+	for _, requestStatus := range m.RequestStatus {
+		if when.Unix()-requestStatus.When <= lifetimeMinutes*60 {
+			newRequestStatus = append(newRequestStatus, requestStatus)
+		}
+	}
+	m.RequestStatus = newRequestStatus
+}
+
+// GetStatus returns halib.RequestStatusResponse
+func (m *RequestStatusManager) GetStatus(fromWhen time.Time) halib.RequestStatusResponse {
+	m.Lock()
+	defer m.Unlock()
+
+	resp := halib.RequestStatusResponse{}
+
+	if len(m.RequestStatus) == 0 {
+		//no result
+		return resp
+	}
+
+	for _, requestStatus := range m.RequestStatus {
+		if fromWhen.Unix()-requestStatus.When <= 60 {
+			// 1 min target
+			foundURI := false
+			for _, respData := range resp.Last1 {
+				if respData.URL == requestStatus.URI {
+					foundURI = true
+					for k1, v1 := range requestStatus.Counts {
+						_, foundCountsKey := respData.Counts[k1]
+						if foundCountsKey {
+							respData.Counts[k1] = respData.Counts[k1] + v1
+						} else {
+							respData.Counts[k1] = v1
+						}
+					}
+				}
+			}
+			if !foundURI {
+				data := halib.RequestStatusData{URL: requestStatus.URI, Counts: make(map[int]uint64)}
+				for k, v := range requestStatus.Counts {
+					data.Counts[k] = v
+				}
+				resp.Last1 = append(resp.Last1, data)
+			}
+		}
+
+		if fromWhen.Unix()-requestStatus.When <= 300 {
+			// 5 min target
+			foundURI := false
+			for _, respData := range resp.Last5 {
+				if respData.URL == requestStatus.URI {
+					foundURI = true
+					for k1, v1 := range requestStatus.Counts {
+						_, foundCountsKey := respData.Counts[k1]
+						if foundCountsKey {
+							respData.Counts[k1] = respData.Counts[k1] + v1
+						} else {
+							respData.Counts[k1] = v1
+						}
+					}
+				}
+			}
+			if !foundURI {
+				data := halib.RequestStatusData{URL: requestStatus.URI, Counts: make(map[int]uint64)}
+				for k, v := range requestStatus.Counts {
+					data.Counts[k] = v
+				}
+				resp.Last5 = append(resp.Last5, data)
+			}
+		}
+	}
+	return resp
+}
+
+var (
+	rsm = &RequestStatusManager{}
+)
+
+// RequestStatusLog is data for chan
+type RequestStatusLog struct {
+	When   time.Time
+	URI    string
+	Status int
+}
+
+// MartiniRequestStatus implements recent request status
+func MartiniRequestStatus() martini.Handler {
+	logChan := make(chan RequestStatusLog, 1000) //FIXME proper buffer size
+
+	// appender
+	go func() {
+		for {
+			select {
+			case log := <-logChan:
+				rsm.Append(log.When, log.URI, log.Status)
+				b, _ := json.Marshal(rsm.GetStatus(time.Now()))
+				HappoAgentLogger().Debug(string(b))
+			}
+		}
+	}()
+
+	// cleaner
+	go func() {
+		for {
+			select {
+			case <-time.Tick(1 * time.Minute):
+				rsm.GarbageCollect(time.Now(), 5)
+			}
+		}
+	}()
+
+	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
+		c.Next()
+
+		rw := res.(martini.ResponseWriter)
+		logChan <- RequestStatusLog{When: time.Now(), URI: req.RequestURI, Status: rw.Status()}
+	}
+}
+
+// GetMartiniRequestStatus implements recent request status
+func GetMartiniRequestStatus(fromWhen time.Time) halib.RequestStatusResponse {
+	return rsm.GetStatus(fromWhen)
 }

@@ -289,7 +289,7 @@ func SaveMetricConfig(config halib.MetricConfig, configFile string) error {
 }
 
 // GetMetricDataBufferStatus returns metric collection status
-func GetMetricDataBufferStatus() map[string]int64 {
+func GetMetricDataBufferStatus(extended bool) map[string]int64 {
 	log := util.HappoAgentLogger()
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
@@ -301,20 +301,26 @@ func GetMetricDataBufferStatus() map[string]int64 {
 		nil)
 	i := 0
 	var firstKey, lastKey []byte
-	for iter.Next() {
-		if i == 0 {
-			firstKey = make([]byte, len(iter.Key()))
-			copy(firstKey, iter.Key())
+
+	if iter.First() {
+		//have result
+		firstKey = make([]byte, len(iter.Key()))
+		copy(firstKey, iter.Key())
+		i = i + 1
+		if extended {
+			// heavy... need long time (Disk IO bound)
+			for iter.Next() {
+				i = i + 1
+			}
 		}
+		iter.Last()
 		lastKey = make([]byte, len(iter.Key()))
 		copy(lastKey, iter.Key())
-		i = i + 1
 	}
 	iter.Release()
 	transaction.Discard()
 
 	length := i
-	capacity := i
 
 	oldestTimestamp := int64(0)
 	newestTimestamp := int64(0)
@@ -334,12 +340,18 @@ func GetMetricDataBufferStatus() map[string]int64 {
 		}
 	}
 
+	if extended {
+		result := map[string]int64{
+			"length":           int64(length),
+			"oldest_timestamp": oldestTimestamp,
+			"newest_timestamp": newestTimestamp,
+		}
+		return result
+	}
 	result := map[string]int64{
-		"length":           int64(length),
-		"capacity":         int64(capacity),
 		"oldest_timestamp": oldestTimestamp,
 		"newest_timestamp": newestTimestamp,
 	}
-
 	return result
+
 }

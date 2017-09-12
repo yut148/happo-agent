@@ -230,33 +230,72 @@ func TestGetMetricDataBufferStatus1(t *testing.T) {
 	//cleanup
 	GetCollectedMetricsWithLimit(-1)
 
-	savedMetricData = GetMetricDataBufferStatus()
+	savedMetricData = GetMetricDataBufferStatus(true)
 	assert.Equal(t, int64(0), savedMetricData["length"])
-	assert.Equal(t, int64(0), savedMetricData["capacity"])
 
 	err = SaveMetrics(time.Unix(1000, 0), metricsData1)
 	assert.Nil(t, err)
 
-	savedMetricData = GetMetricDataBufferStatus()
+	savedMetricData = GetMetricDataBufferStatus(true)
 	assert.Equal(t, int64(1), savedMetricData["length"])
-	assert.Equal(t, int64(1), savedMetricData["capacity"])
 	assert.Equal(t, int64(1000), savedMetricData["oldest_timestamp"])
 	assert.Equal(t, int64(1000), savedMetricData["newest_timestamp"])
 
 	err = SaveMetrics(time.Unix(1001, 0), metricsData2)
 	assert.Nil(t, err)
 
-	savedMetricData = GetMetricDataBufferStatus()
+	savedMetricData = GetMetricDataBufferStatus(true)
 	assert.Equal(t, int64(2), savedMetricData["length"])
-	assert.Equal(t, int64(2), savedMetricData["capacity"])
 	assert.Equal(t, int64(1000), savedMetricData["oldest_timestamp"])
 	assert.Equal(t, int64(1001), savedMetricData["newest_timestamp"])
 
 	GetCollectedMetricsWithLimit(-1)
 
-	savedMetricData = GetMetricDataBufferStatus()
+	savedMetricData = GetMetricDataBufferStatus(true)
 	assert.Equal(t, int64(0), savedMetricData["length"])
-	assert.Equal(t, int64(0), savedMetricData["capacity"])
+}
+
+func TestGetMetricDataBufferStatusPerformance(t *testing.T) {
+	var err error
+	var savedMetricData map[string]int64
+	metricsData1 := []halib.MetricsData{
+		halib.MetricsData{HostName: "host1", Timestamp: 100, Metrics: map[string]float64{"val1": 111, "val2": 112}},
+		halib.MetricsData{HostName: "host2", Timestamp: 100, Metrics: map[string]float64{"val1": 121, "val2": 122}},
+		halib.MetricsData{HostName: "host3", Timestamp: 100, Metrics: map[string]float64{"val1": 131, "val2": 132}},
+		halib.MetricsData{HostName: "host4", Timestamp: 100, Metrics: map[string]float64{"val1": 141, "val2": 142}},
+		halib.MetricsData{HostName: "host5", Timestamp: 100, Metrics: map[string]float64{"val1": 151, "val2": 152}},
+		halib.MetricsData{HostName: "host6", Timestamp: 100, Metrics: map[string]float64{"val1": 161, "val2": 162}},
+		halib.MetricsData{HostName: "host7", Timestamp: 100, Metrics: map[string]float64{"val1": 171, "val2": 172}},
+		halib.MetricsData{HostName: "host8", Timestamp: 100, Metrics: map[string]float64{"val1": 181, "val2": 182}},
+		halib.MetricsData{HostName: "host9", Timestamp: 100, Metrics: map[string]float64{"val1": 191, "val2": 192}},
+	}
+
+	//cleanup
+	GetCollectedMetricsWithLimit(-1)
+
+	savedMetricData = GetMetricDataBufferStatus(true)
+	assert.Equal(t, int64(0), savedMetricData["length"])
+
+	//init
+	length := 3000
+	for i := 1; i <= length; i++ {
+		err = SaveMetrics(time.Unix(int64(i), 0), metricsData1)
+		assert.Nil(t, err)
+	}
+
+	//check
+	before := time.Now()
+	savedMetricData = GetMetricDataBufferStatus(true)
+
+	assert.Equal(t, int64(length), savedMetricData["length"])
+	assert.True(t, time.Now().Sub(before) < 1*time.Second)
+
+	//cleanup
+	GetCollectedMetricsWithLimit(-1)
+
+	savedMetricData = GetMetricDataBufferStatus(true)
+	assert.Equal(t, int64(0), savedMetricData["length"])
+
 }
 
 func TestMain(m *testing.M) {

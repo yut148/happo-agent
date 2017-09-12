@@ -262,7 +262,11 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/append --pos
 
 ### /metric/status
 
-Get collected metric status.
+replaced to /status
+
+### /status
+
+Get happo-agent status
 
 - Input format
     - None
@@ -271,18 +275,63 @@ Get collected metric status.
 - Return format
     - JSON
 - Return variables
-    - length: length of metric_data_buffer
-    - capacity: capacity of metric_data_buffer
-    - oldest_timestamp: oldest Timestamp(int64) in metric_data_buffer
-    - newest_timestamp: newest Timestamp(int64) in metric_data_buffer
+    - app_version: happo-agent version ( equivalent to `happo-agent -v` )
+    - uptime_seconds: seconds from happo-agent started
+    - num_goroutine: number of goroutine
+    - metric_buffer_status
+        - oldest_timestamp: oldest Timestamp(int64) in metric_data_buffer
+        - newest_timestamp: newest Timestamp(int64) in metric_data_buffer
+    - callers: `filepath:linenum` of each goroutines
 
 ```
-$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/status
-{"capacity":4,"length":4,"newest_timestamp":1454654233,"oldest_timestamp":1454654173}
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/status
+{"app_version":"1.0.0","uptime_seconds":13,"num_goroutine":15,"metric_buffer_status":{"newest_timestamp":1505180794,"oldest_timestamp":1504852118},"callers":["/goroot/src/runtime/extern.go:219","/gopath/src/github.com/heartbeatsjp/happo-agent/model/status.go:28",...(snip)...]}
 ```
 
+### /status/memory
 
-### /machine-state/
+Get happo-agent memory usage status
+
+- Input format
+    - None
+- Input variables
+    - None
+- Return format
+    - JSON
+- Return variables
+    - runtime.MemStatus
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/status/memory
+{"Alloc":7155296,"TotalAlloc":12148632,"Sys":14395640,"Lookups":34,"Mallocs":23456,"Frees":6565,...(snip)...}%
+```
+
+### /status/request
+
+Get request status/count.
+
+- Input format
+    - None
+- Input variables
+    - None
+- Return format
+    - JSON
+- Return variables
+    - last1: Last 1 Minutes results
+        - url: url
+        - counts:
+            - `<status_code>`
+            - count
+    - last5: Last 5 Minutes results
+        - same as last1
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/status/request
+{"keys":["s-1498112479","s-1498112819"]}
+{"last1":[{"url":"/","counts":{"200":3,"403":1}},{"url":"/proxy","counts":{"200":1,"403":1}}],"last5":[{"url":"/","counts":{"200":3,"403":1}},{"url":"/proxy","counts":{"200":1,"403":1}}]}
+```
+
+### /machine-state
 
 Get machine state key list.
 
@@ -296,7 +345,7 @@ Get machine state key list.
     - keys: machine-state key list
 
 ```
-$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state
 {"keys":["s-1498112479","s-1498112819"]}
 ```
 
