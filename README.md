@@ -129,7 +129,7 @@ metrics:
 
 ### /
 
-Check available
+Check available.
 
 - Input format
     - None
