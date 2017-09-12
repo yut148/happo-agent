@@ -194,8 +194,9 @@ func TestProxy2(t *testing.T) {
 	_httpClient.Timeout = timeout
 
 	assert.Equal(t, http.StatusGatewayTimeout, res.Code)
-	assert.Equal(t,
-		fmt.Sprintf(`{"return_value":3,"message":"Post https://%s:%d/monitor: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"}`, host, port),
+	assert.Regexp(t,
+		regexp.MustCompile(
+			fmt.Sprintf(`"return_value":3,"message":"Post https://%s:%d/monitor: net/http: request canceled .*(Client.Timeout exceeded while awaiting headers)`, host, port)),
 		res.Body.String(),
 	)
 }
