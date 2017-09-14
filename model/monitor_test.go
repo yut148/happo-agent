@@ -173,7 +173,7 @@ func TestMonitor6(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		`{"return_value":127,"message":""}`,
+		`{"return_value":127,"message":"stdout=, stderr=/bin/sh: 1: /usr/local/bin/notfound: not found\n"}`,
 		res.Body.String(),
 	)
 }
