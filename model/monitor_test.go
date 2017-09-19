@@ -144,7 +144,7 @@ func TestMonitor5(t *testing.T) {
 	lastRunned = time.Now().Unix() //avoid saveMachineState
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
 	assert.Regexp(t,
 		regexp.MustCompile(`^{"return_value":2,"message":"Exec timeout: .*monitor_test_sleep .*"}$`),
 		res.Body.String(),
@@ -173,7 +173,7 @@ func TestMonitor6(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		`{"return_value":127,"message":""}`,
+		`{"return_value":127,"message":"stdout=, stderr=/bin/sh: 1: /usr/local/bin/notfound: not found\n"}`,
 		res.Body.String(),
 	)
 }

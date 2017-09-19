@@ -76,12 +76,15 @@ func postToAgent(host string, port int, requestType string, jsonData []byte) (in
 		if errTimeout, ok := err.(net.Error); ok && errTimeout.Timeout() {
 			return http.StatusGatewayTimeout, "", errTimeout
 		}
-		return http.StatusBadGateway, "", err
+		if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == 0 {
+			return http.StatusServiceUnavailable, "", err
+		}
+		return resp.StatusCode, "", err
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		return http.StatusBadGateway, "", err
+		return http.StatusInternalServerError, "", err
 	}
 	return resp.StatusCode, string(body[:]), nil
 }

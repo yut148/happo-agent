@@ -67,11 +67,11 @@ func Monitor(monitorRequest halib.MonitorRequest, r render.Render) {
 	if err != nil {
 		monitorResponse.ReturnValue = halib.MonitorError
 		monitorResponse.Message = err.Error()
-		if _, ok := err.(*util.TimeoutError); ok {
-			r.JSON(http.StatusServiceUnavailable, monitorResponse)
-			return
-		}
-		r.JSON(http.StatusBadRequest, monitorResponse)
+		//if _, ok := err.(*util.TimeoutError); ok {
+		//	r.JSON(http.StatusInternalServerError, monitorResponse)
+		//	return
+		//}
+		r.JSON(http.StatusInternalServerError, monitorResponse)
 		return
 	}
 	if ret != 0 {
@@ -99,13 +99,16 @@ func execPluginCommand(pluginName string, pluginOption string) (int, string, err
 		}
 	}
 
-	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
+	exitstatus, stdout, stderr, err := util.ExecCommand(plugin, pluginOption)
 
-	if err != nil {
-		return halib.MonitorUnknown, "", err
+	out := stdout
+	if stdout == "" {
+		out = fmt.Sprintf(`stdout=, stderr=%s`, stderr)
+	} else if stderr != "" {
+		out = fmt.Sprintf("%s, stderr=%s", stdout, stderr)
 	}
 
-	return exitstatus, stdout, nil
+	return exitstatus, out, err
 }
 
 func saveMachineState() error {

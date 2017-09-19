@@ -203,7 +203,7 @@ Call monitor plugin. It likes nrpe.
     - return\_code: commands return code
     - return\_value: commands return value (stdout, stderr)
 
-In case `--command-timeout` reached, return `503 Service Unavailable` .
+In case `--command-timeout` reached, return `500 Internal Server Error` .
 
 ```
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/monitor --post-data='{"apikey": "", "plugin_name": "check_procs", "plugin_option": "-w 100 -c 200"}'
