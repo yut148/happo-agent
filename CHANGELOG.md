@@ -1,5 +1,6 @@
-### HEAD (Mon Sep 25 12:38:47 2017 +0900)
+### HEAD (Mon Sep 25 13:09:38 2017 +0900)
 
+- Merge pull request #29 from heartbeatsjp/release-1.0.0pre4 (Mon Sep 25 13:09:38 2017 +0900) 74dd241
 - Merge pull request #16 from heartbeatsjp/use-os-init (Mon Sep 25 12:38:47 2017 +0900) ca62134
 - Merge pull request #17 from heartbeatsjp/happo-agent-add-return-error (Mon Jun 5 14:21:22 2017 +0900) 09226cd
 - Merge pull request #18 from heartbeatsjp/use-dbms (Tue Jun 27 14:16:21 2017 +0900) 10808cb
