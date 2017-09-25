@@ -28,6 +28,11 @@
 /path/to/happo-agent daemon -A [Accept from IP/Subnet] -B [Public key file] -R [Private key file] -M [Metric config file (Accept empty file)]
 ```
 
+**Many configuration can be with environment variables.**
+
+See `/etc/default/happo-agent.env`
+(example is in [contrib/etc/default/happo-agent.env](contrib/etc/default/happo-agent.env))
+
 #### Monitoring
 
 Call plugin from [`check_happo`](https://github.com/heartbeatsjp/check_happo), `happo-agent` calls local nagios plugin program. Then, return code and value to `check_happo`.
@@ -76,36 +81,24 @@ Use api client commands, `happo-agent` calls endpoint url which is client manage
 $ sudo yum install epel-release
 $ sudo yum install nagios-plugins-all
 $ go get -dv github.com/heartbeatsjp/happo-agent
-$ cd $GOHOME/src/bin
-$ openssl genrsa -aes128 -out happo-agent.key 2048
-$ openssl req -new -key happo-agent.key -sha256 -out happo-agent.csr
-$ openssl x509 -in happo-agent.csr -days 3650 -req -signkey happo-agent.key -sha256 -out happo-agent.pub
-$ touch metrics.yaml
-$ chmod go-rwx happo-agent.key
-$ sudo vim /etc/init/happo-agent.conf
+$ sudo install $GOHOME/src/bin/happo-agent /usr/local/bin/happo-agent
+$ sudo install -d -m 755 /etc/happo
+$ cd /etc/happo
+$ sudo openssl genrsa -aes128 -out happo-agent.key 2048
+$ sudo openssl req -new -key happo-agent.key -sha256 -out happo-agent.csr
+$ sudo openssl x509 -in happo-agent.csr -days 3650 -req -signkey happo-agent.key -sha256 -out happo-agent.pub
+$ sudo touch metrics.yaml
+$ sudo chmod go-rwx happo-agent.key
+$ sudo install contrib/etc/default/happo-agent.env /etc/default/happo-agent.env
+$ sudo install contrib/etc/init/happo-agent.conf   /etc/init/happo-agent.conf
 $ sudo initctl reload-configuration
 $ sudo initctl start happo-agent
 ```
 
-happo-agent.conf
-
-```
-description "happo-agent"
-author  "Your Name <USER@example.com>"
-
-start on runlevel [2345]
-stop on runlevel [016]
-
-env LANG=C
-env MARTINI_ENV=production
-env APPNAME=happo-agent
-
-exec /path/to/${APPNAME} daemon -A [Accept from IP/Subnet] -B ./${APPNAME}.pub -R ./${APPNAME}.key -M metrics.yaml >/dev/null 2>&1
-respawn
-```
-
 You want to use sensu metrics plugins, should install `/usr/local/bin`.
 
+Pre build binary maybe useful.
+[Releases · heartbeatsjp/happo\-agent](https://github.com/heartbeatsjp/happo-agent/releases)
 
 ### Metric collection configuration
 

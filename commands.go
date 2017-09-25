@@ -63,7 +63,7 @@ var daemonFlags = []cli.Flag{
 	cli.IntFlag{
 		Name:   "max-connections, X",
 		Value:  halib.DefaultServerMaxConnections,
-		Usage:  "CPU profile output.",
+		Usage:  "happo-agent max connections.",
 		EnvVar: "HAPPO_AGENT_MAX_CONNECTIONS",
 	},
 	cli.IntFlag{
@@ -125,15 +125,9 @@ var daemonFlags = []cli.Flag{
 // Commands is list of subcommand
 var Commands = []cli.Command{
 	{
-		Name:   "_daemon",
-		Usage:  "Daemon mode (agent mode)",
-		Action: command.CmdDaemon,
-		Flags:  daemonFlags,
-	},
-	{
 		Name:   "daemon",
 		Usage:  "Daemon mode (agent mode)",
-		Action: command.CmdDaemonWrapper,
+		Action: command.CmdDaemon,
 		Flags:  daemonFlags,
 	},
 	{

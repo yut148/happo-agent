@@ -1,0 +1,16 @@
+[Unit]
+Description=happo-agent
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/happo-agent.env
+ExecStart=/usr/local/bin/happo-agent daemon
+User=root
+Group=root
+Restart=always
+RestartSec=1
+LimitNOFILE=8192
+
+[Install]
+WantedBy=multi-user.target
