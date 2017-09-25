@@ -15,6 +15,7 @@ import (
 
 // ACL implements AccessControlList ability
 func ACL(allowIPs []string) martini.Handler {
+	HappoAgentLogger().Debug("allowed hosts:", allowIPs)
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		log := HappoAgentLogger()
 		rawHost, _, err := net.SplitHostPort(req.RemoteAddr)
@@ -34,6 +35,9 @@ func ACL(allowIPs []string) martini.Handler {
 
 		// Validate IP Addresss
 		for _, rawIP := range allowIPs {
+			if rawIP == "" {
+				continue
+			}
 			ip, ipNet, err := net.ParseCIDR(rawIP)
 			if err != nil {
 				ipNet = nil
