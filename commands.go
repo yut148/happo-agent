@@ -63,7 +63,7 @@ var daemonFlags = []cli.Flag{
 	cli.IntFlag{
 		Name:   "max-connections, X",
 		Value:  halib.DefaultServerMaxConnections,
-		Usage:  "CPU profile output.",
+		Usage:  "happo-agent max connections.",
 		EnvVar: "HAPPO_AGENT_MAX_CONNECTIONS",
 	},
 	cli.IntFlag{
