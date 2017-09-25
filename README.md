@@ -28,6 +28,11 @@
 /path/to/happo-agent daemon -A [Accept from IP/Subnet] -B [Public key file] -R [Private key file] -M [Metric config file (Accept empty file)]
 ```
 
+**Many configuration can be with environment variables.**
+
+See `/etc/default/happo-agent.env`
+(example is in [contrib/etc/default/happo-agent.env](contrib/etc/default/happo-agent.env))
+
 #### Monitoring
 
 Call plugin from [`check_happo`](https://github.com/heartbeatsjp/check_happo), `happo-agent` calls local nagios plugin program. Then, return code and value to `check_happo`.
@@ -76,51 +81,24 @@ Use api client commands, `happo-agent` calls endpoint url which is client manage
 $ sudo yum install epel-release
 $ sudo yum install nagios-plugins-all
 $ go get -dv github.com/heartbeatsjp/happo-agent
-$ cd $GOHOME/src/bin
-$ openssl genrsa -aes128 -out happo-agent.key 2048
-$ openssl req -new -key happo-agent.key -sha256 -out happo-agent.csr
-$ openssl x509 -in happo-agent.csr -days 3650 -req -signkey happo-agent.key -sha256 -out happo-agent.pub
-$ touch metrics.yaml
-$ chmod go-rwx happo-agent.key
-$ sudo vim /etc/init/happo-agent.conf
+$ sudo install $GOHOME/src/bin/happo-agent /usr/local/bin/happo-agent
+$ sudo install -d -m 755 /etc/happo
+$ cd /etc/happo
+$ sudo openssl genrsa -aes128 -out happo-agent.key 2048
+$ sudo openssl req -new -key happo-agent.key -sha256 -out happo-agent.csr
+$ sudo openssl x509 -in happo-agent.csr -days 3650 -req -signkey happo-agent.key -sha256 -out happo-agent.pub
+$ sudo touch metrics.yaml
+$ sudo chmod go-rwx happo-agent.key
+$ sudo install contrib/etc/default/happo-agent.env /etc/default/happo-agent.env
+$ sudo install contrib/etc/init/happo-agent.conf   /etc/init/happo-agent.conf
 $ sudo initctl reload-configuration
 $ sudo initctl start happo-agent
 ```
 
 You want to use sensu metrics plugins, should install `/usr/local/bin`.
 
-Example of init scripts are in [scripts/](scripts/)
-
-- `scripts/upstart/happo-agent.conf` => `/etc/init/happo-agent.conf`
-- `scripts/default/happo-agent` => `/etc/default/happo-agent`
-
-## Use pre-built binary (Use upstart)
-
-```bash
-export OSARCH="linux_amd64"
-sudo yum install epel-release
-sudo yum install nagios-plugins-all
-curl -L $(curl -s https://api.github.com/repos/heartbeatsjp/happo-agent/releases | jq -r ".[0].assets | map(select( .[\"name\"] == \"${OSARCH:?}.tar.gz\" )) | .[0].browser_download_url") | tar zxf -
-sudo install -o root -m 755 ${OSARCH:?}/happo-agent /usr/local/bin
-openssl genrsa -aes128 -out happo-agent.key 2048
-openssl req -new -key happo-agent.key -sha256 -out happo-agent.csr
-openssl x509 -in happo-agent.csr -days 3650 -req -signkey happo-agent.key -sha256 -out happo-agent.pub
-touch metrics.yaml
-chmod 400 happo-agent.key
-sudo install -d /etc/happo
-sudo install happo-* metrics.yaml /etc/happo
-# TODO /etc/init/happo-agent.conf from repository
-# TODO /etc/default/happo-agent   from repository
-sudo initctl reload-configuration
-sudo initctl start happo-agent
-```
-
-You want to use sensu metrics plugins, should install `/usr/local/bin`.
-
-Example of init scripts are in [scripts/](scripts/)
-
-- `scripts/upstart/happo-agent.conf` => `/etc/init/happo-agent.conf`
-- `scripts/default/happo-agent` => `/etc/default/happo-agent`
+Pre build binary maybe useful.
+[Releases · heartbeatsjp/happo\-agent](https://github.com/heartbeatsjp/happo-agent/releases)
 
 ### Metric collection configuration
 
