@@ -1,3 +1,19 @@
+### HEAD (Mon Sep 25 12:38:47 2017 +0900)
+
+- Merge pull request #16 from heartbeatsjp/use-os-init (Mon Sep 25 12:38:47 2017 +0900) ca62134
+- Merge pull request #17 from heartbeatsjp/happo-agent-add-return-error (Mon Jun 5 14:21:22 2017 +0900) 09226cd
+- Merge pull request #18 from heartbeatsjp/use-dbms (Tue Jun 27 14:16:21 2017 +0900) 10808cb
+- Merge pull request #19 from heartbeatsjp/passive-metrics (Mon Jul 3 12:42:13 2017 +0900) 01bf588
+- Merge pull request #20 from heartbeatsjp/change-timeout-status-code (Thu Jul 13 18:23:27 2017 +0900) 5b2b1e4
+- Merge pull request #21 from heartbeatsjp/fix-readme-ja (Wed Jul 26 10:02:34 2017 +0900) ffd225a
+- Merge pull request #22 from heartbeatsjp/refactoring (Thu Aug 3 16:28:47 2017 +0900) 64bc7af
+- Merge pull request #23 from heartbeatsjp/refactoring (Thu Aug 10 09:12:29 2017 +0900) 88cd7ab
+- Merge pull request #24 from heartbeatsjp/enable-to-change-some-fixed-values (Tue Aug 15 17:14:05 2017 +0900) e0520f3
+- Merge pull request #25 from heartbeatsjp/add-loglevel (Thu Aug 24 13:39:59 2017 +0900) 69b644b
+- Merge pull request #26 from heartbeatsjp/improve-monitoring (Tue Sep 12 15:25:40 2017 +0900) 76440d1
+- Merge pull request #27 from heartbeatsjp/re-design-response (Tue Sep 19 13:24:40 2017 +0900) ba394c4
+- Merge pull request #28 from heartbeatsjp/re-design-response (Tue Sep 19 13:29:24 2017 +0900) 0a40b29
+
 ### 0.9.9 (Fri Sep 9 18:06:44 2016 +0900)
 
 - POC for change daemon uid (Fri Jun 10 14:10:38 2016 +0900) 93e348f
