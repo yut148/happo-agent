@@ -1,6 +1,9 @@
-### HEAD (Mon Sep 25 13:09:38 2017 +0900)
+### 1.0.0 (Mon Sep 25 14:57:52 2017 +0900)
 
 - Merge pull request #29 from heartbeatsjp/release-1.0.0pre4 (Mon Sep 25 13:09:38 2017 +0900) 74dd241
+- Merge branch 'use-os-init' of github.com:heartbeatsjp/happo-agent into use-os-init (Thu Aug 10 18:44:56 2017 +0900) 3efebec
+- Merge branch 'use-os-init' of github.com:heartbeatsjp/happo-agent into use-os-init (Thu Aug 10 18:53:43 2017 +0900) 775ebb5
+- Merge branch 'use-os-init' of github.com:heartbeatsjp/happo-agent into use-os-init (Thu Sep 21 10:01:54 2017 +0900) 7b83b91
 - Merge pull request #16 from heartbeatsjp/use-os-init (Mon Sep 25 12:38:47 2017 +0900) ca62134
 - Merge pull request #17 from heartbeatsjp/happo-agent-add-return-error (Mon Jun 5 14:21:22 2017 +0900) 09226cd
 - Merge pull request #18 from heartbeatsjp/use-dbms (Tue Jun 27 14:16:21 2017 +0900) 10808cb
