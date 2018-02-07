@@ -1,34 +1,27 @@
-box: "tcnksm/gox:1.7"
+box: "netmarkjp/golang-build:1.9.2"
 build: 
   steps:
     - wercker/setup-go-workspace:
         package-dir: github.com/heartbeatsjp/happo-agent
     - script: 
-        name: "install glide"
-        code: |
-            export GLIDE_VERSION="v0.12.1"
-            curl -L https://github.com/Masterminds/glide/releases/download/${GLIDE_VERSION}/glide-${GLIDE_VERSION}-linux-amd64.tar.gz | tar zxf -
-            install -d -m 755 ${WERCKER_CACHE_DIR:?}/bin
-            install -m 755 linux-amd64/glide ${WERCKER_CACHE_DIR:?}/bin/glide
-            export PATH=${WERCKER_CACHE_DIR:?}/bin:$PATH
-    - script: 
-        name: "glide install"
-        code: "glide install"
+        name: "dep ensure"
+        code: "dep ensure && dep status"
     - script: 
         name: "goimports"
         code: |
-            go get -u golang.org/x/tools/cmd/goimports
-            GOFILES=$(glide novendor -x | grep -vE '^\.$' | while read line ; do find $line -name '*.go' -type f ;done ; ls *.go)
+            GOFILES=$(find . -type f -name "*.go" | grep -vE '\./(.git|.wercker|vendor)' | xargs echo)
             goimports -d -e ${GOFILES}
             if [[ $(goimports -d -e ${GOFILES}) == "" ]]; then echo pass; else echo failed; exit 1; fi
     - script: 
         name: "golint"
         code: |
-            go get -u github.com/golang/lint/golint
-            for d in $(glide novendor); do golint -set_exit_status $d; done
+            GODIRECTORIES=". $(find . -type f -name '*.go' | grep -vE '\./(.git|.wercker|vendor)' | grep './.*/.*' | sed 's@[^/]*.go@...@' | sort | uniq | xargs echo)"
+            for d in "${GODIRECTORIES}" ; do golint -set_exit_status $d; done
     - script: 
         name: "go vet"
-        code: "go vet $(glide novendor)"
+        code: |
+            GODIRECTORIES=". $(find . -type f -name '*.go' | grep -vE '\./(.git|.wercker|vendor)' | grep './.*/.*' | sed 's@[^/]*.go@...@' | sort | uniq | xargs echo)"
+            go vet ${GODIRECTORIES:?}
     - script: 
         name: "install test plugin"
         code: |
@@ -37,7 +30,9 @@ build:
             install -m 755 model/monitor_test_sleep /usr/local/bin/monitor_test_sleep
     - script: 
         name: "go test"
-        code: "go test $(glide novendor)"
+        code: |
+            GODIRECTORIES=". $(find . -type f -name '*.go' | grep -vE '\./(.git|.wercker|vendor)' | grep './.*/.*' | sed 's@[^/]*.go@...@' | sort | uniq | xargs echo)"
+            go test ${GODIRECTORIES:?}
     - tcnksm/gox:
         os: "linux"
         arch: "amd64"
