@@ -1,9 +1,9 @@
 package model
 
 import (
-	"fmt"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
@@ -23,15 +23,21 @@ var (
 func Status(req *http.Request, r render.Render) {
 	log := util.HappoAgentLogger()
 
-	callers := make([]string, 0)
-	pcs := make([]uintptr, runtime.NumGoroutine())
-	runtime.Callers(0, pcs)
-	for _, pc := range pcs {
-		f := runtime.FuncForPC(pc)
-		filepath, line := f.FileLine(pc)
-		log.Debug(fmt.Sprintf("%s:%d", filepath, line))
-		callers = append(callers, fmt.Sprintf("%s:%d", filepath, line))
+	bufSize := 4 * 1024 * 1024 // max 4MB
+	buf := make([]byte, bufSize)
+	bufferOverflow := false
+	readBytes := runtime.Stack(buf, true)
+	if readBytes < len(buf) {
+		buf = buf[:readBytes] // shrink
+	} else {
+		// note: strictly saying, in case stack is just same as bufSize, buffer is not overflow.
+		bufferOverflow = true
 	}
+	callers := strings.Split(string(buf), "\n\n")
+	if bufferOverflow {
+		callers = append(callers, "...")
+	}
+	log.Debugf("callers: %v", callers)
 
 	statusResponse := &halib.StatusResponse{
 		AppVersion:         AppVersion,
