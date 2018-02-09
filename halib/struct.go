@@ -106,11 +106,12 @@ type ManageResponse struct {
 
 // StatusResponse is /status API
 type StatusResponse struct {
-	AppVersion         string           `json:"app_version"`
-	UptimeSeconds      int64            `json:"uptime_seconds"`
-	NumGoroutine       int              `json:"num_goroutine"`
-	MetricBufferStatus map[string]int64 `json:"metric_buffer_status"`
-	Callers            []string         `json:"callers"`
+	AppVersion         string            `json:"app_version"`
+	UptimeSeconds      int64             `json:"uptime_seconds"`
+	NumGoroutine       int               `json:"num_goroutine"`
+	MetricBufferStatus map[string]int64  `json:"metric_buffer_status"`
+	Callers            []string          `json:"callers"`
+	LevelDBProperties  map[string]string `json:"leveldb_properties"`
 }
 
 // RequestStatusResponse is /status/request API
