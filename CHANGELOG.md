@@ -1,3 +1,9 @@
+### 1.0.1 (Fri Feb 9 16:44:26 2018 +0900)
+
+- Merge pull request #30 from heartbeatsjp/glide-to-dep (Wed Feb 7 16:44:44 2018 +0900) c8892ca
+- Merge pull request #31 from heartbeatsjp/full-stacktrace (Fri Feb 9 11:47:22 2018 +0900) 74011b1
+- Merge pull request #32 from heartbeatsjp/add-leveldb-properties-to-status (Fri Feb 9 16:40:35 2018 +0900) bc9def2
+
 ### 1.0.0 (Mon Sep 25 14:57:52 2017 +0900)
 
 - Merge pull request #29 from heartbeatsjp/release-1.0.0pre4 (Mon Sep 25 13:09:38 2017 +0900) 74dd241
