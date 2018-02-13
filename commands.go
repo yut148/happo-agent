@@ -120,6 +120,11 @@ var daemonFlags = []cli.Flag{
 		Usage:  "sensu-plugin paths.",
 		EnvVar: "HAPPO_AGENT_SENSU_PLUGIN_PATHS",
 	},
+	cli.BoolFlag{
+		Name:   "disable-collect-metrics",
+		Usage:  "disable collect metrics ( if true, metrics.yaml has no meaning )",
+		EnvVar: "HAPPO_AGENT_DISABLE_COLLECT_METRICS",
+	},
 }
 
 // Commands is list of subcommand
