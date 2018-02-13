@@ -81,7 +81,7 @@ var daemonFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   "dbfile, d",
 		Value:  "happo-agent.db",
-		Usage:  "dbfile",
+		Usage:  "dbfile path (actual file is ${HAPPO_AGENT_DBFILE}/data.db)",
 		EnvVar: "HAPPO_AGENT_DBFILE",
 	},
 	cli.Int64Flag{

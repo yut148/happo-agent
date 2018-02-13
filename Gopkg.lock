@@ -12,6 +12,12 @@
   revision = "84831c43cf48f6b1d52c64ed499d714ffd62eca1"
 
 [[projects]]
+  name = "github.com/boltdb/bolt"
+  packages = ["."]
+  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
+  version = "v1.3.1"
+
+[[projects]]
   name = "github.com/client9/reopen"
   packages = ["."]
   revision = "4b86f9c0ead51cc410d05655596e30f281ed9071"
@@ -52,12 +58,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/golang/snappy"
-  packages = ["."]
-  revision = "553a641470496b2327abcac10b36396bd98e45c9"
-
-[[projects]]
-  branch = "master"
   name = "github.com/martini-contrib/binding"
   packages = ["."]
   revision = "05d3e151b6cf34dacac6306226a33db68459a3b5"
@@ -72,11 +72,6 @@
   packages = ["assert"]
   revision = "f390dcf405f7b83c997eac1b06768bb9f44dec18"
   version = "v1.1.3"
-
-[[projects]]
-  name = "github.com/syndtr/goleveldb"
-  packages = ["leveldb","leveldb/cache","leveldb/comparer","leveldb/errors","leveldb/filter","leveldb/iterator","leveldb/journal","leveldb/memdb","leveldb/opt","leveldb/storage","leveldb/table","leveldb/util"]
-  revision = "8c81ea47d4c41a385645e133e15510fc6a2a74b4"
 
 [[projects]]
   name = "golang.org/x/net"
@@ -96,6 +91,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b4f801c4c54d7d5e5178018c8c21cd32ee15cb59c9f9374ff1a0e6f513db492e"
+  inputs-digest = "da60f2e04641cc543c447dcc0eb050dd7cffc35ec5f5df06862f39568c0d9fb8"
   solver-name = "gps-cdcl"
   solver-version = 1

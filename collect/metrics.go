@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -12,11 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boltdb/bolt"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	leveldbErrors "github.com/syndtr/goleveldb/leveldb/errors"
-	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
 	"gopkg.in/yaml.v2"
 )
@@ -67,68 +65,62 @@ func Metrics(configPath string) error {
 
 //SaveMetrics save metrics to dbms
 func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
+	var err error
 	log := util.HappoAgentLogger()
 
 	// Save Metrics
-	transaction, err := db.DB.OpenTransaction()
-	if err != nil {
-		log.Error(err)
-	}
 
-	got, err := transaction.Get(
-		[]byte(fmt.Sprintf("m-%d", now.Unix())),
-		nil)
-	if err != leveldbErrors.ErrNotFound {
-		savedMetricsData := []halib.MetricsData{}
-		dec := gob.NewDecoder(bytes.NewReader(got))
-		dec.Decode(&savedMetricsData)
-		metricsData = append(savedMetricsData, metricsData...)
-	}
+	err = db.DB.Update(func(tx *bolt.Tx) error {
+		bucket := db.MetricBucket(tx)
+		got := bucket.Get(db.TimeToKey(now))
+		if len(got) > 0 {
+			savedMetricsData := []halib.MetricsData{}
+			dec := gob.NewDecoder(bytes.NewReader(got))
+			dec.Decode(&savedMetricsData)
+			metricsData = append(savedMetricsData, metricsData...)
+		}
 
-	var b bytes.Buffer
-	enc := gob.NewEncoder(&b)
-	err = enc.Encode(metricsData)
-	if err != nil {
-		log.Error(err)
-	} else {
-		transaction.Put(
-			[]byte(fmt.Sprintf("m-%d", now.Unix())),
-			b.Bytes(),
-			nil)
-	}
+		var b bytes.Buffer
+		enc := gob.NewEncoder(&b)
+		err = enc.Encode(metricsData)
+		if err != nil {
+			log.Error(err)
+		} else {
+			bucket.Put(
+				db.TimeToKey(now),
+				b.Bytes())
+		}
 
-	err = transaction.Commit()
+		return nil
+	})
 	if err != nil {
 		//Fatal
-		log.Fatalln(err)
+		log.Fatalln("commit transaction failed at SaveMetrics.", err)
 	}
 
 	// retire old metrics
-	transaction, err = db.DB.OpenTransaction()
-	if err != nil {
-		log.Error(err)
-	}
-	oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
-	iter := transaction.NewIterator(
-		&leveldbUtil.Range{
-			Start: []byte("m-0"),
-			Limit: []byte(fmt.Sprintf("m-%d", oldestThreshold.Unix()))},
-		nil)
-	for iter.Next() {
-		key := iter.Key()
-		value := iter.Value()
-		transaction.Delete(key, nil)
+	err = db.DB.Update(func(tx *bolt.Tx) error {
+		bucket := db.MetricBucket(tx)
+		cursor := bucket.Cursor()
+		oldestThreshold := now.Add(time.Duration(-1*db.MetricsMaxLifetimeSeconds) * time.Second)
 
-		// logging
-		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		expired := []halib.MetricsData{}
-		dec := gob.NewDecoder(bytes.NewReader(value))
-		dec.Decode(&expired)
-		log.Warn("retire old metrics: key=%v(%v), value=%v\n", string(key), time.Unix(int64(unixTime), 0), expired)
-	}
-	iter.Release()
+		retrivedKeys := make([][]byte, 0)
+		oldestThresholdKey := db.TimeToKey(oldestThreshold)
+		for key, value := cursor.First(); key != nil && bytes.Compare(key, oldestThresholdKey) <= 0; key, value = cursor.Next() {
+			retrivedKeys = append(retrivedKeys, key)
 
-	err = transaction.Commit()
+			// logging
+			expired := []halib.MetricsData{}
+			dec := gob.NewDecoder(bytes.NewReader(value))
+			dec.Decode(&expired)
+			log.Warn("retire old metrics: key=%v, value=%v\n", string(key), expired)
+		}
+
+		for _, key := range retrivedKeys {
+			bucket.Delete(key)
+		}
+		return nil
+	})
 	if err != nil {
 		log.Error(err)
 	}
@@ -146,43 +138,42 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 	/*
 		limit > 0 works fine. (otherwise, means unlimited)
 	*/
+	var err error
 	log := util.HappoAgentLogger()
 	var collectedMetricsData []halib.MetricsData
 
-	transaction, err := db.DB.OpenTransaction()
-	if err != nil {
-		log.Error(err)
-	}
+	err = db.DB.Update(func(tx *bolt.Tx) error {
+		var metricsData []halib.MetricsData
+		var dec *gob.Decoder
 
-	var metricsData []halib.MetricsData
-	var dec *gob.Decoder
-	iter := transaction.NewIterator(
-		leveldbUtil.BytesPrefix([]byte("m-")),
-		nil)
+		bucket := db.MetricBucket(tx)
+		cursor := bucket.Cursor()
 
-	i := 0
-	for iter.Next() {
-		key := iter.Key()
-		value := iter.Value()
+		retrivedKeys := make([][]byte, 0)
 
-		metricsData = []halib.MetricsData{}
-		dec = gob.NewDecoder(bytes.NewReader(value))
-		err = dec.Decode(&metricsData)
-		if err != nil {
-			log.Error(err)
-			continue
+		i := 0
+		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
+			metricsData = []halib.MetricsData{}
+			dec = gob.NewDecoder(bytes.NewReader(value))
+			err = dec.Decode(&metricsData)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			collectedMetricsData = append(collectedMetricsData, metricsData...)
+			retrivedKeys = append(retrivedKeys, key)
+
+			i = i + 1
+			if limit > 0 && i >= limit {
+				break
+			}
 		}
-		collectedMetricsData = append(collectedMetricsData, metricsData...)
-		transaction.Delete(key, nil)
 
-		i = i + 1
-		if limit > 0 && i >= limit {
-			break
+		for _, key := range retrivedKeys {
+			bucket.Delete(key)
 		}
-	}
-	iter.Release()
-
-	err = transaction.Commit()
+		return nil
+	})
 	if err != nil {
 		log.Error(err)
 	}
@@ -291,53 +282,30 @@ func SaveMetricConfig(config halib.MetricConfig, configFile string) error {
 // GetMetricDataBufferStatus returns metric collection status
 func GetMetricDataBufferStatus(extended bool) map[string]int64 {
 	log := util.HappoAgentLogger()
-	transaction, err := db.DB.OpenTransaction()
+
+	var firstKey, lastKey []byte
+	var length int
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		bucket := db.MetricBucket(tx)
+		cursor := bucket.Cursor()
+
+		//have result
+		firstKey, _ = cursor.First()
+		length = bucket.Stats().KeyN
+
+		lastKey, _ = cursor.Last()
+		return nil
+	})
 	if err != nil {
 		log.Error(err)
 		return map[string]int64{}
 	}
-	iter := transaction.NewIterator(
-		leveldbUtil.BytesPrefix([]byte("m-")),
-		nil)
-	i := 0
-	var firstKey, lastKey []byte
-
-	if iter.First() {
-		//have result
-		firstKey = make([]byte, len(iter.Key()))
-		copy(firstKey, iter.Key())
-		i = i + 1
-		if extended {
-			// heavy... need long time (Disk IO bound)
-			for iter.Next() {
-				i = i + 1
-			}
-		}
-		iter.Last()
-		lastKey = make([]byte, len(iter.Key()))
-		copy(lastKey, iter.Key())
-	}
-	iter.Release()
-	transaction.Discard()
-
-	length := i
 
 	oldestTimestamp := int64(0)
 	newestTimestamp := int64(0)
-	if i > 0 {
-		firstUnixTime, err := strconv.Atoi(strings.SplitN(string(firstKey), "-", 2)[1])
-		if err != nil {
-			log.Error(err)
-		} else {
-			oldestTimestamp = int64(firstUnixTime)
-		}
-
-		lastUnixTime, err := strconv.Atoi(strings.SplitN(string(lastKey), "-", 2)[1])
-		if err != nil {
-			log.Error(err)
-		} else {
-			newestTimestamp = int64(lastUnixTime)
-		}
+	if length > 0 {
+		oldestTimestamp = db.KeyToUnixtime(firstKey)
+		newestTimestamp = db.KeyToUnixtime(lastKey)
 	}
 
 	if extended {

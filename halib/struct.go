@@ -112,6 +112,7 @@ type StatusResponse struct {
 	MetricBufferStatus map[string]int64  `json:"metric_buffer_status"`
 	Callers            []string          `json:"callers"`
 	LevelDBProperties  map[string]string `json:"leveldb_properties"`
+	BoltDBStats        map[string]int    `json:"boltdb_stats"`
 }
 
 // RequestStatusResponse is /status/request API

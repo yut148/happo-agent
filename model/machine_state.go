@@ -3,32 +3,31 @@ package model
 import (
 	"net/http"
 
+	"github.com/boltdb/bolt"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/util"
-	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // ListMachieState returns saved machine states
 func ListMachieState(r render.Render) {
 	log := util.HappoAgentLogger()
-	transaction, err := db.DB.OpenTransaction()
+
+	var keys []string
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		bucket := db.MachineStateBucket(tx)
+		bucket.ForEach(func(key, value []byte) error {
+			keys = append(keys, string(key))
+			return nil
+		})
+		return nil
+	})
 	if err != nil {
 		log.Error(err)
 		r.JSON(http.StatusNoContent, map[string]string{"error": err.Error()})
 		return
 	}
-
-	iter := transaction.NewIterator(
-		leveldbUtil.BytesPrefix([]byte("s-")),
-		nil)
-	var keys []string
-	for iter.Next() {
-		keys = append(keys, string(iter.Key()))
-	}
-	iter.Release()
-	transaction.Discard()
 
 	if len(keys) == 0 {
 		r.JSON(http.StatusNotFound, map[string][]string{"keys": []string{}})
@@ -42,8 +41,12 @@ func GetMachineState(r render.Render, params martini.Params) {
 	log := util.HappoAgentLogger()
 	key := params["key"]
 
-	val, err := db.DB.Get([]byte(key), nil)
-
+	var val []byte
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		bucket := db.MachineStateBucket(tx)
+		val = bucket.Get([]byte(key))
+		return nil
+	})
 	if err != nil {
 		log.Error(err)
 		r.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})

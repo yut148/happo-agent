@@ -40,26 +40,14 @@ func Status(req *http.Request, r render.Render) {
 	}
 	log.Debugf("callers: %v", callers)
 
-	propertiesName := []string{
-		"leveldb.num-files-at-level0",
-		"leveldb.num-files-at-level1",
-		"leveldb.num-files-at-level2",
-		"leveldb.stats",
-		"leveldb.writedelay",
-		"leveldb.sstables",
-		"leveldb.blockpool",
-		"leveldb.cachedblock",
-		"leveldb.openedtables",
-		"leveldb.alivesnaps",
-		"leveldb.aliveiters",
-	}
-	leveldbProperties := map[string]string{}
-	for _, propertyName := range propertiesName {
-		propertyValue, _ := db.DB.GetProperty(propertyName)
-		leveldbProperties[propertyName] = propertyValue
-	}
-
-	log.Debugf("leveldbProperties:%v", leveldbProperties)
+	boltDBStats := map[string]int{}
+	boltDBStats["FreePageN"] = db.DB.Stats().FreePageN
+	boltDBStats["PendingPageN"] = db.DB.Stats().PendingPageN
+	boltDBStats["FreeAlloc"] = db.DB.Stats().FreeAlloc
+	boltDBStats["FreelistInuse"] = db.DB.Stats().FreelistInuse
+	boltDBStats["TxN"] = db.DB.Stats().TxN
+	boltDBStats["OpenTxN"] = db.DB.Stats().OpenTxN
+	log.Debugf("boltDBStats: %v", boltDBStats)
 
 	statusResponse := &halib.StatusResponse{
 		AppVersion:         AppVersion,
@@ -67,7 +55,8 @@ func Status(req *http.Request, r render.Render) {
 		NumGoroutine:       runtime.NumGoroutine(),
 		MetricBufferStatus: collect.GetMetricDataBufferStatus(false),
 		Callers:            callers,
-		LevelDBProperties:  leveldbProperties,
+		LevelDBProperties:  map[string]string{},
+		BoltDBStats:        boltDBStats,
 	}
 	r.JSON(http.StatusOK, statusResponse)
 }

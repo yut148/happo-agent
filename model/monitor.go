@@ -1,20 +1,20 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/boltdb/bolt"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
-	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // --- Constant Values
@@ -112,6 +112,7 @@ func execPluginCommand(pluginName string, pluginOption string) (int, string, err
 }
 
 func saveMachineState() error {
+	var err error
 	log := util.HappoAgentLogger()
 	loggedTime := time.Now()
 
@@ -129,44 +130,43 @@ func saveMachineState() error {
 		}
 	}
 
-	transaction, err := db.DB.OpenTransaction()
+	err = db.DB.Update(func(tx *bolt.Tx) error {
+		bucket := db.MachineStateBucket(tx)
+		err := bucket.Put(
+			[]byte(db.TimeToKey(loggedTime)),
+			[]byte(result))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	transaction.Put(
-		[]byte(fmt.Sprintf("s-%d", loggedTime.Unix())),
-		[]byte(result),
-		nil)
-	err = transaction.Commit()
+	err = db.DB.Update(func(tx *bolt.Tx) error {
+		// retire old metrics
+		bucket := db.MachineStateBucket(tx)
+		cursor := bucket.Cursor()
 
-	if err != nil {
-		return err
-	}
+		oldestThreshold := loggedTime.Add(time.Duration(-1*db.MachineStateMaxLifetimeSeconds) * time.Second)
 
-	// retire old metrics
-	transaction, err = db.DB.OpenTransaction()
-	if err != nil {
-		log.Error(err)
-	}
-	oldestThreshold := loggedTime.Add(time.Duration(-1*db.MachineStateMaxLifetimeSeconds) * time.Second)
-	iter := transaction.NewIterator(
-		&leveldbUtil.Range{
-			Start: []byte("s-0"),
-			Limit: []byte(fmt.Sprintf("s-%d", oldestThreshold.Unix()))},
-		nil)
-	for iter.Next() {
-		key := iter.Key()
-		transaction.Delete(key, nil)
+		retrivedKeys := make([][]byte, 0)
+		oldestThresholdKey := db.TimeToKey(oldestThreshold)
+		for key, _ := cursor.First(); key != nil && bytes.Compare(key, oldestThresholdKey) <= 0; key, _ = cursor.Next() {
+			retrivedKeys = append(retrivedKeys, key)
 
-		// logging
-		unixTime, _ := strconv.Atoi(strings.SplitN(string(key), "-", 2)[1])
-		log.Warn("retire old metrics: key=%v(%v)\n", string(key), time.Unix(int64(unixTime), 0))
-		// if write value to log, log become too large...
-	}
-	iter.Release()
+			// logging
+			log.Warn("retire old metrics: key=%v\n", string(key))
+			// if write value to log, log become too large...
+		}
 
-	err = transaction.Commit()
+		for _, key := range retrivedKeys {
+			bucket.Delete(key)
+		}
+		return nil
+
+	})
 	if err != nil {
 		return err
 	}

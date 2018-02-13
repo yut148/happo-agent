@@ -1,6 +1,7 @@
 package collect
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -8,9 +9,8 @@ import (
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 
+	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/storage"
 )
 
 const TestConfigFile = "./metrics_test.yaml"
@@ -300,12 +300,14 @@ func TestGetMetricDataBufferStatusPerformance(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	//Mock
-	DB, err := leveldb.Open(storage.NewMemStorage(), nil)
+	f, err := ioutil.TempFile("", "metrics_test")
+	f.Close()
+	DB, err := bolt.Open(f.Name(), 0600, nil)
+	defer DB.Close()
+	defer os.Remove(f.Name())
 	if err != nil {
 		os.Exit(1)
 	}
 	db.DB = DB
 	os.Exit(m.Run())
-
-	db.DB.Close()
 }
