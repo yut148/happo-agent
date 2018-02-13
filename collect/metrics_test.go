@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/boltdb/bolt"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 
@@ -59,10 +60,32 @@ func TestGetCollectedMetricsWithLimit1(t *testing.T) {
 	err = Metrics(TestConfigFile)
 	assert.Nil(t, err)
 
+	err = db.DB.View(func(tx *bolt.Tx) error {
+		bucket := db.MetricBucket(tx)
+		assert.Equal(t, 2, bucket.Stats().KeyN)
+		return nil
+	})
+	assert.Nil(t, err)
+
 	ret := GetCollectedMetricsWithLimit(1)
 	assert.NotNil(t, ret)
 	assert.Equal(t, 1, len(ret))
+
+	err = db.DB.View(func(tx *bolt.Tx) error {
+		bucket := db.MetricBucket(tx)
+		assert.Equal(t, 1, bucket.Stats().KeyN)
+		return nil
+	})
+	assert.Nil(t, err)
+
 	assert.NotNil(t, GetCollectedMetrics())
+
+	err = db.DB.View(func(tx *bolt.Tx) error {
+		bucket := db.MetricBucket(tx)
+		assert.Equal(t, 0, bucket.Stats().KeyN)
+		return nil
+	})
+	assert.Nil(t, err)
 }
 
 func TestGetMetrics1(t *testing.T) {
