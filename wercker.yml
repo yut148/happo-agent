@@ -32,7 +32,9 @@ build:
         name: "go test"
         code: |
             GODIRECTORIES=". $(find . -type f -name '*.go' | grep -vE '\./(.git|.wercker|vendor)' | grep './.*/.*' | sed 's@[^/]*.go@...@' | sort | uniq | xargs echo)"
-            go test ${GODIRECTORIES:?}
+            # go test ${GODIRECTORIES:?}
+            goverage -v -coverprofile coverage.out ${GODIRECTORIES:?}
+            go tool cover -html=coverage.out -o ${WERCKER_OUTPUT_DIR:?}/coverage.html
     - tcnksm/gox:
         os: "linux"
         arch: "amd64"
