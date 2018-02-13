@@ -46,6 +46,21 @@ func Open(dbfile string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	err = DB.Update(func(tx *bolt.Tx) error {
+		var err error
+		_, err = tx.CreateBucketIfNotExists(metricBucketName)
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists(machieStateBucketName)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 // Close close leveldb file
@@ -60,28 +75,12 @@ func Close() {
 
 // MetricBucket returns bucket for metrics
 func MetricBucket(tx *bolt.Tx) *bolt.Bucket {
-	var err error
-	b := tx.Bucket(metricBucketName)
-	if b == nil {
-		b, err = tx.CreateBucketIfNotExists(metricBucketName)
-		if err != nil {
-			util.HappoAgentLogger().Error(err)
-		}
-	}
-	return b
+	return tx.Bucket(metricBucketName)
 }
 
 // MachineStateBucket returns bucket for metrics
 func MachineStateBucket(tx *bolt.Tx) *bolt.Bucket {
-	var err error
-	b := tx.Bucket(machieStateBucketName)
-	if b == nil {
-		b, err = tx.CreateBucketIfNotExists(machieStateBucketName)
-		if err != nil {
-			util.HappoAgentLogger().Error(err)
-		}
-	}
-	return b
+	return tx.Bucket(machieStateBucketName)
 }
 
 // TimeToKey returns key

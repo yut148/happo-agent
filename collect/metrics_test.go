@@ -9,7 +9,6 @@ import (
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 
-	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -300,14 +299,12 @@ func TestGetMetricDataBufferStatusPerformance(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	//Mock
-	f, err := ioutil.TempFile("", "metrics_test")
-	f.Close()
-	DB, err := bolt.Open(f.Name(), 0600, nil)
-	defer DB.Close()
-	defer os.Remove(f.Name())
+	dirname, err := ioutil.TempDir("", "metrics_test")
 	if err != nil {
 		os.Exit(1)
 	}
-	db.DB = DB
+	defer os.Remove(dirname)
+	db.Open(dirname)
+	defer db.Close()
 	os.Exit(m.Run())
 }
