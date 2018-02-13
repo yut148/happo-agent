@@ -69,7 +69,6 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 	log := util.HappoAgentLogger()
 
 	// Save Metrics
-
 	err = db.DB.Update(func(tx *bolt.Tx) error {
 		bucket := db.MetricBucket(tx)
 		got := bucket.Get(db.TimeToKey(now))
