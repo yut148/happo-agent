@@ -133,7 +133,7 @@ func saveMachineState() error {
 	err = db.DB.Update(func(tx *bolt.Tx) error {
 		bucket := db.MachineStateBucket(tx)
 		err := bucket.Put(
-			[]byte(db.TimeToKey(loggedTime)),
+			db.TimeToKey(loggedTime),
 			[]byte(result))
 		if err != nil {
 			return err

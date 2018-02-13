@@ -83,13 +83,15 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 		enc := gob.NewEncoder(&b)
 		err = enc.Encode(metricsData)
 		if err != nil {
-			log.Error(err)
-		} else {
-			bucket.Put(
-				db.TimeToKey(now),
-				b.Bytes())
+			return err
 		}
 
+		err = bucket.Put(
+			db.TimeToKey(now),
+			b.Bytes())
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -116,12 +118,15 @@ func SaveMetrics(now time.Time, metricsData []halib.MetricsData) error {
 		}
 
 		for _, key := range retrivedKeys {
-			bucket.Delete(key)
+			err := bucket.Delete(key)
+			if err != nil {
+				log.Error("Delete old metric failed. ", err)
+			}
 		}
 		return nil
 	})
 	if err != nil {
-		log.Error(err)
+		log.Error("commit transaction failed at SaveMetrics.retire old metrics.", err)
 	}
 
 	return nil
@@ -169,7 +174,10 @@ func GetCollectedMetricsWithLimit(limit int) []halib.MetricsData {
 		}
 
 		for _, key := range retrivedKeys {
-			bucket.Delete(key)
+			err := bucket.Delete(key)
+			if err != nil {
+				log.Error("Delete retrived metric failed. ", err)
+			}
 		}
 		return nil
 	})

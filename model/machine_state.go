@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/boltdb/bolt"
@@ -45,6 +46,9 @@ func GetMachineState(r render.Render, params martini.Params) {
 	err := db.DB.View(func(tx *bolt.Tx) error {
 		bucket := db.MachineStateBucket(tx)
 		val = bucket.Get([]byte(key))
+		if val == nil {
+			return fmt.Errorf("not found")
+		}
 		return nil
 	})
 	if err != nil {
