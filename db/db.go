@@ -27,7 +27,7 @@ func init() {
 	machieStateBucketName = []byte("MachineState")
 }
 
-// Open open leveldb file
+// Open open boltdb file
 func Open(dbfile string) {
 	var err error
 	log := util.HappoAgentLogger()
@@ -63,7 +63,7 @@ func Open(dbfile string) {
 	}
 }
 
-// Close close leveldb file
+// Close close boltdb file
 func Close() {
 	log := util.HappoAgentLogger()
 	var err error

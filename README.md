@@ -320,7 +320,6 @@ Get request status/count.
 
 ```
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/status/request
-{"keys":["s-1498112479","s-1498112819"]}
 {"last1":[{"url":"/","counts":{"200":3,"403":1}},{"url":"/proxy","counts":{"200":1,"403":1}}],"last5":[{"url":"/","counts":{"200":3,"403":1}},{"url":"/proxy","counts":{"200":1,"403":1}}]}
 ```
 
@@ -339,7 +338,7 @@ Get machine state key list.
 
 ```
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state
-{"keys":["s-1498112479","s-1498112819"]}
+{"keys":["2018-02-13T06:41:56Z"]}
 ```
 
 ### /machine-state/:key
@@ -356,18 +355,21 @@ Get machine state.
     - machineState: command results
 
 ```
-$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/s-1498112479
+$ wget -q --no-check-certificate -O - "https://127.0.0.1:6777/machine-state/2018-02-13T06:41:56Z"
 {"machineState":"********** w (2017-06-22T15:21:19+09:00) cron 15:21:19 up 13 days, ..."}
 ```
 
 ## DBMS
 
-- key `m-<timestamp>` are metrics(timestamp is unixtime).
-    - value: `happo_agent.MetricsData`
-- key `s-<timestamp>` are saved machine state(timestamp is unixtime).
-    - value: `string`
+backend is boltdb.
 
-[syndtr/goleveldb: LevelDB key/value database in Go\.](https://github.com/syndtr/goleveldb)
+[boltdb/bolt: An embedded key/value database for Go\.](https://github.com/boltdb/bolt)
+
+- 2 buckets in one `data.db` file.
+    - for Metric
+    - for MachineState
+- key is time(created at). Format is RFC3339
+    - see [boltdb document](https://github.com/boltdb/bolt#range-scans)
 
 ## Contribution
 
