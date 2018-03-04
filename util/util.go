@@ -47,7 +47,7 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 	var cswBegin int
 	if HappoAgentLoggerEnableInfo() {
 		timeBegin = time.Now()
-		cswBegin = getContextSwitchLinux()
+		cswBegin = getContextSwitch()
 	}
 
 	commandTimeout := CommandTimeout
@@ -69,20 +69,29 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 
 	if HappoAgentLoggerEnableInfo() {
 		now := time.Now()
-		cswTook := getContextSwitchLinux() - cswBegin
+		cswTook := getContextSwitch() - cswBegin
 		timeTook := now.Sub(timeBegin)
 		HappoAgentLogger().Infof("%v: ExecCommand %v end. csw=%v, duration=%v,", now.Format(time.RFC3339Nano), command, cswTook, timeTook.Seconds())
 	}
 	return exitStatus.GetChildExitCode(), stdout, stderr, err
 }
 
-func getContextSwitchLinux() int {
-	fp, _ := os.Open("/proc/stat")
+func getContextSwitch() int {
+	if _, err := os.Stat("/proc/stat"); err != nil {
+		return -1
+	}
+	fp, err := os.Open("/proc/stat")
 	defer fp.Close()
+	if err != nil {
+		return -1
+	}
 	for scanner := bufio.NewScanner(fp); scanner.Scan(); {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "ctxt ") {
-			csw, _ := strconv.Atoi(strings.Split(line, " ")[1])
+			csw, err := strconv.Atoi(strings.Split(line, " ")[1])
+			if err != nil {
+				return -1
+			}
 			return csw
 		}
 	}
