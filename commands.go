@@ -120,6 +120,11 @@ var daemonFlags = []cli.Flag{
 		Usage:  "sensu-plugin paths.",
 		EnvVar: "HAPPO_AGENT_SENSU_PLUGIN_PATHS",
 	},
+	cli.BoolFlag{
+		Name:   "enable-requeststatus-middleware",
+		Usage:  "enable util.MartiniRequestStatus middleware(if enable, restart happo-agent at least once a day)",
+		EnvVar: "HAPPO_AGENT_ENABLE_REQUESTSTATUS_MIDDLEWARE",
+	},
 }
 
 // Commands is list of subcommand

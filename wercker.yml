@@ -1,4 +1,4 @@
-box: "netmarkjp/golang-build:1.9.2"
+box: "netmarkjp/golang-build:1.9.4"
 build: 
   steps:
     - wercker/setup-go-workspace:
