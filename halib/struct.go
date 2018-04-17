@@ -66,6 +66,12 @@ type ManageRequest struct {
 	Hostdata CrawlConfigAgent `json:"hostdata"`
 }
 
+// AutoScalingConfigUpdateRequest is /autoscaling/config/update API
+type AutoScalingConfigUpdateRequest struct {
+	APIKey string            `json:"apikey"`
+	Config AutoScalingConfig `json:"config"`
+}
+
 // --- Response Parameter
 
 // MonitorResponse is /monitor API
@@ -100,6 +106,12 @@ type InventoryResponse struct {
 
 // ManageResponse is Manage API
 type ManageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// AutoScalingConfigUpdateResponse is /autoscaling/config/update API
+type AutoScalingConfigUpdateResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }

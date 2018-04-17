@@ -55,6 +55,12 @@ var daemonFlags = []cli.Flag{
 		EnvVar: "HAPPO_AGENT_METRIC_CONFIG",
 	},
 	cli.StringFlag{
+		Name:   "autoscaling-config, a",
+		Value:  halib.DefaultAutoScalingConfigPath,
+		Usage:  "AutoScaling config file path",
+		EnvVar: "HAPPO_AGENT_AUTOSCALING_CONFIG",
+	},
+	cli.StringFlag{
 		Name:   "cpu-profile, C",
 		Value:  "",
 		Usage:  "CPU profile output.",
