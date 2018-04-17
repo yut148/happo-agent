@@ -25,7 +25,9 @@ type CrawlConfigAgent struct {
 
 // AutoScalingConfig is struct of autoscaling config yaml file
 type AutoScalingConfig struct {
-	AutoScalingGroupName string `yaml:"autoscaling_group_name" json:"autoscaling_group_name"`
-	AutoScalingCount     int    `yaml:"autoscaling_count" json:"autoscaling_count"`
-	HostPrefix           string `yaml:"host_prefix" json:"host_prefix"`
+	AutoScalings []struct {
+		AutoScalingGroupName string `yaml:"autoscaling_group_name" json:"autoscaling_group_name"`
+		AutoScalingCount     int    `yaml:"autoscaling_count" json:"autoscaling_count"`
+		HostPrefix           string `yaml:"host_prefix" json:"host_prefix"`
+	} `yaml:"autoscalings" json:"autoscalings"`
 }
