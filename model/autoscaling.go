@@ -24,3 +24,48 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 
 	r.JSON(http.StatusOK, autoScalingResponse)
 }
+
+// AutoScalingRefresh refresh autoscaling
+func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render) {
+	var response halib.AutoScalingRefreshResponse
+
+	if request.AutoScalingGroupName == "" {
+		response.Status = "error"
+		response.Message = "autoscaling_group_name required"
+		r.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	var (
+		autoScalingGroupName string
+		autoScalingCount     int
+		hostPrefix           string
+	)
+	for _, a := range autoScalingList.AutoScalings {
+		if request.AutoScalingGroupName == a.AutoScalingGroupName {
+			autoScalingGroupName = a.AutoScalingGroupName
+			autoScalingCount = a.AutoScalingCount
+			hostPrefix = a.HostPrefix
+			break
+		}
+	}
+
+	err = autoscaling.RefreshAutoScalingInstances(autoScalingGroupName, hostPrefix, autoScalingCount)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusOK, response)
+		return
+	}
+
+	response.Status = "OK"
+	r.JSON(http.StatusOK, response)
+}
