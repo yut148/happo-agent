@@ -30,6 +30,12 @@ type InstanceData struct {
 	} `json:"metric_plugins"`
 }
 
+// AutoScalingData name and actual instance data
+type AutoScalingData struct {
+	AutoScalingGroupName string                  `json:"autoscaling_group_name"`
+	InstanceData         map[string]InstanceData `json:"instance_data"`
+}
+
 // --- Request Parameter
 
 // ProxyRequest is /proxy API
@@ -124,6 +130,11 @@ type InventoryResponse struct {
 type ManageResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
+}
+
+// AutoScalingResponse is /autoscaling API
+type AutoScalingResponse struct {
+	AutoScaling []AutoScalingData `json:"autoscaling"`
 }
 
 // AutoScalingRefreshResponse is /autoscaling/refresh API

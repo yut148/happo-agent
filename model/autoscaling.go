@@ -11,6 +11,18 @@ import (
 // AutoScalingConfigFile is filepath of autoscaling config file
 var AutoScalingConfigFile string
 
+func AutoScaling(req *http.Request, r render.Render) {
+	var autoScalingResponse halib.AutoScalingResponse
+
+	autoScaling, err := autoscaling.AutoScaling(AutoScalingConfigFile)
+	if err != nil {
+		r.JSON(http.StatusInternalServerError, autoScalingResponse)
+		return
+	}
+	autoScalingResponse.AutoScaling = autoScaling
+	r.JSON(http.StatusOK, autoScalingResponse)
+}
+
 // AutoScalingConfigUpdate save autoscaling config
 func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateRequest, r render.Render) {
 	var autoScalingResponse halib.AutoScalingConfigUpdateResponse

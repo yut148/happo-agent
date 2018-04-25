@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -19,6 +20,49 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 )
+
+func AutoScaling(configPath string) ([]halib.AutoScalingData, error) {
+	log := util.HappoAgentLogger()
+	var autoScaling []halib.AutoScalingData
+
+	autoScalingList, err := GetAutoScalingConfig(configPath)
+	if err != nil {
+		return autoScaling, err
+	}
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return autoScaling, err
+	}
+
+	for _, a := range autoScalingList.AutoScalings {
+		var autoScalingData halib.AutoScalingData
+		autoScalingData.AutoScalingGroupName = a.AutoScalingGroupName
+		autoScalingData.InstanceData = map[string]halib.InstanceData{}
+
+		iter := transaction.NewIterator(
+			leveldbUtil.BytesPrefix(
+				[]byte(fmt.Sprintf("ag-%s-", a.HostPrefix)),
+			),
+			nil,
+		)
+		for iter.Next() {
+			var instanceData halib.InstanceData
+			alias := strings.TrimPrefix(string(iter.Key()), "ag-")
+			value := iter.Value()
+			dec := gob.NewDecoder(bytes.NewReader(value))
+			dec.Decode(&instanceData)
+			autoScalingData.InstanceData[alias] = instanceData
+		}
+		autoScaling = append(autoScaling, autoScalingData)
+		iter.Release()
+	}
+
+	transaction.Discard()
+
+	return autoScaling, nil
+}
 
 // SaveAutoScalingConfig save autoscaling config to config file
 func SaveAutoScalingConfig(config halib.AutoScalingConfig, configFile string) error {
