@@ -11,6 +11,7 @@ import (
 // AutoScalingConfigFile is filepath of autoscaling config file
 var AutoScalingConfigFile string
 
+// AutoScaling list autoscaling instances
 func AutoScaling(req *http.Request, r render.Render) {
 	var autoScalingResponse halib.AutoScalingResponse
 

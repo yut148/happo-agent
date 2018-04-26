@@ -17,6 +17,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// AutoScaling list autoscaling instances
 func AutoScaling(configPath string) ([]halib.AutoScalingData, error) {
 	log := util.HappoAgentLogger()
 	var autoScaling []halib.AutoScalingData
