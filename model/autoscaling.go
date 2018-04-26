@@ -70,7 +70,8 @@ func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render
 		}
 	}
 
-	err = autoscaling.RefreshAutoScalingInstances(autoScalingGroupName, hostPrefix, autoScalingCount)
+	client := autoscaling.NewAWSClient()
+	err = autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount)
 	if err != nil {
 		response.Status = "error"
 		response.Message = err.Error()

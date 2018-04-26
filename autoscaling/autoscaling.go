@@ -8,10 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
@@ -95,41 +91,11 @@ func GetAutoScalingConfig(configFile string) (halib.AutoScalingConfig, error) {
 	return autoscalingConfig, nil
 }
 
-func describeAutoScalingInstances(autoScalingGroupName string) (*ec2.DescribeInstancesOutput, error) {
-	sess := session.Must(session.NewSession())
-
-	// Describe AutoScaling Instances
-	svc := autoscaling.New(sess, aws.NewConfig().WithRegion("ap-northeast-1"))
-	input := &autoscaling.DescribeAutoScalingGroupsInput{
-		AutoScalingGroupNames: []*string{
-			aws.String(autoScalingGroupName),
-		},
-	}
-
-	result, err := svc.DescribeAutoScalingGroups(input)
-	if err != nil {
-		return nil, err
-	}
-
-	var instances []*string
-	for _, instance := range result.AutoScalingGroups[0].Instances {
-		instances = append(instances, aws.String(*instance.InstanceId))
-	}
-
-	// Describe AutoScaling Instance Details
-	svc2 := ec2.New(sess, aws.NewConfig().WithRegion("ap-northeast-1"))
-	input2 := &ec2.DescribeInstancesInput{
-		InstanceIds: instances,
-	}
-
-	return svc2.DescribeInstances(input2)
-}
-
 // RefreshAutoScalingInstances refresh alias maps
-func RefreshAutoScalingInstances(autoScalingGroupName, hostPrefix string, autoscalingCount int) error {
+func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPrefix string, autoscalingCount int) error {
 	log := util.HappoAgentLogger()
 
-	resp, err := describeAutoScalingInstances(autoScalingGroupName)
+	resp, err := client.describeAutoScalingInstances(autoScalingGroupName)
 	if err != nil {
 		log.Error(err)
 		return err
