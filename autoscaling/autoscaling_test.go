@@ -22,10 +22,11 @@ import (
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
-const TestConfigFile = "./autoscaling_test.yaml"
-const TestFailConfigFile = "./autoscaling_test_fail.yaml"
-const TestMultiConfigFile = "./autoscaling_test_multi.yaml"
-const TestEmptyConfigFile = "./autoscaling_test_empty.yaml"
+const TestConfigFile = "./testdata/autoscaling_test.yaml"
+const TestFailConfigFile = "./testdata/autoscaling_test_fail.yaml"
+const TestMultiConfigFile = "./testdata/autoscaling_test_multi.yaml"
+const TestEmptyConfigFile = "./testdata/autoscaling_test_empty.yaml"
+const TestMissingConfigFile = "./testdata/autoscaling_test_missing.yaml"
 
 func TestAutoScaling(t *testing.T) {
 	var cases = []struct {
@@ -75,7 +76,7 @@ func TestAutoScaling(t *testing.T) {
 		},
 		{
 			name:  "dummy-missing-ag",
-			input: "./autoscaling_dummy.yaml",
+			input: TestMissingConfigFile,
 			expected: []struct {
 				name  string
 				count int
@@ -219,7 +220,7 @@ func TestGetAutoScalingConfig(t *testing.T) {
 		},
 		{
 			name:  "missing config file",
-			input: "./autoscaling_dummy.yaml",
+			input: TestMissingConfigFile,
 			expected: halib.AutoScalingConfig{
 				AutoScalings: []struct {
 					AutoScalingGroupName string `yaml:"autoscaling_group_name" json:"autoscaling_group_name"`
