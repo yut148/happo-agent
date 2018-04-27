@@ -143,6 +143,15 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 			var instanceData halib.InstanceData
 			instanceData.InstanceID = *r.Instances[0].InstanceId
 			instanceData.IP = *r.Instances[0].PrivateIpAddress
+			instanceData.MetricPlugins = []struct {
+				PluginName   string `json:"plugin_name"`
+				PluginOption string `json:"plugin_option"`
+			}{
+				{
+					PluginName:   "",
+					PluginOption: "",
+				},
+			}
 			newInstances = append(newInstances, instanceData)
 		}
 	}
