@@ -1,0 +1,4 @@
+autoscalings:
+- autoscaling_group_name: fail-dummy-prod-ag
+  autoscaling_count: 10
+  host_prefix: fail-dummy-prod-app

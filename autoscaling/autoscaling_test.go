@@ -23,6 +23,7 @@ import (
 )
 
 const TestConfigFile = "./autoscaling_test.yaml"
+const TestFailConfigFile = "./autoscaling_test_fail.yaml"
 const TestMultiConfigFile = "./autoscaling_test_multi.yaml"
 const TestEmptyConfigFile = "./autoscaling_test_empty.yaml"
 
@@ -55,6 +56,15 @@ func TestAutoScaling(t *testing.T) {
 			isNormalTest: true,
 		},
 		{
+			name:  "fail-dummy-prod-ag",
+			input: TestFailConfigFile,
+			expected: []struct {
+				name  string
+				count int
+			}{{"fail-dummy-prod-ag", 7}},
+			isNormalTest: true,
+		},
+		{
 			name:  "dummy-empty-ag",
 			input: TestEmptyConfigFile,
 			expected: []struct {
@@ -79,6 +89,7 @@ func TestAutoScaling(t *testing.T) {
 		svcAutoscaling: &mockAutoScalingClient{},
 	}
 	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
+	RefreshAutoScalingInstances(client, "fail-dummy-prod-ag", "fail-dummy-prod-app", 10)
 	RefreshAutoScalingInstances(client, "dummy-stg-ag", "dummy-stg-app", 4)
 
 	for _, c := range cases {
@@ -242,23 +253,36 @@ func (m *mockAutoScalingClient) DescribeAutoScalingGroups(input *autoscaling.Des
 	switch *input.AutoScalingGroupNames[0] {
 	case "dummy-prod-ag":
 		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance{
-			{InstanceId: aws.String("i-aaaaaa")},
-			{InstanceId: aws.String("i-bbbbbb")},
-			{InstanceId: aws.String("i-cccccc")},
-			{InstanceId: aws.String("i-dddddd")},
-			{InstanceId: aws.String("i-eeeeee")},
-			{InstanceId: aws.String("i-ffffff")},
-			{InstanceId: aws.String("i-gggggg")},
-			{InstanceId: aws.String("i-hhhhhh")},
-			{InstanceId: aws.String("i-iiiiii")},
-			{InstanceId: aws.String("i-jjjjjj")},
+			{InstanceId: aws.String("i-aaaaaa"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-bbbbbb"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-cccccc"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-dddddd"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-eeeeee"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-ffffff"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-gggggg"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-hhhhhh"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-iiiiii"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-jjjjjj"), LifecycleState: aws.String("InService")},
+		}
+	case "fail-dummy-prod-ag":
+		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance{
+			{InstanceId: aws.String("i-aaaaaa"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-bbbbbb"), LifecycleState: aws.String("Terminating")},
+			{InstanceId: aws.String("i-cccccc"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-dddddd"), LifecycleState: aws.String("Terminated")},
+			{InstanceId: aws.String("i-eeeeee"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-ffffff"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-gggggg"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-hhhhhh"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-iiiiii"), LifecycleState: aws.String("Pending")},
+			{InstanceId: aws.String("i-jjjjjj"), LifecycleState: aws.String("InService")},
 		}
 	case "dummy-stg-ag":
 		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance{
-			{InstanceId: aws.String("i-kkkkkk")},
-			{InstanceId: aws.String("i-llllll")},
-			{InstanceId: aws.String("i-mmmmmm")},
-			{InstanceId: aws.String("i-nnnnnn")},
+			{InstanceId: aws.String("i-kkkkkk"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-llllll"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-mmmmmm"), LifecycleState: aws.String("InService")},
+			{InstanceId: aws.String("i-nnnnnn"), LifecycleState: aws.String("InService")},
 		}
 	}
 
@@ -433,6 +457,105 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 				{
 					InstanceID: "i-iiiiii",
 					IP:         "192.0.2.19",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "fail-dummy-prod-ag",
+			input1: "fail-dummy-prod-ag",
+			input2: "fail-dummy-prod-app",
+			input3: 10,
+			expected: []halib.InstanceData{
+				{
+					InstanceID: "i-aaaaaa",
+					IP:         "192.0.2.11",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-cccccc",
+					IP:         "192.0.2.13",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-eeeeee",
+					IP:         "192.0.2.15",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-ffffff",
+					IP:         "192.0.2.16",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-gggggg",
+					IP:         "192.0.2.17",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-hhhhhh",
+					IP:         "192.0.2.18",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-jjjjjj",
+					IP:         "192.0.2.20",
 					MetricPlugins: []struct {
 						PluginName   string `json:"plugin_name"`
 						PluginOption string `json:"plugin_option"`
