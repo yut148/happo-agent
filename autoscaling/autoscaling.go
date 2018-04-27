@@ -96,6 +96,16 @@ func GetAutoScalingConfig(configFile string) (halib.AutoScalingConfig, error) {
 func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPrefix string, autoscalingCount int) error {
 	log := util.HappoAgentLogger()
 
+	// Already registered instances to dbms
+	registeredInstances := map[string]halib.InstanceData{}
+
+	// Not registered instances to dbms
+	newInstances := []halib.InstanceData{}
+
+	// Idempotent actual register instances
+	// It is reregister to dbms
+	actualInstances := map[string]halib.InstanceData{}
+
 	resp, err := client.describeAutoScalingInstances(autoScalingGroupName)
 	if err != nil {
 		log.Error(err)
@@ -108,7 +118,6 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		return err
 	}
 
-	registeredInstances := map[string]halib.InstanceData{}
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix(
 			[]byte(fmt.Sprintf("ag-%s-", hostPrefix)),
@@ -127,14 +136,12 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 	}
 	iter.Release()
 
-	autoScalingInstances := map[string]halib.InstanceData{}
-	newInstances := []halib.InstanceData{}
-
 	for _, r := range resp.Reservations {
 		isRegistered := false
 		for key, registerdInstance := range registeredInstances {
+			// registeredInstances put in actualInstances map of same key
 			if *r.Instances[0].InstanceId == registerdInstance.InstanceID {
-				autoScalingInstances[key] = registerdInstance
+				actualInstances[key] = registerdInstance
 				isRegistered = true
 				break
 			}
@@ -155,18 +162,21 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 			newInstances = append(newInstances, instanceData)
 		}
 	}
+
+	// newInstances put in actualInstances map of empty key
 	for _, instance := range newInstances {
 		for i := 0; i < autoscalingCount; i++ {
 			key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
-			if _, ok := autoScalingInstances[key]; !ok {
-				autoScalingInstances[key] = instance
+			if _, ok := actualInstances[key]; !ok {
+				actualInstances[key] = instance
 				break
 			}
 		}
 	}
 
+	// actualInstances register to dbms
 	batch := new(leveldb.Batch)
-	for key, value := range autoScalingInstances {
+	for key, value := range actualInstances {
 		var b bytes.Buffer
 		enc := gob.NewEncoder(&b)
 		err = enc.Encode(value)
