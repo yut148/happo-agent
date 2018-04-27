@@ -26,46 +26,85 @@ const TestConfigFile = "./autoscaling_test.yaml"
 const TestMultiConfigFile = "./autoscaling_test_multi.yaml"
 const TestEmptyConfigFile = "./autoscaling_test_empty.yaml"
 
-// func TestAutoScaling(t *testing.T) {
-// 	var cases = []struct {
-// 		name         string
-// 		input        string
-// 		expected     []halib.AutoScalingData
-// 		isNormalTest bool
-// 	}{
-// 		{
-// 			name:  "default",
-// 			input: TestConfigFile,
-// 			expected: []halib.AutoScalingData{
-// 				{
-// 					AutoScalingGroupName: "dummy-prod-ag",
-// 					InstanceData: map[string]halib.InstanceData{
-// 						"dummy-prod-app-1": {
-// 							IP:         "",
-// 							InstanceID: "",
-// 							MetricPlugins: []struct {
-// 								PluginName   string `json:"plugin_name"`
-// 								PluginOption string `json:"plugin_option"`
-// 							}{},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			isNormalTest: true,
-// 		},
-// 	}
-//
-// 	for _, c := range cases {
-// 		t.Run(c.name, func(t *testing.T) {
-// 			_, err := AutoScaling(c.input)
-// 			if c.isNormalTest {
-// 				assert.Nil(t, err)
-// 			} else {
-// 				assert.NotNil(t, err)
-// 			}
-// 		})
-// 	}
-// }
+func TestAutoScaling(t *testing.T) {
+	var cases = []struct {
+		name     string
+		input    string
+		expected []struct {
+			name  string
+			count int
+		}
+		isNormalTest bool
+	}{
+		{
+			name:  "dummy-prod-ag",
+			input: TestConfigFile,
+			expected: []struct {
+				name  string
+				count int
+			}{{"dummy-prod-ag", 10}},
+			isNormalTest: true,
+		},
+		{
+			name:  "dummy-prod-ag dummy-stg-ag",
+			input: TestMultiConfigFile,
+			expected: []struct {
+				name  string
+				count int
+			}{{"dummy-prod-ag", 10}, {"dummy-stg-ag", 4}},
+			isNormalTest: true,
+		},
+		{
+			name:  "dummy-empty-ag",
+			input: TestEmptyConfigFile,
+			expected: []struct {
+				name  string
+				count int
+			}(nil),
+			isNormalTest: true,
+		},
+		{
+			name:  "dummy-missing-ag",
+			input: "./autoscaling_dummy.yaml",
+			expected: []struct {
+				name  string
+				count int
+			}(nil),
+			isNormalTest: false,
+		},
+	}
+
+	client := &AWSClient{
+		svcEC2:         &mockEC2Client{},
+		svcAutoscaling: &mockAutoScalingClient{},
+	}
+	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
+	RefreshAutoScalingInstances(client, "dummy-stg-ag", "dummy-stg-app", 4)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			autoscaling, err := AutoScaling(c.input)
+			var actual []struct {
+				name  string
+				count int
+			}
+
+			for _, a := range autoscaling {
+				actual = append(actual, struct {
+					name  string
+					count int
+				}{name: a.AutoScalingGroupName, count: len(a.InstanceData)})
+			}
+
+			if c.isNormalTest {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+			}
+			assert.Equal(t, c.expected, actual)
+		})
+	}
+}
 
 func TestSaveAutoScalingConfig(t *testing.T) {
 	var cases = []struct {
