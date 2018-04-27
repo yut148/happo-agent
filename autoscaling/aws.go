@@ -38,7 +38,9 @@ func (client *AWSClient) describeAutoScalingInstances(autoScalingGroupName strin
 
 	var instances []*string
 	for _, instance := range result.AutoScalingGroups[0].Instances {
-		instances = append(instances, aws.String(*instance.InstanceId))
+		if *instance.LifecycleState == "InService" {
+			instances = append(instances, aws.String(*instance.InstanceId))
+		}
 	}
 
 	input2 := &ec2.DescribeInstancesInput{
