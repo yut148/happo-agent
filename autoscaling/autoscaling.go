@@ -158,8 +158,6 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 	for _, instance := range newInstances {
 		for i := 0; i < autoscalingCount; i++ {
 			key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
-			log.Info(key)
-			log.Info(autoScalingInstances[key])
 			if _, ok := autoScalingInstances[key]; !ok {
 				autoScalingInstances[key] = instance
 				break
