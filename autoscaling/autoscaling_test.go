@@ -1,6 +1,9 @@
 package autoscaling
 
 import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"os"
 	"testing"
 
@@ -16,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/storage"
+	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const TestConfigFile = "./autoscaling_test.yaml"
@@ -196,6 +200,29 @@ type mockAutoScalingClient struct {
 
 func (m *mockAutoScalingClient) DescribeAutoScalingGroups(input *autoscaling.DescribeAutoScalingGroupsInput) (*autoscaling.DescribeAutoScalingGroupsOutput, error) {
 	output := &autoscaling.DescribeAutoScalingGroupsOutput{AutoScalingGroups: []*autoscaling.Group{{}}}
+	switch *input.AutoScalingGroupNames[0] {
+	case "dummy-prod-ag":
+		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance{
+			{InstanceId: aws.String("i-aaaaaa")},
+			{InstanceId: aws.String("i-bbbbbb")},
+			{InstanceId: aws.String("i-cccccc")},
+			{InstanceId: aws.String("i-dddddd")},
+			{InstanceId: aws.String("i-eeeeee")},
+			{InstanceId: aws.String("i-ffffff")},
+			{InstanceId: aws.String("i-gggggg")},
+			{InstanceId: aws.String("i-hhhhhh")},
+			{InstanceId: aws.String("i-iiiiii")},
+			{InstanceId: aws.String("i-jjjjjj")},
+		}
+	case "dummy-stg-ag":
+		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance{
+			{InstanceId: aws.String("i-kkkkkk")},
+			{InstanceId: aws.String("i-llllll")},
+			{InstanceId: aws.String("i-mmmmmm")},
+			{InstanceId: aws.String("i-nnnnnn")},
+		}
+	}
+
 	return output, nil
 }
 
@@ -216,11 +243,15 @@ func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*e
 		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-hhhhhh"), PrivateIpAddress: aws.String("192.0.2.18")}}},
 		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-iiiiii"), PrivateIpAddress: aws.String("192.0.2.19")}}},
 		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-jjjjjj"), PrivateIpAddress: aws.String("192.0.2.20")}}},
+		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-kkkkkk"), PrivateIpAddress: aws.String("192.0.2.21")}}},
+		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-llllll"), PrivateIpAddress: aws.String("192.0.2.22")}}},
+		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-mmmmmm"), PrivateIpAddress: aws.String("192.0.2.23")}}},
+		{Instances: []*ec2.Instance{{InstanceId: aws.String("i-nnnnnn"), PrivateIpAddress: aws.String("192.0.2.24")}}},
 	}
 
 	for _, instanceID := range input.InstanceIds {
 		for _, r := range reservations {
-			if instanceID == r.Instances[0].InstanceId {
+			if *instanceID == *r.Instances[0].InstanceId {
 				output.Reservations = append(output.Reservations, r)
 			}
 		}
@@ -231,25 +262,216 @@ func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*e
 
 func TestRefreshAutoScalingInstances(t *testing.T) {
 	var cases = []struct {
-		name         string
-		input1       string
-		input2       string
-		input3       int
-		isNormalTest bool
+		name     string
+		input1   string
+		input2   string
+		input3   int
+		expected []halib.InstanceData
 	}{
 		{
-			name:         "default",
-			input1:       "dummy-prod-ag",
-			input2:       "dummy-prod-app",
-			input3:       10,
-			isNormalTest: true,
+			name:   "dummy-prod-ag",
+			input1: "dummy-prod-ag",
+			input2: "dummy-prod-app",
+			input3: 10,
+			expected: []halib.InstanceData{
+				{
+					InstanceID: "i-aaaaaa",
+					IP:         "192.0.2.11",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-jjjjjj",
+					IP:         "192.0.2.20",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-bbbbbb",
+					IP:         "192.0.2.12",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-cccccc",
+					IP:         "192.0.2.13",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-dddddd",
+					IP:         "192.0.2.14",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-eeeeee",
+					IP:         "192.0.2.15",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-ffffff",
+					IP:         "192.0.2.16",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-gggggg",
+					IP:         "192.0.2.17",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-hhhhhh",
+					IP:         "192.0.2.18",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-iiiiii",
+					IP:         "192.0.2.19",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
 		},
 		{
-			name:         "missing instance",
-			input1:       "dummy-missing-ag",
-			input2:       "dummy-missing-app",
-			input3:       10,
-			isNormalTest: false,
+			name:   "dummy-stg-ag",
+			input1: "dummy-stg-ag",
+			input2: "dummy-stg-app",
+			input3: 4,
+			expected: []halib.InstanceData{
+				{
+					InstanceID: "i-kkkkkk",
+					IP:         "192.0.2.21",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-llllll",
+					IP:         "192.0.2.22",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-mmmmmm",
+					IP:         "192.0.2.23",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "i-nnnnnn",
+					IP:         "192.0.2.24",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:     "missing instance",
+			input1:   "dummy-missing-ag",
+			input2:   "dummy-missing-app",
+			input3:   10,
+			expected: []halib.InstanceData(nil),
 		},
 	}
 
@@ -260,11 +482,26 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 				svcAutoscaling: &mockAutoScalingClient{},
 			}
 			err := RefreshAutoScalingInstances(client, c.input1, c.input2, c.input3)
-			if c.isNormalTest {
-				assert.Nil(t, err)
-			} else {
-				assert.NotNil(t, err)
+			assert.Nil(t, err)
+
+			iter := db.DB.NewIterator(
+				leveldbUtil.BytesPrefix(
+					[]byte(fmt.Sprintf("ag-%s-", c.input2)),
+				),
+				nil,
+			)
+			var actual []halib.InstanceData
+			for iter.Next() {
+				value := iter.Value()
+
+				var instanceData halib.InstanceData
+				dec := gob.NewDecoder(bytes.NewReader(value))
+				dec.Decode(&instanceData)
+				actual = append(actual, instanceData)
 			}
+			iter.Release()
+
+			assert.Equal(t, c.expected, actual)
 		})
 	}
 }
