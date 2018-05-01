@@ -168,6 +168,9 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		for i := 0; i < autoscalingCount; i++ {
 			key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
 			if _, ok := actualInstances[key]; !ok {
+				if _, ok := registeredInstances[key]; ok {
+					instance.MetricPlugins = registeredInstances[key].MetricPlugins
+				}
 				actualInstances[key] = instance
 				break
 			}
