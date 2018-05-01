@@ -62,7 +62,7 @@ func TestAutoScaling(t *testing.T) {
 			expected: []struct {
 				name  string
 				count int
-			}{{"fail-dummy-prod-ag", 7}},
+			}{{"fail-dummy-prod-ag", 10}},
 			isNormalTest: true,
 		},
 		{
@@ -490,6 +490,19 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 					},
 				},
 				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
 					InstanceID: "i-cccccc",
 					IP:         "192.0.2.13",
 					MetricPlugins: []struct {
@@ -567,6 +580,32 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 						},
 					},
 				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -630,11 +669,64 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			},
 		},
 		{
-			name:     "missing instance",
-			input1:   "dummy-missing-ag",
-			input2:   "dummy-missing-app",
-			input3:   10,
-			expected: []halib.InstanceData(nil),
+			name:   "missing instance",
+			input1: "dummy-missing-ag",
+			input2: "dummy-missing-app",
+			input3: 4,
+			expected: []halib.InstanceData{
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
 		},
 	}
 
