@@ -177,6 +177,30 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		}
 	}
 
+	// Fill actualInstances with emptyInstance
+	for i := 0; i < autoscalingCount; i++ {
+		emptyInstance := halib.InstanceData{
+			InstanceID: "",
+			IP:         "",
+			MetricPlugins: []struct {
+				PluginName   string `json:"plugin_name"`
+				PluginOption string `json:"plugin_option"`
+			}{
+				{
+					PluginName:   "",
+					PluginOption: "",
+				},
+			},
+		}
+		key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
+		if _, ok := actualInstances[key]; !ok {
+			if _, ok := registeredInstances[key]; ok {
+				emptyInstance.MetricPlugins = registeredInstances[key].MetricPlugins
+			}
+			actualInstances[key] = emptyInstance
+		}
+	}
+
 	// actualInstances register to dbms
 	batch := new(leveldb.Batch)
 	for key, value := range actualInstances {
