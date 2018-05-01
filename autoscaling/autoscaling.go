@@ -106,7 +106,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 	// It is reregister to dbms
 	actualInstances := map[string]halib.InstanceData{}
 
-	resp, err := client.describeAutoScalingInstances(autoScalingGroupName)
+	autoScalingInstances, err := client.describeAutoScalingInstances(autoScalingGroupName)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -136,43 +136,45 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 	}
 	iter.Release()
 
-	for _, r := range resp.Reservations {
-		isRegistered := false
-		for key, registerdInstance := range registeredInstances {
-			// registeredInstances put in actualInstances map of same key
-			if *r.Instances[0].InstanceId == registerdInstance.InstanceID {
-				actualInstances[key] = registerdInstance
-				isRegistered = true
-				break
-			}
-		}
-		if !isRegistered {
-			var instanceData halib.InstanceData
-			instanceData.InstanceID = *r.Instances[0].InstanceId
-			instanceData.IP = *r.Instances[0].PrivateIpAddress
-			instanceData.MetricPlugins = []struct {
-				PluginName   string `json:"plugin_name"`
-				PluginOption string `json:"plugin_option"`
-			}{
-				{
-					PluginName:   "",
-					PluginOption: "",
-				},
-			}
-			newInstances = append(newInstances, instanceData)
-		}
-	}
-
-	// newInstances put in actualInstances map of empty key
-	for _, instance := range newInstances {
-		for i := 0; i < autoscalingCount; i++ {
-			key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
-			if _, ok := actualInstances[key]; !ok {
-				if _, ok := registeredInstances[key]; ok {
-					instance.MetricPlugins = registeredInstances[key].MetricPlugins
+	if len(autoScalingInstances) > 0 {
+		for _, autoScalingInstance := range autoScalingInstances {
+			isRegistered := false
+			for key, registerdInstance := range registeredInstances {
+				// registeredInstances put in actualInstances map of same key
+				if *autoScalingInstance.InstanceId == registerdInstance.InstanceID {
+					actualInstances[key] = registerdInstance
+					isRegistered = true
+					break
 				}
-				actualInstances[key] = instance
-				break
+			}
+			if !isRegistered {
+				var instanceData halib.InstanceData
+				instanceData.InstanceID = *autoScalingInstance.InstanceId
+				instanceData.IP = *autoScalingInstance.PrivateIpAddress
+				instanceData.MetricPlugins = []struct {
+					PluginName   string `json:"plugin_name"`
+					PluginOption string `json:"plugin_option"`
+				}{
+					{
+						PluginName:   "",
+						PluginOption: "",
+					},
+				}
+				newInstances = append(newInstances, instanceData)
+			}
+		}
+
+		// newInstances put in actualInstances map of empty key
+		for _, instance := range newInstances {
+			for i := 0; i < autoscalingCount; i++ {
+				key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
+				if _, ok := actualInstances[key]; !ok {
+					if _, ok := registeredInstances[key]; ok {
+						instance.MetricPlugins = registeredInstances[key].MetricPlugins
+					}
+					actualInstances[key] = instance
+					break
+				}
 			}
 		}
 	}
