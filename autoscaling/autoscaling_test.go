@@ -285,8 +285,16 @@ func (m *mockAutoScalingClient) DescribeAutoScalingGroups(input *autoscaling.Des
 			{InstanceId: aws.String("i-mmmmmm"), LifecycleState: aws.String("InService")},
 			{InstanceId: aws.String("i-nnnnnn"), LifecycleState: aws.String("InService")},
 		}
+	case "allfali-dummy-stg-ag":
+		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance{
+			{InstanceId: aws.String("i-kkkkkk"), LifecycleState: aws.String("Terminating")},
+			{InstanceId: aws.String("i-llllll"), LifecycleState: aws.String("Terminating")},
+			{InstanceId: aws.String("i-mmmmmm"), LifecycleState: aws.String("Terminating")},
+			{InstanceId: aws.String("i-nnnnnn"), LifecycleState: aws.String("Terminating")},
+		}
+	case "nil-dummy-stg-ag":
+		output.AutoScalingGroups[0].Instances = []*autoscaling.Instance(nil)
 	}
-
 	return output, nil
 }
 
@@ -656,6 +664,126 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 				{
 					InstanceID: "i-nnnnnn",
 					IP:         "192.0.2.24",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "allfail-dummy-stg-ag",
+			input1: "allfail-dummy-stg-ag",
+			input2: "allfail-dummy-stg-app",
+			input3: 4,
+			expected: []halib.InstanceData{
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "nill-dummy-stg-ag",
+			input1: "nill-dummy-stg-ag",
+			input2: "nill-dummy-stg-app",
+			input3: 4,
+			expected: []halib.InstanceData{
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+				{
+					InstanceID: "",
+					IP:         "",
 					MetricPlugins: []struct {
 						PluginName   string `json:"plugin_name"`
 						PluginOption string `json:"plugin_option"`
