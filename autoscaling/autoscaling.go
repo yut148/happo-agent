@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
@@ -92,31 +93,8 @@ func GetAutoScalingConfig(configFile string) (halib.AutoScalingConfig, error) {
 	return autoscalingConfig, nil
 }
 
-// RefreshAutoScalingInstances refresh alias maps
-func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPrefix string, autoscalingCount int) error {
-	log := util.HappoAgentLogger()
-
-	// Already registered instances to dbms
+func makeRegisteredInstances(transaction *leveldb.Transaction, hostPrefix string) map[string]halib.InstanceData {
 	registeredInstances := map[string]halib.InstanceData{}
-
-	// Not registered instances to dbms
-	newInstances := []halib.InstanceData{}
-
-	// Idempotent actual register instances
-	// It is reregister to dbms
-	actualInstances := map[string]halib.InstanceData{}
-
-	autoScalingInstances, err := client.describeAutoScalingInstances(autoScalingGroupName)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	transaction, err := db.DB.OpenTransaction()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
 
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix(
@@ -132,22 +110,65 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&instanceData)
 		registeredInstances[string(key)] = instanceData
-		transaction.Delete(key, nil)
 	}
 	iter.Release()
+	return registeredInstances
+}
 
+func checkRegistered(instance *ec2.Instance, registeredInstances map[string]halib.InstanceData) (bool, string) {
+	isRegistered := false
+	var registeredKey string
+	for key, registerdInstance := range registeredInstances {
+		if *instance.InstanceId == registerdInstance.InstanceID {
+			registeredKey = key
+			isRegistered = true
+			break
+		}
+	}
+	return isRegistered, registeredKey
+}
+
+// RefreshAutoScalingInstances refresh alias maps
+func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPrefix string, autoscalingCount int) error {
+	log := util.HappoAgentLogger()
+
+	autoScalingInstances, err := client.describeAutoScalingInstances(autoScalingGroupName)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// Already registered instances to dbms
+	registeredInstances := makeRegisteredInstances(transaction, hostPrefix)
+
+	// init dbms
+	for key := range registeredInstances {
+		transaction.Delete([]byte(key), nil)
+	}
+
+	// Not registered instances to dbms
+	newInstances := []halib.InstanceData{}
+
+	// Idempotent actual register instances
+	// It is reregister to dbms
+	actualInstances := map[string]halib.InstanceData{}
+
+	// if there are autoscaling instances,
+	// put in actualInstances at same key an instances of registered to dbms in autoscaling instances
+	// after there, put in actualInstances at empty key an instances of not registered to dbms in autoscaling instances
 	if len(autoScalingInstances) > 0 {
 		for _, autoScalingInstance := range autoScalingInstances {
-			isRegistered := false
-			for key, registerdInstance := range registeredInstances {
-				// registeredInstances put in actualInstances map of same key
-				if *autoScalingInstance.InstanceId == registerdInstance.InstanceID {
-					actualInstances[key] = registerdInstance
-					isRegistered = true
-					break
-				}
-			}
-			if !isRegistered {
+			if isRegistered, key := checkRegistered(autoScalingInstance, registeredInstances); isRegistered {
+				// put in actualInstances at same key an instances of registered to dbms in autoscaling instances
+				actualInstances[key] = registeredInstances[key]
+			} else {
+				// append newInstances an instances of not registered to dbms in autoscaling instances
 				var instanceData halib.InstanceData
 				instanceData.InstanceID = *autoScalingInstance.InstanceId
 				instanceData.IP = *autoScalingInstance.PrivateIpAddress
@@ -164,7 +185,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 			}
 		}
 
-		// newInstances put in actualInstances map of empty key
+		// put in actualInstances at empty key a newInstances
 		for _, instance := range newInstances {
 			for i := 0; i < autoscalingCount; i++ {
 				key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
