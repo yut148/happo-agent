@@ -144,7 +144,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		return err
 	}
 
-	// Already registered instances to dbms
+	// registerdInstance has already been registered instances with dbms
 	registeredInstances := makeRegisteredInstances(transaction, hostPrefix)
 
 	// init dbms
@@ -152,23 +152,20 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		transaction.Delete([]byte(key), nil)
 	}
 
-	// Not registered instances to dbms
+	// newInstances has not been registered with dbms
 	newInstances := []halib.InstanceData{}
 
-	// Idempotent actual register instances
-	// It is reregister to dbms
+	// actualInstances will be registered to the dbms
 	actualInstances := map[string]halib.InstanceData{}
 
 	// if there are autoscaling instances,
-	// put in actualInstances at same key an instances of registered to dbms in autoscaling instances
-	// after there, put in actualInstances at empty key an instances of not registered to dbms in autoscaling instances
+	// put in actualInstances at same key an instances of registered with dbms in autoscaling instances
+	// after there, put in actualInstances at empty key an instances of not registered with dbms in autoscaling instances
 	if len(autoScalingInstances) > 0 {
 		for _, autoScalingInstance := range autoScalingInstances {
 			if isRegistered, key := checkRegistered(autoScalingInstance, registeredInstances); isRegistered {
-				// put in actualInstances at same key an instances of registered to dbms in autoscaling instances
 				actualInstances[key] = registeredInstances[key]
 			} else {
-				// append newInstances an instances of not registered to dbms in autoscaling instances
 				var instanceData halib.InstanceData
 				instanceData.InstanceID = *autoScalingInstance.InstanceId
 				instanceData.IP = *autoScalingInstance.PrivateIpAddress
@@ -185,7 +182,6 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 			}
 		}
 
-		// put in actualInstances at empty key a newInstances
 		for _, instance := range newInstances {
 			for i := 0; i < autoscalingCount; i++ {
 				key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
@@ -200,7 +196,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 		}
 	}
 
-	// Fill actualInstances with emptyInstance
+	// fill actualInstances with emptyInstance
 	for i := 0; i < autoscalingCount; i++ {
 		emptyInstance := halib.InstanceData{
 			InstanceID: "",
