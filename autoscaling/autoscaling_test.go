@@ -105,7 +105,7 @@ func TestAutoScaling(t *testing.T) {
 				actual = append(actual, struct {
 					name  string
 					count int
-				}{name: a.AutoScalingGroupName, count: len(a.InstanceData)})
+				}{name: a.AutoScalingGroupName, count: len(a.Instances)})
 			}
 
 			if c.isNormalTest {

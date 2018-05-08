@@ -32,8 +32,11 @@ type InstanceData struct {
 
 // AutoScalingData name and actual instance data
 type AutoScalingData struct {
-	AutoScalingGroupName string                  `json:"autoscaling_group_name"`
-	InstanceData         map[string]InstanceData `json:"instance_data"`
+	AutoScalingGroupName string `json:"autoscaling_group_name"`
+	Instances            []struct {
+		Alias        string       `json:"alias"`
+		InstanceData InstanceData `json:"instance_data"`
+	} `json:"instances"`
 }
 
 // --- Request Parameter

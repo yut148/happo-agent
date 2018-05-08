@@ -37,7 +37,10 @@ func AutoScaling(configPath string) ([]halib.AutoScalingData, error) {
 	for _, a := range autoScalingList.AutoScalings {
 		var autoScalingData halib.AutoScalingData
 		autoScalingData.AutoScalingGroupName = a.AutoScalingGroupName
-		autoScalingData.InstanceData = map[string]halib.InstanceData{}
+		autoScalingData.Instances = []struct {
+			Alias        string             `json:"alias"`
+			InstanceData halib.InstanceData `json:"instance_data"`
+		}{}
 
 		iter := transaction.NewIterator(
 			leveldbUtil.BytesPrefix(
@@ -51,7 +54,13 @@ func AutoScaling(configPath string) ([]halib.AutoScalingData, error) {
 			value := iter.Value()
 			dec := gob.NewDecoder(bytes.NewReader(value))
 			dec.Decode(&instanceData)
-			autoScalingData.InstanceData[alias] = instanceData
+			autoScalingData.Instances = append(autoScalingData.Instances, struct {
+				Alias        string             `json:"alias"`
+				InstanceData halib.InstanceData `json:"instance_data"`
+			}{
+				Alias:        alias,
+				InstanceData: instanceData,
+			})
 		}
 		autoScaling = append(autoScaling, autoScalingData)
 		iter.Release()
