@@ -869,7 +869,7 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 
 			iter := db.DB.NewIterator(
 				leveldbUtil.BytesPrefix(
-					[]byte(fmt.Sprintf("ag-%s-", c.input2)),
+					[]byte(fmt.Sprintf("ag-%s-%s-", c.input1, c.input2)),
 				),
 				nil,
 			)

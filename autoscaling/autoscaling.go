@@ -44,7 +44,7 @@ func AutoScaling(configPath string) ([]halib.AutoScalingData, error) {
 
 		iter := transaction.NewIterator(
 			leveldbUtil.BytesPrefix(
-				[]byte(fmt.Sprintf("ag-%s-", a.HostPrefix)),
+				[]byte(fmt.Sprintf("ag-%s-%s-", a.AutoScalingGroupName, a.HostPrefix)),
 			),
 			nil,
 		)
@@ -102,12 +102,12 @@ func GetAutoScalingConfig(configFile string) (halib.AutoScalingConfig, error) {
 	return autoscalingConfig, nil
 }
 
-func makeRegisteredInstances(transaction *leveldb.Transaction, hostPrefix string) map[string]halib.InstanceData {
+func makeRegisteredInstances(transaction *leveldb.Transaction, autoScalingGroupName, hostPrefix string) map[string]halib.InstanceData {
 	registeredInstances := map[string]halib.InstanceData{}
 
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix(
-			[]byte(fmt.Sprintf("ag-%s-", hostPrefix)),
+			[]byte(fmt.Sprintf("ag-%s-%s-", autoScalingGroupName, hostPrefix)),
 		),
 		nil,
 	)
@@ -154,7 +154,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 	}
 
 	// registerdInstance has already been registered instances with dbms
-	registeredInstances := makeRegisteredInstances(transaction, hostPrefix)
+	registeredInstances := makeRegisteredInstances(transaction, autoScalingGroupName, hostPrefix)
 
 	// init dbms
 	for key := range registeredInstances {
@@ -193,7 +193,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 
 		for _, instance := range newInstances {
 			for i := 0; i < autoscalingCount; i++ {
-				key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
+				key := fmt.Sprintf("ag-%s-%s-%d", autoScalingGroupName, hostPrefix, i+1)
 				if _, ok := actualInstances[key]; !ok {
 					if _, ok := registeredInstances[key]; ok {
 						instance.MetricPlugins = registeredInstances[key].MetricPlugins
@@ -220,7 +220,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 				},
 			},
 		}
-		key := fmt.Sprintf("ag-%s-%d", hostPrefix, i+1)
+		key := fmt.Sprintf("ag-%s-%s-%d", autoScalingGroupName, hostPrefix, i+1)
 		if _, ok := actualInstances[key]; !ok {
 			if _, ok := registeredInstances[key]; ok {
 				emptyInstance.MetricPlugins = registeredInstances[key].MetricPlugins
