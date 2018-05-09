@@ -70,6 +70,12 @@ func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render
 			break
 		}
 	}
+	if autoScalingGroupName == "" {
+		response.Status = "error"
+		response.Message = "can't find autoscaling group name in config"
+		r.JSON(http.StatusNotFound, response)
+		return
+	}
 
 	client := autoscaling.NewAWSClient()
 	err = autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount)
