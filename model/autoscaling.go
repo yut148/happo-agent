@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/autoscaling"
@@ -42,13 +44,6 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render) {
 	var response halib.AutoScalingRefreshResponse
 
-	if request.AutoScalingGroupName == "" {
-		response.Status = "error"
-		response.Message = "autoscaling_group_name required"
-		r.JSON(http.StatusBadRequest, response)
-		return
-	}
-
 	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
 	if err != nil {
 		response.Status = "error"
@@ -57,20 +52,36 @@ func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render
 		return
 	}
 
-	var (
+	var refreshAutoScalingGroups = []struct {
 		autoScalingGroupName string
 		autoScalingCount     int
 		hostPrefix           string
-	)
+	}{}
 	for _, a := range autoScalingList.AutoScalings {
 		if request.AutoScalingGroupName == a.AutoScalingGroupName {
-			autoScalingGroupName = a.AutoScalingGroupName
-			autoScalingCount = a.AutoScalingCount
-			hostPrefix = a.HostPrefix
+			refreshAutoScalingGroups = append(refreshAutoScalingGroups, struct {
+				autoScalingGroupName string
+				autoScalingCount     int
+				hostPrefix           string
+			}{
+				autoScalingGroupName: a.AutoScalingGroupName,
+				autoScalingCount:     a.AutoScalingCount,
+				hostPrefix:           a.HostPrefix,
+			})
 			break
+		} else if request.AutoScalingGroupName == "" {
+			refreshAutoScalingGroups = append(refreshAutoScalingGroups, struct {
+				autoScalingGroupName string
+				autoScalingCount     int
+				hostPrefix           string
+			}{
+				autoScalingGroupName: a.AutoScalingGroupName,
+				autoScalingCount:     a.AutoScalingCount,
+				hostPrefix:           a.HostPrefix,
+			})
 		}
 	}
-	if autoScalingGroupName == "" {
+	if len(refreshAutoScalingGroups) == 0 {
 		response.Status = "error"
 		response.Message = "can't find autoscaling group name in config"
 		r.JSON(http.StatusNotFound, response)
@@ -78,11 +89,17 @@ func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render
 	}
 
 	client := autoscaling.NewAWSClient()
-	err = autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount)
-	if err != nil {
+	var errors []string
+	for _, a := range refreshAutoScalingGroups {
+		err = autoscaling.RefreshAutoScalingInstances(client, a.autoScalingGroupName, a.hostPrefix, a.autoScalingCount)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("failed to refresh for %s: %s", a.autoScalingGroupName, err.Error()))
+		}
+	}
+	if len(errors) > 0 {
 		response.Status = "error"
-		response.Message = err.Error()
-		r.JSON(http.StatusOK, response)
+		response.Message = strings.Join(errors, ",")
+		r.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
