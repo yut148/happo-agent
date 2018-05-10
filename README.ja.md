@@ -130,6 +130,34 @@ metrics:
   - (以上同じ)
 ```
 
+## AutoScaling設定
+
+`autoscaling.yaml`ファイルは、次の構造で記述します。
+
+```
+autoscalings:
+- autoscaling_group_name: AutoScalingGroup名
+  autoscaling_count: AutoScalingGroupのインスタンス数
+  host_prefix: ホスト名のプレフィックス
+- (以上同じ)
+```
+
+注意点:
+
+AutoScalingのインスタンスのデータはDBMSに保存します。
+保存時のキーは、上記で指定したAutoScalingGroup名とホスト名のプレフィックスを組み合わせて生成するため(詳細は[こちら](/README.md#dbms))、AutoScalingGroupの設定をするときにはキーが衝突しないように注意してください。
+
+例えば以下の設定では、`autoscaling_group_name`と`host_prefix`を組み合わせると同じプレフィックスのキーが生成されるため、キーが衝突します。
+
+```
+autoscalings:
+- autoscaling_group_name: sysx-web-a
+  autoscaling_count: 4
+  host_prefix: ap
+- autoscaling_group_name: sysx-web
+  autoscaling_count: 4
+  host_prefix: a-ap
+```
 
 ## API
 
@@ -262,6 +290,79 @@ Get collected metric status.
 ```
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/status
 {"capacity":4,"length":4,"newest_timestamp":1454654233,"oldest_timestamp":1454654173}
+```
+
+### /autoscaling
+
+登録済みのAutoScalingインスタンスの一覧を返します。
+
+- 入力形式
+    - なし
+- 入力変数
+    - なし
+- 返り値の形式
+    - JSON
+- 返り値の変数
+    - autoscaling:
+        - (Array)
+            - autoscaling_group_name: AutoScaling Group名
+            - instances: AutoScaling Groupに所属するインスタンス
+                - (Array)
+                    - alias: インスタンスに割り当てられたエイリアス
+                    - instance_data:
+                        - ip: プライベートIPアドレス
+                        - instance_id: インスタンスID
+                        - metric_plugins:
+                            - (Array)
+                                - plugin_name: メトリックプラグイン名
+                                - plugin_option: メトリックプラグインのオプション
+
+```
+$ wget -q --no-check-certificate -O -  https://127.0.0.1:6777/autoscaling
+{"autoscaling":[{"autoscaling_group_name":"hb-autoscaling","instances":[{"alias":"hb-autoscaling-app-1","instance_data":{"ip":"192.0.2.11","instance_id":"i-aaaaaaaaaaaaaaaaa","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-2","instance_data":{"ip":"192.0.2.12","instance_id":"i-bbbbbbbbbbbbbbbbb","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-3","instance_data":{"ip":"192.0.2.13","instance_id":"i-ccccccccccccccccc","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-4","instance_data":{"ip":"192.0.2.14","instance_id":"i-ddddddddddddddddd","metric_plugins":[{"plugin_name":"","plugin_option":""}]}}]}]}
+```
+
+### /autoscaling/config/update
+
+AutoScalingの設定を更新します。
+
+- 入力形式
+    - JSON
+- 入力変数
+    - apikey: ""
+    - config: AutoScalingの設定
+        - autoscalings:
+            - autoscaling_group_name: AutoScalingの設定
+            - autoscaling_count: AutoScalingのインスタンス数
+            - host_prefix: ホスト名のプレフィックス
+- 返り値の形式
+    - JSON
+- 返り値の変数
+    - status: 実行結果のステータス
+    - message: エージェントからのメッセージ (特にエラーがあれば掲載)
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/config/update --post-data="{\"apikey\":\"\",\"config\":{\"autoscalings\":[{\"autoscaling_group_name\":\"hb-autoscaling\",\"autoscaling_count\":"4",\"host_prefix\":\"app\"}]}}"
+{"status":"OK","message":""}
+```
+
+### /autoscaling/refresh
+
+最新のAutoScalingインスタンス一覧をDBに反映します。
+
+- 入力形式
+    - JSON
+- 入力変数
+    - autoscaling_group_name: autoscaling group name
+- 返り値の形式
+    - JSON
+- 返り値の変数　
+    - status: 実行結果のステータス
+    - message: エージェントからのメッセージ (特にエラーがあれば掲載)
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/refresh --post-data="{\"autoscaling_group_name\": \"hb-autoscaling\"}"
+{"status":"OK","message":""}
 ```
 
 ## Contribution

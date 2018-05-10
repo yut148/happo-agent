@@ -20,6 +20,25 @@ type InventoryData struct {
 	Created       string `json:"created"`
 }
 
+// InstanceData is actual instance
+type InstanceData struct {
+	IP            string `json:"ip"`
+	InstanceID    string `json:"instance_id"`
+	MetricPlugins []struct {
+		PluginName   string `json:"plugin_name"`
+		PluginOption string `json:"plugin_option"`
+	} `json:"metric_plugins"`
+}
+
+// AutoScalingData name and actual instance data
+type AutoScalingData struct {
+	AutoScalingGroupName string `json:"autoscaling_group_name"`
+	Instances            []struct {
+		Alias        string       `json:"alias"`
+		InstanceData InstanceData `json:"instance_data"`
+	} `json:"instances"`
+}
+
 // --- Request Parameter
 
 // ProxyRequest is /proxy API
@@ -66,6 +85,18 @@ type ManageRequest struct {
 	Hostdata CrawlConfigAgent `json:"hostdata"`
 }
 
+// AutoScalingRefreshRequest is /autoscaling/refresh API
+type AutoScalingRefreshRequest struct {
+	APIKey               string `json:"apikey"`
+	AutoScalingGroupName string `json:"autoscaling_group_name"`
+}
+
+// AutoScalingConfigUpdateRequest is /autoscaling/config/update API
+type AutoScalingConfigUpdateRequest struct {
+	APIKey string            `json:"apikey"`
+	Config AutoScalingConfig `json:"config"`
+}
+
 // --- Response Parameter
 
 // MonitorResponse is /monitor API
@@ -100,6 +131,23 @@ type InventoryResponse struct {
 
 // ManageResponse is Manage API
 type ManageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// AutoScalingResponse is /autoscaling API
+type AutoScalingResponse struct {
+	AutoScaling []AutoScalingData `json:"autoscaling"`
+}
+
+// AutoScalingRefreshResponse is /autoscaling/refresh API
+type AutoScalingRefreshResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// AutoScalingConfigUpdateResponse is /autoscaling/config/update API
+type AutoScalingConfigUpdateResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }

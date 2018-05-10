@@ -114,6 +114,34 @@ metrics:
   - ...
 ```
 
+### AutoScaling configuration
+
+autoscaling.yaml
+
+```
+autoscalings:
+- autoscaling_group_name: [AutoScaling Group Name]
+  autoscaling_count: [Number of AutoScaling Group Instances]
+  host_prefix: [HOSTNAME Prefix]
+- ...
+```
+
+IMPORTANT NOTICE:
+
+AutoScaling instances data is stored with DBMS, DB key prefix is composed of autoscaling group name and hostprefix (see also [DBMS](#dbms)).
+You should take care about DB key confrict when update autoscaling configuration.
+
+In this case, DB key confrict. because it will generate DB key in same prefix composed of `autoscaling_group_name` and `host_prefix`.
+
+```
+autoscalings:
+- autoscaling_group_name: sysx-web-a
+  autoscaling_count: 4
+  host_prefix: ap
+- autoscaling_group_name: sysx-web
+  autoscaling_count: 4
+  host_prefix: a-ap
+```
 
 ## API
 
@@ -257,6 +285,79 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/append --pos
 
 replaced to /status
 
+### /autoscaling
+
+List registered autoscaling instances
+
+- Input format
+    - None
+- Input variables
+    - None
+- Return format
+    - JSON
+- Return variables
+    - autoscaling: autoscaling list
+        - (Array)
+            - autoscaling_group_name: autoscaling group name
+            - instances: autoscaling group instances
+                - (Array)
+                    - alias: alias of instance
+                    - instance_data:
+                        - ip: private ip address by Amazon EC2
+                        - instance_id: instance id by Amazon EC2
+                        - metric_plugins:
+                            - (Array)
+                                - plugin_name: metric plugin name
+                                - plugin_option: metric plugin option
+
+```
+$ wget -q --no-check-certificate -O -  https://127.0.0.1:6777/autoscaling
+{"autoscaling":[{"autoscaling_group_name":"hb-autoscaling","instances":[{"alias":"hb-autoscaling-app-1","instance_data":{"ip":"192.0.2.11","instance_id":"i-aaaaaaaaaaaaaaaaa","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-2","instance_data":{"ip":"192.0.2.12","instance_id":"i-bbbbbbbbbbbbbbbbb","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-3","instance_data":{"ip":"192.0.2.13","instance_id":"i-ccccccccccccccccc","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-4","instance_data":{"ip":"192.0.2.14","instance_id":"i-ddddddddddddddddd","metric_plugins":[{"plugin_name":"","plugin_option":""}]}}]}]}
+```
+
+### /autoscaling/config/update
+
+Update autoscaling config
+
+- Input format
+    - JSON
+- Input variables
+    - apikey: ""
+    - config: configuration of autoscaling groups
+        - autoscalings:
+            - autoscaling_group_name: autoscaling group name
+            - autoscaling_count: num of autoscaling instances
+            - host_prefix: hostname(alias) prefix
+- Return format
+    - JSON
+- Return variables
+    - status: result status
+    - message: message from agent (if error occurred)
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/config/update --post-data="{\"apikey\":\"\",\"config\":{\"autoscalings\":[{\"autoscaling_group_name\":\"hb-autoscaling\",\"autoscaling_count\":"4",\"host_prefix\":\"app\"}]}}"
+{"status":"OK","message":""}
+```
+
+### /autoscaling/refresh
+
+Refresh autoscaling instances
+
+- Input format
+    - JSON
+- Input variables
+    - autoscaling_group_name: autoscaling group name
+- Return format
+    - JSON
+- Return variables
+    - status: result status
+    - message: message from agent (if error occurred)
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/refresh --post-data="{\"autoscaling_group_name\": \"hb-autoscaling\"}"
+{"status":"OK","message":""}
+```
+
 ### /status
 
 Get happo-agent status
@@ -366,6 +467,8 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/s-149
     - value: `happo_agent.MetricsData`
 - key `s-<timestamp>` are saved machine state(timestamp is unixtime).
     - value: `string`
+- key `ag-<autoscaling group name>-<host prefix>-<serial number>` are saved autoscaling instance data.
+    - value: `happo_agent.InstanceData`
 
 [syndtr/goleveldb: LevelDB key/value database in Go\.](https://github.com/syndtr/goleveldb)
 

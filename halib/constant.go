@@ -57,3 +57,6 @@ const DefaultSensuPluginPaths = "/usr/local/hb-agent/bin,/usr/local/bin"
 
 // DefaultMetricsConfigPath is default metric collection config path
 const DefaultMetricsConfigPath = "./metrics.yaml"
+
+// DefaultAutoScalingConfigPath is default autoscaling config path
+const DefaultAutoScalingConfigPath = "./autoscaling.yaml"
