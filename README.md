@@ -358,6 +358,21 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/refresh
 {"status":"OK","message":""}
 ```
 
+### /autoscaling/instance/deregister
+
+Delete autocaling instances
+
+- Input format
+    - JSON
+- Input variables
+    - apikey: ""
+    - instance_id: instance id by Amazon EC2
+- Return format
+    - JSON
+- Return variables
+    - status: result status
+    - message: message from agent (if error occurred)
+
 ### /status
 
 Get happo-agent status
