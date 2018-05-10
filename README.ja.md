@@ -130,6 +130,34 @@ metrics:
   - (以上同じ)
 ```
 
+## AutoScaling設定
+
+`autoscaling.yaml`ファイルは、次の構造で記述します。
+
+```
+autoscalings:
+- autoscaling_group_name: AutoScalingGroup名
+  autoscaling_count: AutoScalingGroupのインスタンス数
+  host_prefix: ホスト名のプレフィックス
+- (以上同じ)
+```
+
+注意点:
+
+AutoScalingのインスタンスのデータはDBMSに保存します。
+保存時のキーは、上記で指定したAutoScalingGroup名とホスト名のプレフィックスを組み合わせて生成するため(詳細は[こちら](/README.md#dbms))、AutoScalingGroupの設定をするときにはキーが衝突しないように注意してください。
+
+例えば以下の設定では、`autoscaling_group_name`と`host_prefix`を組み合わせると同じプレフィックスのキーが生成されるため、キーが衝突します。
+
+```
+autoscalings:
+- autoscaling_group_name: sysx-web-a
+  autoscaling_count: 4
+  host_prefix: ap
+- autoscaling_group_name: sysx-web
+  autoscaling_count: 4
+  host_prefix: a-ap
+```
 
 ## API
 

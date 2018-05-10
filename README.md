@@ -114,6 +114,34 @@ metrics:
   - ...
 ```
 
+### AutoScaling configuration
+
+autoscaling.yaml
+
+```
+autoscalings:
+- autoscaling_group_name: [AutoScaling Group Name]
+  autoscaling_count: [Number of AutoScaling Group Instances]
+  host_prefix: [HOSTNAME Prefix]
+- ...
+```
+
+IMPORTANT NOTICE:
+
+AutoScaling instances data is stored with DBMS, DB key prefix is composed of autoscaling group name and hostprefix (see also [DBMS](#dbms)).
+You should take care about DB key confrict when update autoscaling configuration.
+
+In this case, DB key confrict. because it will generate DB key in same prefix composed of `autoscaling_group_name` and `host_prefix`.
+
+```
+autoscalings:
+- autoscaling_group_name: sysx-web-a
+  autoscaling_count: 4
+  host_prefix: ap
+- autoscaling_group_name: sysx-web
+  autoscaling_count: 4
+  host_prefix: a-ap
+```
 
 ## API
 
