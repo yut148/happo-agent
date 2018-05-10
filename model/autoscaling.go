@@ -58,27 +58,19 @@ func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render
 		hostPrefix           string
 	}{}
 	for _, a := range autoScalingList.AutoScalings {
+		if request.AutoScalingGroupName == a.AutoScalingGroupName || request.AutoScalingGroupName == "" {
+			refreshAutoScalingGroups = append(refreshAutoScalingGroups, struct {
+				autoScalingGroupName string
+				autoScalingCount     int
+				hostPrefix           string
+			}{
+				autoScalingGroupName: a.AutoScalingGroupName,
+				autoScalingCount:     a.AutoScalingCount,
+				hostPrefix:           a.HostPrefix,
+			})
+		}
 		if request.AutoScalingGroupName == a.AutoScalingGroupName {
-			refreshAutoScalingGroups = append(refreshAutoScalingGroups, struct {
-				autoScalingGroupName string
-				autoScalingCount     int
-				hostPrefix           string
-			}{
-				autoScalingGroupName: a.AutoScalingGroupName,
-				autoScalingCount:     a.AutoScalingCount,
-				hostPrefix:           a.HostPrefix,
-			})
 			break
-		} else if request.AutoScalingGroupName == "" {
-			refreshAutoScalingGroups = append(refreshAutoScalingGroups, struct {
-				autoScalingGroupName string
-				autoScalingCount     int
-				hostPrefix           string
-			}{
-				autoScalingGroupName: a.AutoScalingGroupName,
-				autoScalingCount:     a.AutoScalingCount,
-				hostPrefix:           a.HostPrefix,
-			})
 		}
 	}
 	if len(refreshAutoScalingGroups) == 0 {
