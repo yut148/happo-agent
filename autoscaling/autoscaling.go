@@ -108,12 +108,14 @@ func getInstanceData(transaction *leveldb.Transaction, instanceID string) ([]byt
 
 	iter := transaction.NewIterator(leveldbUtil.BytesPrefix([]byte("ag-")), nil)
 	for iter.Next() {
+		var d halib.InstanceData
 		value := iter.Value()
 
 		dec := gob.NewDecoder(bytes.NewReader(value))
-		dec.Decode(&instanceData)
-		if instanceData.InstanceID == instanceID {
+		dec.Decode(&d)
+		if d.InstanceID == instanceID {
 			key = iter.Key()
+			instanceData = d
 			break
 		}
 	}
