@@ -245,6 +245,43 @@ func TestGetAutoScalingConfig(t *testing.T) {
 	}
 }
 
+func TestDeregisterAutoScalingInstance(t *testing.T) {
+	var cases = []struct {
+		name         string
+		input        string
+		isNormalTest bool
+	}{
+		{
+			name:         "deregister i-aaaaaa",
+			input:        "i-aaaaaa",
+			isNormalTest: true,
+		},
+		{
+			name:         "deregister i-zzzzzz",
+			input:        "i-zzzzzz",
+			isNormalTest: false,
+		},
+	}
+
+	client := &AWSClient{
+		svcEC2:         &mockEC2Client{},
+		svcAutoscaling: &mockAutoScalingClient{},
+	}
+	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := DeregisterAutoScalingInstance(c.input)
+			if c.isNormalTest {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+			}
+		})
+	}
+
+}
+
 type mockAutoScalingClient struct {
 	autoscalingiface.AutoScalingAPI
 }
