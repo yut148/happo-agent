@@ -44,6 +44,13 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 func AutoScalingInstanceDeregister(request halib.AutoScalingInstanceDeregisterRequest, r render.Render) {
 	var response halib.AutoScalingInstanceDeregisterResponse
 
+	if request.InstanceID == "" {
+		response.Status = "NG"
+		response.Message = "instance_id required"
+		r.JSON(http.StatusBadRequest, response)
+		return
+	}
+
 	err := autoscaling.DeregisterAutoScalingInstance(request.InstanceID)
 	if err != nil {
 		response.Status = "NG"
