@@ -102,6 +102,72 @@ func GetAutoScalingConfig(configFile string) (halib.AutoScalingConfig, error) {
 	return autoscalingConfig, nil
 }
 
+func getInstanceData(transaction *leveldb.Transaction, instanceID string) ([]byte, halib.InstanceData) {
+	var key []byte
+	var instanceData halib.InstanceData
+
+	iter := transaction.NewIterator(leveldbUtil.BytesPrefix([]byte("ag-")), nil)
+	for iter.Next() {
+		var d halib.InstanceData
+		value := iter.Value()
+
+		dec := gob.NewDecoder(bytes.NewReader(value))
+		dec.Decode(&d)
+		if d.InstanceID == instanceID {
+			key = iter.Key()
+			instanceData = d
+			break
+		}
+	}
+
+	return key, instanceData
+}
+
+// DeregisterAutoScalingInstance deregister autoscaling instance from dbms
+func DeregisterAutoScalingInstance(instanceID string) error {
+	log := util.HappoAgentLogger()
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	key, instanceData := getInstanceData(transaction, instanceID)
+	if key == nil {
+		transaction.Discard()
+		err := fmt.Errorf("%s is not registered", instanceID)
+		log.Error(err)
+		return err
+	}
+
+	err = transaction.Delete(key, nil)
+	if err != nil {
+		transaction.Discard()
+		log.Error(err)
+		return err
+	}
+
+	instanceData.InstanceID = ""
+	instanceData.IP = ""
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	err = enc.Encode(instanceData)
+	transaction.Put(
+		key,
+		b.Bytes(),
+		nil,
+	)
+
+	err = transaction.Commit()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func makeRegisteredInstances(transaction *leveldb.Transaction, autoScalingGroupName, hostPrefix string) map[string]halib.InstanceData {
 	registeredInstances := map[string]halib.InstanceData{}
 
