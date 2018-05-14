@@ -365,6 +365,25 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/refresh
 {"status":"OK","message":""}
 ```
 
+### /autoscaling/delete
+
+AutoScalingグループのインスタンスデータを削除します。
+
+- 入力形式
+    - JSON
+- 入力変数
+    - autoscaling_group_name: autoscaling group name
+- 返り値の形式
+    - JSON
+- 返り値の変数　
+    - status: 実行結果のステータス
+    - message: エージェントからのメッセージ (特にエラーがあれば掲載)
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/delete --post-data="{\"autoscaling_group_name\": \"hb-autoscaling\"}"
+{"status":"OK","message":""}
+```
+
 ## Contribution
 
 1. Fork ([http://github.com/heartbeatsjp/happo-agent/fork](http://github.com/heartbeatsjp/happo-agent/fork))
