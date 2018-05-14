@@ -9,3 +9,4 @@ vendor/
 .wercker/
 debug
 .vscode/
+happo-agent_linux_amd64
