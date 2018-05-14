@@ -145,6 +145,7 @@ func CmdDaemon(c *cli.Context) {
 	m.Post("/metric/append", binding.Json(halib.MetricAppendRequest{}), model.MetricAppend)
 	m.Post("/metric/config/update", binding.Json(halib.MetricConfigUpdateRequest{}), model.MetricConfigUpdate)
 	m.Post("/autoscaling/refresh", binding.Json(halib.AutoScalingRefreshRequest{}), model.AutoScalingRefresh)
+	m.Post("/autoscaling/delete", binding.Json(halib.AutoScalingDeleteRequest{}), model.AutoScalingDelete)
 	m.Post("/autoscaling/instance/deregister", binding.Json(halib.AutoScalingInstanceDeregisterRequest{}), model.AutoScalingInstanceDeregister)
 	m.Post("/autoscaling/config/update", binding.Json(halib.AutoScalingConfigUpdateRequest{}), model.AutoScalingConfigUpdate)
 	m.Get("/autoscaling", model.AutoScaling)
