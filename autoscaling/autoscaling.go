@@ -323,5 +323,39 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 
 // DeleteAutoScaling delete autoscaling instances data
 func DeleteAutoScaling(autoScalingGroupName string) error {
+	log := util.HappoAgentLogger()
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix(
+			[]byte(fmt.Sprintf("ag-%s-", autoScalingGroupName)),
+		),
+		nil,
+	)
+	batch := new(leveldb.Batch)
+	for iter.Next() {
+		key := iter.Key()
+		batch.Delete(key)
+	}
+	iter.Release()
+
+	err = transaction.Write(batch, nil)
+	if err != nil {
+		transaction.Discard()
+		log.Error(err)
+		return err
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
 	return nil
 }
