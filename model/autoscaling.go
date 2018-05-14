@@ -62,6 +62,45 @@ func AutoScalingInstanceDeregister(request halib.AutoScalingInstanceDeregisterRe
 	r.JSON(http.StatusOK, response)
 }
 
+// AutoScalingDelete delete autoscaling instances data
+func AutoScalingDelete(request halib.AutoScalingDeleteRequest, r render.Render) {
+	var response halib.AutoScalingDeleteResponse
+
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	var deleteAutoScalingGroups []string
+	for _, a := range autoScalingList.AutoScalings {
+		if request.AutoScalingGroupName == a.AutoScalingGroupName || request.AutoScalingGroupName == "" {
+			deleteAutoScalingGroups = append(deleteAutoScalingGroups, a.AutoScalingGroupName)
+		}
+		if request.AutoScalingGroupName == a.AutoScalingGroupName {
+			break
+		}
+	}
+
+	var errors []string
+	for _, a := range deleteAutoScalingGroups {
+		err := autoscaling.DeleteAutoScaling(a)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("failed to delete for %s: %s", a, err.Error()))
+		}
+	}
+	if len(errors) > 0 {
+		response.Status = "error"
+		response.Message = strings.Join(errors, ",")
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	r.JSON(http.StatusOK, response)
+}
+
 // AutoScalingRefresh refresh autoscaling
 func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render) {
 	var response halib.AutoScalingRefreshResponse

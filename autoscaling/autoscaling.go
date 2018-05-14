@@ -320,3 +320,8 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 
 	return nil
 }
+
+// DeleteAutoScaling delete autoscaling instances data
+func DeleteAutoScaling(autoScalingGroupName string) error {
+	return nil
+}
