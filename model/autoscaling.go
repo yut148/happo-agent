@@ -98,6 +98,7 @@ func AutoScalingDelete(request halib.AutoScalingDeleteRequest, r render.Render) 
 		return
 	}
 
+	response.Status = "OK"
 	r.JSON(http.StatusOK, response)
 }
 
