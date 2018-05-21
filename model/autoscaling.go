@@ -62,6 +62,51 @@ func AutoScalingInstanceDeregister(request halib.AutoScalingInstanceDeregisterRe
 	r.JSON(http.StatusOK, response)
 }
 
+// AutoScalingDelete delete autoscaling instances data
+func AutoScalingDelete(request halib.AutoScalingDeleteRequest, r render.Render) {
+	var response halib.AutoScalingDeleteResponse
+
+	if request.AutoScalingGroupName == "" {
+		response.Status = "error"
+		response.Message = "autoscaling_gorup_name required"
+		r.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	var deleteAutoScalingGroup string
+	for _, a := range autoScalingList.AutoScalings {
+		if request.AutoScalingGroupName == a.AutoScalingGroupName {
+			deleteAutoScalingGroup = a.AutoScalingGroupName
+			break
+		}
+	}
+
+	if deleteAutoScalingGroup == "" {
+		response.Status = "error"
+		response.Message = "can't find autoscaling group name in config"
+		r.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	if err := autoscaling.DeleteAutoScaling(deleteAutoScalingGroup); err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	response.Status = "OK"
+	r.JSON(http.StatusOK, response)
+}
+
 // AutoScalingRefresh refresh autoscaling
 func AutoScalingRefresh(request halib.AutoScalingRefreshRequest, r render.Render) {
 	var response halib.AutoScalingRefreshResponse

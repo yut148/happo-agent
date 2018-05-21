@@ -358,9 +358,28 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/refresh
 {"status":"OK","message":""}
 ```
 
+### /autoscaling/delete
+
+Delete autoscaling instances data
+
+- Input format
+    - JSON
+- Input variables
+    - autoscaling_group_name: autoscaling group name
+- Return format
+    - JSON
+- Return variables
+    - status: result status
+    - message: message from agent (if error occurred)
+
+```
+$ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/delete --post-data="{\"autoscaling_group_name\": \"hb-autoscaling\"}"
+{"status":"OK","message":""}
+```
+
 ### /autoscaling/instance/deregister
 
-Delete autocaling instances
+Deregister autocaling instances
 
 - Input format
     - JSON

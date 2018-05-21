@@ -28,6 +28,20 @@ const TestMultiConfigFile = "./testdata/autoscaling_test_multi.yaml"
 const TestEmptyConfigFile = "./testdata/autoscaling_test_empty.yaml"
 const TestMissingConfigFile = "./testdata/autoscaling_test_missing.yaml"
 
+func teardown() {
+	iter := db.DB.NewIterator(
+		leveldbUtil.BytesPrefix(
+			[]byte("ag-"),
+		),
+		nil,
+	)
+	for iter.Next() {
+		key := iter.Key()
+		db.DB.Delete(key, nil)
+	}
+	iter.Release()
+}
+
 func TestAutoScaling(t *testing.T) {
 	var cases = []struct {
 		name     string
@@ -92,6 +106,7 @@ func TestAutoScaling(t *testing.T) {
 	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
 	RefreshAutoScalingInstances(client, "fail-dummy-prod-ag", "fail-dummy-prod-app", 10)
 	RefreshAutoScalingInstances(client, "dummy-stg-ag", "dummy-stg-app", 4)
+	defer teardown()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -268,6 +283,7 @@ func TestDeregisterAutoScalingInstance(t *testing.T) {
 		svcAutoscaling: &mockAutoScalingClient{},
 	}
 	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
+	defer teardown()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -895,6 +911,8 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 		},
 	}
 
+	defer teardown()
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			client := &AWSClient{
@@ -922,6 +940,55 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			iter.Release()
 
 			assert.Equal(t, c.expected, actual)
+		})
+	}
+}
+
+func TestDeleteAutoScaling(t *testing.T) {
+	var cases = []struct {
+		name     string
+		input    string
+		expected int
+	}{
+		{
+			name:     "dummy-prod-ag",
+			input:    "dummy-prod-ag",
+			expected: 0,
+		},
+		{
+			name:     "empty",
+			input:    "",
+			expected: 0,
+		},
+	}
+
+	client := &AWSClient{
+		svcEC2:         &mockEC2Client{},
+		svcAutoscaling: &mockAutoScalingClient{},
+	}
+	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
+	defer teardown()
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := DeleteAutoScaling(c.input)
+			assert.Nil(t, err)
+
+			iter := db.DB.NewIterator(
+				leveldbUtil.BytesPrefix(
+					[]byte(fmt.Sprintf("ag-%s", c.input)),
+				),
+				nil,
+			)
+			var actual []string
+			for iter.Next() {
+				key := iter.Key()
+				actual = append(actual, string(key))
+			}
+			iter.Release()
+
+			assert.Equal(t, c.expected, len(actual))
+
 		})
 	}
 }
