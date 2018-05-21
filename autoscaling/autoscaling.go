@@ -123,6 +123,11 @@ func getInstanceData(transaction *leveldb.Transaction, instanceID string) ([]byt
 	return key, instanceData
 }
 
+// RegisterAutoScalingInstance register autoscaling instance to dbms
+func RegisterAutoScalingInstance(instanceID string) error {
+	return nil
+}
+
 // DeregisterAutoScalingInstance deregister autoscaling instance from dbms
 func DeregisterAutoScalingInstance(instanceID string) error {
 	log := util.HappoAgentLogger()

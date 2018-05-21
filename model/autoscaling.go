@@ -40,6 +40,20 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 	r.JSON(http.StatusOK, autoScalingResponse)
 }
 
+// AutoScalingInstanceRegister register autoscaling instance to dbms
+func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterRequest, r render.Render) {
+	var response halib.AutoScalingInstanceRegisterResponse
+
+	if err := autoscaling.RegisterAutoScalingInstance(request.InstanceID); err != nil {
+		response.Status = "NG"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	r.JSON(http.StatusOK, response)
+}
+
 // AutoScalingInstanceDeregister deregister autoscaling instance from dbms
 func AutoScalingInstanceDeregister(request halib.AutoScalingInstanceDeregisterRequest, r render.Render) {
 	var response halib.AutoScalingInstanceDeregisterResponse
