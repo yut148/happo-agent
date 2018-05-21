@@ -89,6 +89,13 @@ func AutoScalingDelete(request halib.AutoScalingDeleteRequest, r render.Render) 
 		}
 	}
 
+	if deleteAutoScalingGroup == "" {
+		response.Status = "error"
+		response.Message = "can't find autoscaling group name in config"
+		r.JSON(http.StatusNotFound, response)
+		return
+	}
+
 	if err := autoscaling.DeleteAutoScaling(deleteAutoScalingGroup); err != nil {
 		response.Status = "error"
 		response.Message = err.Error()
