@@ -377,6 +377,30 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/delete 
 {"status":"OK","message":""}
 ```
 
+### /autoscaling/instance/register
+
+Register autoscaling instance
+
+- Input format
+    - JSON
+- Input variables
+    - apikey: ""
+    - autoscaling_group_name: autoscaling group name
+    - ip: private ip address by Amazon EC2
+    - instance_id: instance id by Amazon EC2
+- Return format
+    - JSON
+- Return variables
+    - status: result status
+    - message: message from agent (if error occurred)
+    - instance_data:
+        - ip: private ip address by Amazon EC2
+        - instance_id: instance id by Amazon EC2
+        - metric_plugins:
+            - (Array)
+                - plugin_name: metric plugin name
+                - plugin_option: metric plugin option
+
 ### /autoscaling/instance/deregister
 
 Deregister autocaling instances
