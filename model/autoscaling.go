@@ -44,7 +44,38 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterRequest, r render.Render) {
 	var response halib.AutoScalingInstanceRegisterResponse
 
-	if err := autoscaling.RegisterAutoScalingInstance(request.InstanceID); err != nil {
+	if request.AutoScalingGroupName == "" || request.InstanceID == "" || request.IP == "" {
+		response.Status = "error"
+		response.Message = "missing parameter"
+		r.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		r.JSON(http.StatusInternalServerError, response)
+	}
+
+	var autoScalingGroupName string
+	var hostPrefix string
+	for _, a := range autoScalingList.AutoScalings {
+		if request.AutoScalingGroupName == a.AutoScalingGroupName {
+			autoScalingGroupName = a.AutoScalingGroupName
+			hostPrefix = a.HostPrefix
+			break
+		}
+	}
+
+	if autoScalingGroupName == "" {
+		response.Status = "error"
+		response.Message = "can't find autoscaling group name in config"
+		r.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	if err := autoscaling.RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, request.InstanceID, request.IP); err != nil {
 		response.Status = "NG"
 		response.Message = err.Error()
 		r.JSON(http.StatusInternalServerError, response)
