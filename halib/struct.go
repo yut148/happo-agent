@@ -99,9 +99,10 @@ type AutoScalingDeleteRequest struct {
 
 // AutoScalingInstanceRegisterRequest is /autoscaling/instance/register API
 type AutoScalingInstanceRegisterRequest struct {
-	APIKey     string `json:"apikey"`
-	InstanceID string `json:"instance_id"`
-	IP         string `json:"ip"`
+	APIKey               string `json:"apikey"`
+	InstanceID           string `json:"instance_id"`
+	IP                   string `json:"ip"`
+	AutoScalingGroupName string `json:"autoscaling_group_name"`
 }
 
 // AutoScalingInstanceDeregisterRequest is /autoscaling/instance/delete API
