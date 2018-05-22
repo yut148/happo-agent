@@ -123,8 +123,60 @@ func getInstanceData(transaction *leveldb.Transaction, instanceID string) ([]byt
 	return key, instanceData
 }
 
+func getEmptyAlias(transaction *leveldb.Transaction, autoScalingGroupName, hostPrefix string) ([]byte, halib.InstanceData) {
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix(
+			[]byte(fmt.Sprintf("ag-%s-%s-", autoScalingGroupName, hostPrefix)),
+		),
+		nil)
+
+	for iter.Next() {
+		key := iter.Key()
+		value := iter.Value()
+
+		var instanceData halib.InstanceData
+		dec := gob.NewDecoder(bytes.NewReader(value))
+		dec.Decode(&instanceData)
+		if instanceData.InstanceID == "" {
+			return key, instanceData
+		}
+	}
+	iter.Release()
+	return nil, halib.InstanceData{}
+}
+
 // RegisterAutoScalingInstance register autoscaling instance to dbms
-func RegisterAutoScalingInstance(instanceID string) error {
+func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, ip string) error {
+	log := util.HappoAgentLogger()
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	newAlias, newInstanceData := getEmptyAlias(transaction, autoScalingGroupName, hostPrefix)
+	if newAlias == nil {
+		transaction.Discard()
+		return fmt.Errorf("")
+	}
+
+	newInstanceData.InstanceID = instanceID
+	newInstanceData.IP = ip
+
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	err = enc.Encode(newInstanceData)
+	transaction.Put(
+		newAlias,
+		b.Bytes(),
+		nil)
+
+	if err := transaction.Commit(); err != nil {
+		log.Error(err)
+		return err
+	}
+
 	return nil
 }
 
