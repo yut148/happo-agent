@@ -158,7 +158,7 @@ func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, i
 	newAlias, newInstanceData := getEmptyAlias(transaction, autoScalingGroupName, hostPrefix)
 	if newAlias == nil {
 		transaction.Discard()
-		return fmt.Errorf("")
+		return fmt.Errorf("can't find empty alias from %s", autoScalingGroupName)
 	}
 
 	newInstanceData.InstanceID = instanceID
