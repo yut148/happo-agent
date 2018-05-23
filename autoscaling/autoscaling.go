@@ -146,19 +146,19 @@ func getEmptyAlias(transaction *leveldb.Transaction, autoScalingGroupName, hostP
 }
 
 // RegisterAutoScalingInstance register autoscaling instance to dbms
-func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, ip string) error {
+func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, ip string) (halib.InstanceData, error) {
 	log := util.HappoAgentLogger()
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Error(err)
-		return err
+		return halib.InstanceData{}, err
 	}
 
 	newAlias, newInstanceData := getEmptyAlias(transaction, autoScalingGroupName, hostPrefix)
 	if newAlias == nil {
 		transaction.Discard()
-		return fmt.Errorf("can't find empty alias from %s", autoScalingGroupName)
+		return halib.InstanceData{}, fmt.Errorf("can't find empty alias from %s", autoScalingGroupName)
 	}
 
 	newInstanceData.InstanceID = instanceID
@@ -174,10 +174,10 @@ func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, i
 
 	if err := transaction.Commit(); err != nil {
 		log.Error(err)
-		return err
+		return halib.InstanceData{}, err
 	}
 
-	return nil
+	return newInstanceData, nil
 }
 
 // DeregisterAutoScalingInstance deregister autoscaling instance from dbms

@@ -75,12 +75,16 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 		return
 	}
 
-	if err := autoscaling.RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, request.InstanceID, request.IP); err != nil {
+	instanceData, err := autoscaling.RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, request.InstanceID, request.IP)
+	if err != nil {
 		response.Status = "error"
 		response.Message = err.Error()
 		r.JSON(http.StatusInternalServerError, response)
 		return
 	}
+
+	response.Status = "OK"
+	response.InstanceData = instanceData
 
 	r.JSON(http.StatusOK, response)
 }
