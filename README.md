@@ -393,6 +393,7 @@ Register autoscaling instance
 - Return variables
     - status: result status
     - message: message from agent (if error occurred)
+    - alias: assigned alias to instance
     - instance_data:
         - ip: private ip address by Amazon EC2
         - instance_id: instance id by Amazon EC2

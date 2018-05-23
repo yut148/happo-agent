@@ -375,7 +375,7 @@ AutoScalingグループのインスタンスデータを削除します。
     - autoscaling_group_name: autoscaling group name
 - 返り値の形式
     - JSON
-- 返り値の変数　
+- 返り値の変数
     - status: 実行結果のステータス
     - message: エージェントからのメッセージ (特にエラーがあれば掲載)
 
@@ -383,6 +383,31 @@ AutoScalingグループのインスタンスデータを削除します。
 $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/autoscaling/delete --post-data="{\"autoscaling_group_name\": \"hb-autoscaling\"}"
 {"status":"OK","message":""}
 ```
+
+### /autoscaling/instance/register
+
+AutoScalingのインスタンスを登録します。
+
+- 入力形式
+    - JSON
+- 入力変数
+    - apikey: ""
+    - autoscaling_group_name: AutoScaling Group名
+    - ip: プライベートIPアドレス
+    - instance_id: インスタンスID
+- 出力形式
+    - JSON
+- 出力変数
+    - status: 実行結果のステータス
+    - message: エージェントからのメッセージ (特にエラーがあれば掲載)
+    - alias: インスタンスに割り当てられたエイリアス
+    - instance_data:
+        - ip: プライベートIPアドレス
+        - instance_id: インスタンスID
+        - metric_plugins:
+            - (Array)
+                - plugin_name: メトリックプラグイン名
+                - plugin_option: メトリックプラグインのオプション
 
 ## Contribution
 
