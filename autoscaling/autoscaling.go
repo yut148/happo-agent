@@ -155,6 +155,14 @@ func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, i
 		return halib.InstanceData{}, err
 	}
 
+	registeredInstances := makeRegisteredInstances(transaction, autoScalingGroupName, hostPrefix)
+	for _, registeredInstance := range registeredInstances {
+		if instanceID == registeredInstance.InstanceID {
+			transaction.Discard()
+			return halib.InstanceData{}, fmt.Errorf("already registered")
+		}
+	}
+
 	newAlias, newInstanceData := getEmptyAlias(transaction, autoScalingGroupName, hostPrefix)
 	if newAlias == nil {
 		transaction.Discard()
