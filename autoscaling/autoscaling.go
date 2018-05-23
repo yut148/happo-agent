@@ -123,7 +123,7 @@ func getInstanceData(transaction *leveldb.Transaction, instanceID string) ([]byt
 	return key, instanceData
 }
 
-func getEmptyAlias(transaction *leveldb.Transaction, autoScalingGroupName, hostPrefix string) ([]byte, halib.InstanceData) {
+func getEmptyAlias(transaction *leveldb.Transaction, autoScalingGroupName, hostPrefix string) (string, halib.InstanceData) {
 	iter := transaction.NewIterator(
 		leveldbUtil.BytesPrefix(
 			[]byte(fmt.Sprintf("ag-%s-%s-", autoScalingGroupName, hostPrefix)),
@@ -138,35 +138,35 @@ func getEmptyAlias(transaction *leveldb.Transaction, autoScalingGroupName, hostP
 		dec := gob.NewDecoder(bytes.NewReader(value))
 		dec.Decode(&instanceData)
 		if instanceData.InstanceID == "" {
-			return key, instanceData
+			return strings.TrimPrefix(string(key), "ag-"), instanceData
 		}
 	}
 	iter.Release()
-	return nil, halib.InstanceData{}
+	return "", halib.InstanceData{}
 }
 
 // RegisterAutoScalingInstance register autoscaling instance to dbms
-func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, ip string) (halib.InstanceData, error) {
+func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, ip string) (string, halib.InstanceData, error) {
 	log := util.HappoAgentLogger()
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Error(err)
-		return halib.InstanceData{}, err
+		return "", halib.InstanceData{}, err
 	}
 
 	registeredInstances := makeRegisteredInstances(transaction, autoScalingGroupName, hostPrefix)
 	for _, registeredInstance := range registeredInstances {
 		if instanceID == registeredInstance.InstanceID {
 			transaction.Discard()
-			return halib.InstanceData{}, fmt.Errorf("already registered")
+			return "", halib.InstanceData{}, fmt.Errorf("already registered")
 		}
 	}
 
 	newAlias, newInstanceData := getEmptyAlias(transaction, autoScalingGroupName, hostPrefix)
-	if newAlias == nil {
+	if newAlias == "" {
 		transaction.Discard()
-		return halib.InstanceData{}, fmt.Errorf("can't find empty alias from %s", autoScalingGroupName)
+		return "", halib.InstanceData{}, fmt.Errorf("can't find empty alias from %s", autoScalingGroupName)
 	}
 
 	newInstanceData.InstanceID = instanceID
@@ -176,16 +176,16 @@ func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, i
 	enc := gob.NewEncoder(&b)
 	err = enc.Encode(newInstanceData)
 	transaction.Put(
-		newAlias,
+		[]byte(fmt.Sprintf("ag-%s", newAlias)),
 		b.Bytes(),
 		nil)
 
 	if err := transaction.Commit(); err != nil {
 		log.Error(err)
-		return halib.InstanceData{}, err
+		return "", halib.InstanceData{}, err
 	}
 
-	return newInstanceData, nil
+	return string(newAlias), newInstanceData, nil
 }
 
 // DeregisterAutoScalingInstance deregister autoscaling instance from dbms

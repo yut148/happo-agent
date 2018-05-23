@@ -176,6 +176,7 @@ type AutoScalingDeleteResponse struct {
 type AutoScalingInstanceRegisterResponse struct {
 	Status       string       `json:"status"`
 	Message      string       `json:"message"`
+	Alias        string       `json:"alias"`
 	InstanceData InstanceData `json:"instance_data"`
 }
 

@@ -75,7 +75,7 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 		return
 	}
 
-	instanceData, err := autoscaling.RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, request.InstanceID, request.IP)
+	alias, instanceData, err := autoscaling.RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, request.InstanceID, request.IP)
 	if err != nil {
 		response.Status = "error"
 		response.Message = err.Error()
@@ -84,6 +84,7 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 	}
 
 	response.Status = "OK"
+	response.Alias = alias
 	response.InstanceData = instanceData
 
 	r.JSON(http.StatusOK, response)
