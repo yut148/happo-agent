@@ -185,7 +185,7 @@ func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, i
 		return "", halib.InstanceData{}, err
 	}
 
-	return string(newAlias), newInstanceData, nil
+	return newAlias, newInstanceData, nil
 }
 
 // DeregisterAutoScalingInstance deregister autoscaling instance from dbms
