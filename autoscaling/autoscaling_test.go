@@ -260,6 +260,136 @@ func TestGetAutoScalingConfig(t *testing.T) {
 	}
 }
 
+func TestRegisterAutoScalingInstance(t *testing.T) {
+	var cases = []struct {
+		name     string
+		input1   string
+		input2   string
+		input3   string
+		input4   string
+		expected struct {
+			alias        string
+			instanceData halib.InstanceData
+		}
+		isNormalTest bool
+	}{
+		{
+			name:   "dummy-prod-ag",
+			input1: "dummy-prod-ag",
+			input2: "dummy-prod-app",
+			input3: "i-zzzzzz",
+			input4: "192.0.2.99",
+			expected: struct {
+				alias        string
+				instanceData halib.InstanceData
+			}{
+				alias: "dummy-prod-ag-dummy-prod-app-11",
+				instanceData: halib.InstanceData{
+					InstanceID: "i-zzzzzz",
+					IP:         "192.0.2.99",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}{
+						{
+							PluginName:   "",
+							PluginOption: "",
+						},
+					},
+				},
+			},
+			isNormalTest: true,
+		},
+		{
+			name:   "dummy-prod-ag already instance",
+			input1: "dummy-prod-ag",
+			input2: "dummy-prod-app",
+			input3: "i-aaaaaa",
+			input4: "192.0.2.11",
+			expected: struct {
+				alias        string
+				instanceData halib.InstanceData
+			}{
+				alias: "",
+				instanceData: halib.InstanceData{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}(nil),
+				},
+			},
+			isNormalTest: false,
+		},
+		{
+			name:   "dummy-stg-ag no empty alias",
+			input1: "dummy-stg-ag",
+			input2: "dummy-stg-app",
+			input3: "i-zzzzzz",
+			input4: "192.0.2.99",
+			expected: struct {
+				alias        string
+				instanceData halib.InstanceData
+			}{
+				alias: "",
+				instanceData: halib.InstanceData{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}(nil),
+				},
+			},
+			isNormalTest: false,
+		},
+		{
+			name:   "dummy-missing-ag",
+			input1: "dummy-missing-ag",
+			input2: "dummy-missing-app",
+			input3: "i-zzzzzz",
+			input4: "192.0.2.99",
+			expected: struct {
+				alias        string
+				instanceData halib.InstanceData
+			}{
+				alias: "",
+				instanceData: halib.InstanceData{
+					InstanceID: "",
+					IP:         "",
+					MetricPlugins: []struct {
+						PluginName   string `json:"plugin_name"`
+						PluginOption string `json:"plugin_option"`
+					}(nil),
+				},
+			},
+			isNormalTest: false,
+		},
+	}
+
+	client := &AWSClient{
+		svcEC2:         &mockEC2Client{},
+		svcAutoscaling: &mockAutoScalingClient{},
+	}
+	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 20)
+	RefreshAutoScalingInstances(client, "dummy-stg-ag", "dummy-stg-app", 4)
+	defer teardown()
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actualAlias, actualInstanceData, err := RegisterAutoScalingInstance(c.input1, c.input2, c.input3, c.input4)
+			assert.Equal(t, c.expected.alias, actualAlias)
+			assert.Equal(t, c.expected.instanceData, actualInstanceData)
+			if c.isNormalTest {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+			}
+		})
+	}
+}
+
 func TestDeregisterAutoScalingInstance(t *testing.T) {
 	var cases = []struct {
 		name         string

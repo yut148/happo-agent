@@ -8,6 +8,7 @@ import (
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/autoscaling"
 	"github.com/heartbeatsjp/happo-agent/halib"
+	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // AutoScalingConfigFile is filepath of autoscaling config file
@@ -38,6 +39,64 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 	}
 
 	r.JSON(http.StatusOK, autoScalingResponse)
+}
+
+// AutoScalingInstanceRegister register autoscaling instance to dbms
+func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterRequest, r render.Render) {
+	log := util.HappoAgentLogger()
+	var response halib.AutoScalingInstanceRegisterResponse
+
+	if request.AutoScalingGroupName == "" || request.InstanceID == "" || request.IP == "" {
+		response.Status = "error"
+		response.Message = "missing parameter"
+		log.Warnf("failed to register %s:%s", request.InstanceID, response.Message)
+		r.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		log.Warnf("failed to register %s:%s", request.InstanceID, err.Error())
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	var autoScalingGroupName string
+	var hostPrefix string
+	for _, a := range autoScalingList.AutoScalings {
+		if request.AutoScalingGroupName == a.AutoScalingGroupName {
+			autoScalingGroupName = a.AutoScalingGroupName
+			hostPrefix = a.HostPrefix
+			break
+		}
+	}
+
+	if autoScalingGroupName == "" {
+		response.Status = "error"
+		response.Message = "can't find autoscaling group name in config"
+		log.Warnf("failed to register %s:%s", request.InstanceID, response.Message)
+		r.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	alias, instanceData, err := autoscaling.RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, request.InstanceID, request.IP)
+	if err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		log.Warnf("failed to register %s:%s", request.InstanceID, err.Error())
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	response.Status = "OK"
+	response.Alias = alias
+	response.InstanceData = instanceData
+
+	log.Infof("register %s with alias %s", response.InstanceData.InstanceID, response.Alias)
+
+	r.JSON(http.StatusOK, response)
 }
 
 // AutoScalingInstanceDeregister deregister autoscaling instance from dbms

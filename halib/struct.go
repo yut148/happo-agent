@@ -97,6 +97,14 @@ type AutoScalingDeleteRequest struct {
 	AutoScalingGroupName string `json:"autoscaling_group_name"`
 }
 
+// AutoScalingInstanceRegisterRequest is /autoscaling/instance/register API
+type AutoScalingInstanceRegisterRequest struct {
+	APIKey               string `json:"apikey"`
+	InstanceID           string `json:"instance_id"`
+	IP                   string `json:"ip"`
+	AutoScalingGroupName string `json:"autoscaling_group_name"`
+}
+
 // AutoScalingInstanceDeregisterRequest is /autoscaling/instance/delete API
 type AutoScalingInstanceDeregisterRequest struct {
 	APIKey     string `json:"apikey"`
@@ -162,6 +170,14 @@ type AutoScalingRefreshResponse struct {
 type AutoScalingDeleteResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
+}
+
+// AutoScalingInstanceRegisterResponse is /autoscaling/instance/register API
+type AutoScalingInstanceRegisterResponse struct {
+	Status       string       `json:"status"`
+	Message      string       `json:"message"`
+	Alias        string       `json:"alias"`
+	InstanceData InstanceData `json:"instance_data"`
 }
 
 // AutoScalingInstanceDeregisterResponse is /autoscaling/instance/delete API

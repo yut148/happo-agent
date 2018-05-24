@@ -123,6 +123,71 @@ func getInstanceData(transaction *leveldb.Transaction, instanceID string) ([]byt
 	return key, instanceData
 }
 
+func getEmptyAlias(transaction *leveldb.Transaction, autoScalingGroupName, hostPrefix string) (string, halib.InstanceData) {
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix(
+			[]byte(fmt.Sprintf("ag-%s-%s-", autoScalingGroupName, hostPrefix)),
+		),
+		nil)
+
+	for iter.Next() {
+		key := iter.Key()
+		value := iter.Value()
+
+		var instanceData halib.InstanceData
+		dec := gob.NewDecoder(bytes.NewReader(value))
+		dec.Decode(&instanceData)
+		if instanceData.InstanceID == "" {
+			return strings.TrimPrefix(string(key), "ag-"), instanceData
+		}
+	}
+	iter.Release()
+	return "", halib.InstanceData{}
+}
+
+// RegisterAutoScalingInstance register autoscaling instance to dbms
+func RegisterAutoScalingInstance(autoScalingGroupName, hostPrefix, instanceID, ip string) (string, halib.InstanceData, error) {
+	log := util.HappoAgentLogger()
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return "", halib.InstanceData{}, err
+	}
+
+	registeredInstances := makeRegisteredInstances(transaction, autoScalingGroupName, hostPrefix)
+	for _, registeredInstance := range registeredInstances {
+		if instanceID == registeredInstance.InstanceID {
+			transaction.Discard()
+			return "", halib.InstanceData{}, fmt.Errorf("already registered")
+		}
+	}
+
+	newAlias, newInstanceData := getEmptyAlias(transaction, autoScalingGroupName, hostPrefix)
+	if newAlias == "" {
+		transaction.Discard()
+		return "", halib.InstanceData{}, fmt.Errorf("can't find empty alias from %s", autoScalingGroupName)
+	}
+
+	newInstanceData.InstanceID = instanceID
+	newInstanceData.IP = ip
+
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	err = enc.Encode(newInstanceData)
+	transaction.Put(
+		[]byte(fmt.Sprintf("ag-%s", newAlias)),
+		b.Bytes(),
+		nil)
+
+	if err := transaction.Commit(); err != nil {
+		log.Error(err)
+		return "", halib.InstanceData{}, err
+	}
+
+	return newAlias, newInstanceData, nil
+}
+
 // DeregisterAutoScalingInstance deregister autoscaling instance from dbms
 func DeregisterAutoScalingInstance(instanceID string) error {
 	log := util.HappoAgentLogger()
