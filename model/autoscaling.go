@@ -8,6 +8,7 @@ import (
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/autoscaling"
 	"github.com/heartbeatsjp/happo-agent/halib"
+	"github.com/heartbeatsjp/happo-agent/util"
 )
 
 // AutoScalingConfigFile is filepath of autoscaling config file
@@ -42,11 +43,13 @@ func AutoScalingConfigUpdate(autoScalingRequest halib.AutoScalingConfigUpdateReq
 
 // AutoScalingInstanceRegister register autoscaling instance to dbms
 func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterRequest, r render.Render) {
+	log := util.HappoAgentLogger()
 	var response halib.AutoScalingInstanceRegisterResponse
 
 	if request.AutoScalingGroupName == "" || request.InstanceID == "" || request.IP == "" {
 		response.Status = "error"
 		response.Message = "missing parameter"
+		log.Warnf("failed to register %s:%s", request.InstanceID, response.Message)
 		r.JSON(http.StatusBadRequest, response)
 		return
 	}
@@ -55,7 +58,9 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 	if err != nil {
 		response.Status = "error"
 		response.Message = err.Error()
+		log.Warnf("failed to register %s:%s", request.InstanceID, err.Error())
 		r.JSON(http.StatusInternalServerError, response)
+		return
 	}
 
 	var autoScalingGroupName string
@@ -71,6 +76,7 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 	if autoScalingGroupName == "" {
 		response.Status = "error"
 		response.Message = "can't find autoscaling group name in config"
+		log.Warnf("failed to register %s:%s", request.InstanceID, response.Message)
 		r.JSON(http.StatusNotFound, response)
 		return
 	}
@@ -79,6 +85,7 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 	if err != nil {
 		response.Status = "error"
 		response.Message = err.Error()
+		log.Warnf("failed to register %s:%s", request.InstanceID, err.Error())
 		r.JSON(http.StatusInternalServerError, response)
 		return
 	}
@@ -86,6 +93,8 @@ func AutoScalingInstanceRegister(request halib.AutoScalingInstanceRegisterReques
 	response.Status = "OK"
 	response.Alias = alias
 	response.InstanceData = instanceData
+
+	log.Infof("register %s with alias %s", response.InstanceData.InstanceID, response.Alias)
 
 	r.JSON(http.StatusOK, response)
 }
