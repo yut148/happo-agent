@@ -13,10 +13,10 @@ import (
 
 	"os"
 
+	"encoding/gob"
+
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
-	"github.com/heartbeatsjp/happo-agent/autoscaling"
-	"github.com/heartbeatsjp/happo-agent/autoscaling/awsmock"
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/martini-contrib/binding"
@@ -33,6 +33,30 @@ func setup() {
 		os.Exit(1)
 	}
 	db.DB = DB
+
+	saveInstanceData := func(alias, instanceID, ip string) {
+		var instanceData halib.InstanceData
+		instanceData.InstanceID = instanceID
+		instanceData.IP = ip
+		instanceData.MetricPlugins = []struct {
+			PluginName   string `json:"plugin_name"`
+			PluginOption string `json:"plugin_option"`
+		}{
+			{
+				PluginName:   "",
+				PluginOption: "",
+			},
+		}
+
+		var b bytes.Buffer
+		enc := gob.NewEncoder(&b)
+		enc.Encode(instanceData)
+
+		db.DB.Put([]byte(fmt.Sprintf("ag-%s", alias)), b.Bytes(), nil)
+	}
+
+	saveInstanceData("dummy-prod-ag-dummy-prod-app-1", "i-aaaaaa", "127.0.0.1")
+	saveInstanceData("dummy-prod-ag-dummy-prod-app-2", "", "")
 }
 
 func teardown() {
@@ -327,14 +351,9 @@ func TestProxy4(t *testing.T) {
 }
 
 func TestProxy5(t *testing.T) {
-	//dispatch autoscaling instance
+	//proxy monitor
 
 	setup()
-	client := &autoscaling.AWSClient{
-		SvcEC2:         &awsmock.MockEC2Client{},
-		SvcAutoscaling: &awsmock.MockAutoScalingClient{},
-	}
-	autoscaling.RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
 	defer teardown()
 
 	//bastion
@@ -348,11 +367,13 @@ func TestProxy5(t *testing.T) {
 			func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
 			}))
-	ts.URL = "http://192.0.2.11:6777"
 	defer ts.Close()
 
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
 	alias := "dummy-prod-ag-dummy-prod-app-1"
-	port := 6777
 
 	requestJSON := fmt.Sprintf(`{
 		"proxy_hostport": ["%s:%d"],
@@ -374,4 +395,103 @@ func TestProxy5(t *testing.T) {
 		`{"return_value":0,"message":"ok"}`,
 		res.Body.String(),
 	)
+}
+
+func TestProxy6(t *testing.T) {
+	//proxy monitor when alias not assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-2"
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
+	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t,
+		`{"return_value":0,"message":"dummy-prod-ag-dummy-prod-app-2 has not been assigned Instance"}`,
+		res.Body.String(),
+	)
+}
+
+func TestProxy7(t *testing.T) {
+	//proxy monitor when alias not found
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-99"
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
+	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t,
+		`{"return_value":3,"message":"alias not found: dummy-prod-ag-dummy-prod-app-99"}`,
+		res.Body.String(),
+	)
+}
+
+func TestMain(m *testing.M) {
+	AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test.yaml"
+	os.Exit(m.Run())
 }
