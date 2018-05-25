@@ -274,6 +274,11 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/metric/status
 1. Run `gofmt -s`
 1. Create a new Pull Request
 
+### Run test suite with docker
+
+ローカルPC上のDockerでテストスイートを実行することもできます。
+
+[ヘルパースクリプトの使用法](contrib/development/README.md)を参照してください。
 
 ## Author
 
