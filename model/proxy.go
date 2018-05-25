@@ -13,8 +13,10 @@ import (
 	"time"
 
 	"github.com/codegangsta/martini-contrib/render"
+	"github.com/heartbeatsjp/happo-agent/autoscaling"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // --- Global Variables
@@ -52,16 +54,36 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 			nextPort = halib.DefaultAgentPort
 		}
 	}
-	respCode, response, err := postToAgent(nextHost, nextPort, requestType, requestJSON)
+
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
 	if err != nil {
-		var monitorResponse halib.MonitorResponse
-		monitorResponse.ReturnValue = halib.MonitorUnknown
-		monitorResponse.Message = err.Error()
-		errJSONData, _ := json.Marshal(monitorResponse)
-		response = string(errJSONData[:])
+		return http.StatusInternalServerError, makeMonitorResponse(halib.MonitorUnknown, err.Error())
+	}
+
+	var respCode int
+	var response string
+	if isAutoScaling(nextHost, autoScalingList) {
+		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON)
+		if err != nil {
+			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
+		}
+	} else {
+		respCode, response, err = postToAgent(nextHost, nextPort, requestType, requestJSON)
+		if err != nil {
+			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
+		}
 	}
 
 	return respCode, response
+}
+
+func isAutoScaling(nextHost string, autoScalingList halib.AutoScalingConfig) bool {
+	for _, a := range autoScalingList.AutoScalings {
+		if strings.HasPrefix(nextHost, a.AutoScalingGroupName) {
+			return true
+		}
+	}
+	return false
 }
 
 func postToAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
@@ -90,6 +112,49 @@ func postToAgent(host string, port int, requestType string, jsonData []byte) (in
 		return http.StatusInternalServerError, "", err
 	}
 	return resp.StatusCode, string(body[:]), nil
+}
+
+func makeMonitorResponse(returnValue int, message string) string {
+	var monitorResponse halib.MonitorResponse
+	monitorResponse.ReturnValue = returnValue
+	monitorResponse.Message = message
+
+	jsonData, err := json.Marshal(&monitorResponse)
+	if err != nil {
+		return err.Error()
+	}
+	return string(jsonData)
+}
+
+func monitorAutoScaling(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+	ip, err := autoscaling.AliasToIP(host)
+	if err != nil {
+		var message string
+		if err == leveldb.ErrNotFound {
+			message = fmt.Sprintf("alias not found: %s", host)
+		} else {
+			message = err.Error()
+		}
+		return http.StatusOK, makeMonitorResponse(3, message), nil
+	}
+
+	if ip == "" {
+		message := fmt.Sprintf("%s has not been assigned Instance", host)
+		return http.StatusOK, makeMonitorResponse(0, message), nil
+	}
+
+	return postToAgent(ip, port, requestType, jsonData)
+}
+
+func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+	switch requestType {
+	case "monitor":
+		return monitorAutoScaling(host, port, requestType, jsonData)
+	// TODO: implement for other requestType
+	default:
+		// don't work
+		return postToAgent(host, port, requestType, jsonData)
+	}
 }
 
 // SetProxyTimeout set timeout of _httpClient
