@@ -55,35 +55,47 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 		}
 	}
 
-	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	autoScalingGroupName, hostPrefix, autoScalingCount, err := getAutoScalingInfo(nextHost)
 	if err != nil {
 		return http.StatusInternalServerError, makeMonitorResponse(halib.MonitorUnknown, err.Error())
 	}
 
 	var respCode int
 	var response string
-	if isAutoScaling(nextHost, autoScalingList) {
-		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON)
-		if err != nil {
-			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
-		}
-	} else {
+	if autoScalingGroupName == "" {
 		respCode, response, err = postToAgent(nextHost, nextPort, requestType, requestJSON)
 		if err != nil {
 			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
 		}
+	} else {
+		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON)
+		if err != nil {
+			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
+		}
+	}
+
+	if respCode == http.StatusGatewayTimeout {
+		go func() {
+			client := autoscaling.NewAWSClient()
+			autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount)
+		}()
 	}
 
 	return respCode, response
 }
 
-func isAutoScaling(nextHost string, autoScalingList halib.AutoScalingConfig) bool {
+func getAutoScalingInfo(nextHost string) (string, string, int, error) {
+	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
+	if err != nil {
+		return "", "", 0, err
+	}
+
 	for _, a := range autoScalingList.AutoScalings {
 		if strings.HasPrefix(nextHost, a.AutoScalingGroupName) {
-			return true
+			return a.AutoScalingGroupName, a.HostPrefix, a.AutoScalingCount, nil
 		}
 	}
-	return false
+	return "", "", 0, nil
 }
 
 func postToAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
