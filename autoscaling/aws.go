@@ -11,16 +11,16 @@ import (
 
 // AWSClient allows you to get the list of IP addresses of instanes of an Auto Scaling group
 type AWSClient struct {
-	svcEC2         ec2iface.EC2API
-	svcAutoscaling autoscalingiface.AutoScalingAPI
+	SvcEC2         ec2iface.EC2API
+	SvcAutoscaling autoscalingiface.AutoScalingAPI
 }
 
 // NewAWSClient return AWSClient
 func NewAWSClient() *AWSClient {
 	sess := session.Must(session.NewSession())
 	return &AWSClient{
-		svcAutoscaling: autoscaling.New(sess, aws.NewConfig().WithRegion("ap-northeast-1")),
-		svcEC2:         ec2.New(sess, aws.NewConfig().WithRegion("ap-northeast-1")),
+		SvcAutoscaling: autoscaling.New(sess, aws.NewConfig().WithRegion("ap-northeast-1")),
+		SvcEC2:         ec2.New(sess, aws.NewConfig().WithRegion("ap-northeast-1")),
 	}
 }
 
@@ -33,7 +33,7 @@ func (client *AWSClient) describeAutoScalingInstances(autoScalingGroupName strin
 		},
 	}
 
-	result, err := client.svcAutoscaling.DescribeAutoScalingGroups(input)
+	result, err := client.SvcAutoscaling.DescribeAutoScalingGroups(input)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (client *AWSClient) describeAutoScalingInstances(autoScalingGroupName strin
 		InstanceIds: instanceIds,
 	}
 
-	result2, err := client.svcEC2.DescribeInstances(input2)
+	result2, err := client.SvcEC2.DescribeInstances(input2)
 	if err != nil {
 		return nil, err
 	}
