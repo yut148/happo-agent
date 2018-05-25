@@ -364,8 +364,8 @@ func TestRegisterAutoScalingInstance(t *testing.T) {
 	}
 
 	client := &AWSClient{
-		svcEC2:         &mockEC2Client{},
-		svcAutoscaling: &mockAutoScalingClient{},
+		SvcEC2:         &awsmock.MockEC2Client{},
+		SvcAutoscaling: &awsmock.MockAutoScalingClient{},
 	}
 	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 20)
 	RefreshAutoScalingInstances(client, "dummy-stg-ag", "dummy-stg-app", 4)
