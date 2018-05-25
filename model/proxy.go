@@ -147,12 +147,12 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 		} else {
 			message = err.Error()
 		}
-		return http.StatusOK, makeMonitorResponse(3, message), nil
+		return http.StatusOK, makeMonitorResponse(halib.MonitorUnknown, message), nil
 	}
 
 	if ip == "" {
 		message := fmt.Sprintf("%s has not been assigned Instance", host)
-		return http.StatusOK, makeMonitorResponse(0, message), nil
+		return http.StatusOK, makeMonitorResponse(halib.MonitorOK, message), nil
 	}
 
 	return postToAgent(ip, port, requestType, jsonData)
