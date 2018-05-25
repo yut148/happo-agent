@@ -424,3 +424,17 @@ func DeleteAutoScaling(autoScalingGroupName string) error {
 
 	return nil
 }
+
+// AliasToIP resolve autoscaling instance private ip address
+func AliasToIP(alias string) (string, error) {
+	value, err := db.DB.Get([]byte(fmt.Sprintf("ag-%s", alias)), nil)
+	if err != nil {
+		return "", err
+	}
+	var instanceData halib.InstanceData
+	dec := gob.NewDecoder(bytes.NewReader(value))
+	if err := dec.Decode(&instanceData); err != nil {
+		return "", err
+	}
+	return instanceData.IP, nil
+}

@@ -1030,6 +1030,47 @@ func TestDeleteAutoScaling(t *testing.T) {
 	}
 }
 
+func TestAliasToIP(t *testing.T) {
+	var cases = []struct {
+		name         string
+		input        string
+		expected     string
+		isNormalTest bool
+	}{
+		{
+			name:         "dummy-prod-ag-dummy-prod-app-1",
+			input:        "dummy-prod-ag-dummy-prod-app-1",
+			expected:     "192.0.2.11",
+			isNormalTest: true,
+		},
+		{
+			name:         "dummy-prod-ag-dummy-prod-app-99",
+			input:        "dummy-prod-ag-dummy-prod-app-99",
+			expected:     "",
+			isNormalTest: false,
+		},
+	}
+
+	client := &AWSClient{
+		SvcEC2:         &awsmock.MockEC2Client{},
+		SvcAutoscaling: &awsmock.MockAutoScalingClient{},
+	}
+	RefreshAutoScalingInstances(client, "dummy-prod-ag", "dummy-prod-app", 10)
+	defer teardown()
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actual, err := AliasToIP(c.input)
+			if c.isNormalTest {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+			}
+			assert.Equal(t, c.expected, actual)
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	//Mock
 	DB, err := leveldb.Open(storage.NewMemStorage(), nil)
