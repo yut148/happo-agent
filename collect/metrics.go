@@ -216,6 +216,11 @@ func getMetrics(pluginName string, pluginOption string) (string, error) {
 	exitstatus, stdout, _, err := util.ExecCommand(plugin, pluginOption)
 
 	if err != nil {
+		// timeout is onetime/runtime error, does not handle as serious error
+		if timeoutError, ok := err.(*util.TimeoutError); ok {
+			log.Errorf("Plugin timeout: %s %s", pluginName, timeoutError.Error())
+			return stdout, nil
+		}
 		return "", err
 	}
 	if exitstatus != 0 {

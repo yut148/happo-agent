@@ -1,12 +1,14 @@
 package collect
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/heartbeatsjp/happo-agent/db"
 	"github.com/heartbeatsjp/happo-agent/halib"
+	"github.com/heartbeatsjp/happo-agent/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -76,6 +78,18 @@ func TestGetMetrics1(t *testing.T) {
 func TestGetMetrics2(t *testing.T) {
 	_, err := getMetrics("dummy", "")
 	assert.Nil(t, err) // If plugin not found, not stop app.
+}
+
+func TestGetMetrics3(t *testing.T) {
+	SensuPluginPaths = fmt.Sprintf("%s,/usr/bin,/bin", SensuPluginPaths)
+	prevCommandTimeout := util.CommandTimeout
+
+	util.CommandTimeout = 1
+	_, err := getMetrics("sleep", "2")
+
+	util.CommandTimeout = prevCommandTimeout
+
+	assert.Nil(t, err)
 }
 
 func TestParseMetricData1(t *testing.T) {
