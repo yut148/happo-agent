@@ -379,6 +379,11 @@ $ wget -q --no-check-certificate -O - https://127.0.0.1:6777/machine-state/s-149
 1. Run `gofmt -s`
 1. Create a new Pull Request
 
+### Run test suite with docker
+
+You also can run test suite with docker on local PC.
+
+See [helper scripts usage](contrib/development/README.md)
 
 ## Author
 
