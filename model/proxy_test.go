@@ -365,7 +365,7 @@ func TestProxy5(t *testing.T) {
 	ts := httptest.NewTLSServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+				fmt.Fprint(w, `{"return_value":0,"message":"ok\n"}`)
 			}))
 	defer ts.Close()
 
@@ -392,7 +392,7 @@ func TestProxy5(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		`{"return_value":0,"message":"ok"}`,
+		`{"return_value":0,"message":"ok\nAutoScaling Group Name: dummy-prod-ag\nAutoScaling Instance PrivateIP: 127.0.0.1\n"}`,
 		res.Body.String(),
 	)
 }
@@ -412,7 +412,7 @@ func TestProxy6(t *testing.T) {
 	ts := httptest.NewTLSServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+				fmt.Fprint(w, `{"return_value":0,"message":"ok\n"}`)
 			}))
 	defer ts.Close()
 
@@ -439,7 +439,7 @@ func TestProxy6(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		`{"return_value":0,"message":"dummy-prod-ag-dummy-prod-app-2 has not been assigned Instance"}`,
+		`{"return_value":0,"message":"dummy-prod-ag-dummy-prod-app-2 has not been assigned Instance\n"}`,
 		res.Body.String(),
 	)
 }
@@ -459,7 +459,7 @@ func TestProxy7(t *testing.T) {
 	ts := httptest.NewTLSServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+				fmt.Fprint(w, `{"return_value":0,"message":"ok\n"}`)
 			}))
 	defer ts.Close()
 
@@ -486,7 +486,7 @@ func TestProxy7(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		`{"return_value":3,"message":"alias not found: dummy-prod-ag-dummy-prod-app-99"}`,
+		`{"return_value":3,"message":"alias not found: dummy-prod-ag-dummy-prod-app-99\n"}`,
 		res.Body.String(),
 	)
 }
