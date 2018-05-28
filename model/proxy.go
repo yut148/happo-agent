@@ -68,7 +68,7 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
 		}
 	} else {
-		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON)
+		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON, autoScalingGroupName)
 		if err != nil {
 			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
 		}
@@ -138,7 +138,7 @@ func makeMonitorResponse(returnValue int, message string) string {
 	return string(jsonData)
 }
 
-func monitorAutoScaling(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+func monitorAutoScaling(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	ip, err := autoscaling.AliasToIP(host)
 	if err != nil {
 		var message string
@@ -155,13 +155,21 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 		return http.StatusOK, makeMonitorResponse(halib.MonitorOK, message), nil
 	}
 
-	return postToAgent(ip, port, requestType, jsonData)
+	statusCode, jsonStr, perr := postToAgent(ip, port, requestType, jsonData)
+
+	var m halib.MonitorResponse
+	if err := json.Unmarshal([]byte(jsonStr), &m); err != nil {
+		return http.StatusInternalServerError, "", err
+	}
+
+	message := fmt.Sprintf("%sAutoScaling Group Name: %s\nAutoScaling Instance PrivateIP: %s\n", m.Message, autoScalingGroupName, ip)
+	return statusCode, makeMonitorResponse(m.ReturnValue, message), perr
 }
 
-func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	switch requestType {
 	case "monitor":
-		return monitorAutoScaling(host, port, requestType, jsonData)
+		return monitorAutoScaling(host, port, requestType, jsonData, autoScalingGroupName)
 	// TODO: implement for other requestType
 	default:
 		// don't work
