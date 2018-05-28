@@ -28,6 +28,7 @@ var _httpClient = &http.Client{Transport: tr}
 
 // Proxy do http reqest to next happo-agent
 func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
+	log := util.HappoAgentLogger()
 	var nextHostport string
 	var requestType string
 	var requestJSON []byte
@@ -77,7 +78,9 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 	if respCode != http.StatusOK {
 		go func() {
 			client := autoscaling.NewAWSClient()
-			autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount)
+			if err := autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount); err != nil {
+				log.Error(err.Error())
+			}
 		}()
 	}
 
