@@ -143,7 +143,7 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 	if err != nil {
 		var message string
 		if err == leveldb.ErrNotFound {
-			message = fmt.Sprintf("alias not found: %s", host)
+			message = fmt.Sprintf("alias not found: %s\n", host)
 		} else {
 			message = err.Error()
 		}
@@ -151,7 +151,7 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 	}
 
 	if ip == "" {
-		message := fmt.Sprintf("%s has not been assigned Instance", host)
+		message := fmt.Sprintf("%s has not been assigned Instance\n", host)
 		return http.StatusOK, makeMonitorResponse(halib.MonitorOK, message), nil
 	}
 
