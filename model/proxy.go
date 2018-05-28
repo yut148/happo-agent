@@ -74,7 +74,7 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 		}
 	}
 
-	if respCode == http.StatusGatewayTimeout {
+	if respCode != http.StatusOK {
 		go func() {
 			client := autoscaling.NewAWSClient()
 			autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount)
