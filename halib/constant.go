@@ -60,3 +60,6 @@ const DefaultMetricsConfigPath = "./metrics.yaml"
 
 // DefaultAutoScalingConfigPath is default autoscaling config path
 const DefaultAutoScalingConfigPath = "./autoscaling.yaml"
+
+// DefaultRefreshAutoScalingIntervalSeconds when proxy monitor return not http.StatusOK), and refreshAutoScalingIntervalSeconds past from previous error, refresh AutoScaling instances.
+const DefaultRefreshAutoScalingIntervalSeconds = 60

@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"sync"
+
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/heartbeatsjp/happo-agent/autoscaling"
 	"github.com/heartbeatsjp/happo-agent/halib"
@@ -20,15 +22,40 @@ import (
 )
 
 // --- Global Variables
-// See http://golang.org/pkg/net/http/#Client
-var tr = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+var (
+	// See http://golang.org/pkg/net/http/#Client
+	tr = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	_httpClient = &http.Client{Transport: tr}
+
+	refreshAutoScalingChan            = make(chan halib.AutoScalingConfigData)
+	refreshAutoScalingMutex           = sync.Mutex{}
+	lastRefreshAutoScaling            = make(map[string]int64)
+	refreshAutoScalingIntervalSeconds = int64(halib.DefaultRefreshAutoScalingIntervalSeconds)
+)
+
+func init() {
+	go func() {
+		for {
+			select {
+			case a := <-refreshAutoScalingChan:
+				go func() {
+					if isPermitRefreshAutoScaling(a.AutoScalingGroupName) {
+						client := autoscaling.NewAWSClient()
+						if err := autoscaling.RefreshAutoScalingInstances(client, a.AutoScalingGroupName, a.HostPrefix, a.AutoScalingCount); err != nil {
+							log := util.HappoAgentLogger()
+							log.Error(err.Error())
+						}
+					}
+				}()
+			}
+		}
+	}()
 }
-var _httpClient = &http.Client{Transport: tr}
 
 // Proxy do http reqest to next happo-agent
 func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
-	log := util.HappoAgentLogger()
 	var nextHostport string
 	var requestType string
 	var requestJSON []byte
@@ -56,49 +83,47 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 		}
 	}
 
-	autoScalingGroupName, hostPrefix, autoScalingCount, err := getAutoScalingInfo(nextHost)
+	a, err := getAutoScalingInfo(nextHost)
 	if err != nil {
 		return http.StatusInternalServerError, makeMonitorResponse(halib.MonitorUnknown, err.Error())
 	}
 
 	var respCode int
 	var response string
-	if autoScalingGroupName == "" {
+	if a.AutoScalingGroupName == "" {
 		respCode, response, err = postToAgent(nextHost, nextPort, requestType, requestJSON)
 		if err != nil {
 			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
 		}
 	} else {
-		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON, autoScalingGroupName)
+		respCode, response, err = postToAutoScalingAgent(nextHost, nextPort, requestType, requestJSON, a.AutoScalingGroupName)
 		if err != nil {
 			response = makeMonitorResponse(halib.MonitorUnknown, err.Error())
 		}
-	}
-
-	if respCode != http.StatusOK {
-		go func() {
-			client := autoscaling.NewAWSClient()
-			if err := autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount); err != nil {
-				log.Error(err.Error())
-			}
-		}()
+		if requestType == "monitor" && respCode != http.StatusOK {
+			refreshAutoScalingChan <- a
+		}
 	}
 
 	return respCode, response
 }
 
-func getAutoScalingInfo(nextHost string) (string, string, int, error) {
+func getAutoScalingInfo(nextHost string) (halib.AutoScalingConfigData, error) {
+	var autoScalingConfigData halib.AutoScalingConfigData
 	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
 	if err != nil {
-		return "", "", 0, err
+		return autoScalingConfigData, err
 	}
 
 	for _, a := range autoScalingList.AutoScalings {
 		if strings.HasPrefix(nextHost, a.AutoScalingGroupName) {
-			return a.AutoScalingGroupName, a.HostPrefix, a.AutoScalingCount, nil
+			autoScalingConfigData.AutoScalingGroupName = a.AutoScalingGroupName
+			autoScalingConfigData.HostPrefix = a.HostPrefix
+			autoScalingConfigData.AutoScalingCount = a.AutoScalingCount
+			return autoScalingConfigData, nil
 		}
 	}
-	return "", "", 0, nil
+	return autoScalingConfigData, nil
 }
 
 func postToAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
@@ -178,6 +203,24 @@ func postToAutoScalingAgent(host string, port int, requestType string, jsonData 
 		// don't work
 		return postToAgent(host, port, requestType, jsonData)
 	}
+}
+
+func isPermitRefreshAutoScaling(autoScalingGroupName string) bool {
+	log := util.HappoAgentLogger()
+	if _, ok := lastRefreshAutoScaling[autoScalingGroupName]; !ok {
+		lastRefreshAutoScaling[autoScalingGroupName] = 0
+	}
+
+	refreshAutoScalingMutex.Lock()
+	defer refreshAutoScalingMutex.Unlock()
+
+	duration := time.Now().Unix() - lastRefreshAutoScaling[autoScalingGroupName]
+	if duration < refreshAutoScalingIntervalSeconds {
+		log.Debug(fmt.Sprintf("Duration of after last refresh autoscaling: %d < %d", duration, refreshAutoScalingIntervalSeconds))
+		return false
+	}
+	lastRefreshAutoScaling[autoScalingGroupName] = time.Now().Unix()
+	return true
 }
 
 // SetProxyTimeout set timeout of _httpClient
