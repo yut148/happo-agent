@@ -116,7 +116,7 @@ func getAutoScalingInfo(nextHost string) (halib.AutoScalingConfigData, error) {
 	}
 
 	for _, a := range autoScalingList.AutoScalings {
-		if strings.HasPrefix(nextHost, a.AutoScalingGroupName) {
+		if strings.HasPrefix(nextHost, fmt.Sprintf("%s-%s-", a.AutoScalingGroupName, a.HostPrefix)) {
 			autoScalingConfigData.AutoScalingGroupName = a.AutoScalingGroupName
 			autoScalingConfigData.HostPrefix = a.HostPrefix
 			autoScalingConfigData.AutoScalingCount = a.AutoScalingCount
