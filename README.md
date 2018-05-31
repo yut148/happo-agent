@@ -180,6 +180,13 @@ Use agent bastion(proxy) mode.
 
 In case `--proxy-timeout-seconds` reached, return `504 Gateway Timeout` .
 
+If destination host is AutoScaling instance, it will behave as follows.
+
+- `request_type: monitor` 
+    - In case it can be resolved alias, proxy request to Auto Scaling instance.
+    - In case it can't be resolved alias, return dummy response from bastion.
+        - dummy response: `{"return_value":0,"message":"<alias> has not been assigned Instance\n"}`
+
 ```
 $ wget -q --no-check-certificate -O - https://192.0.2.1:6777/proxy --post-data='{"proxy_hostport": ["198.51.100.1:6777"], "request_type": "monitor", "request_json": "{\"apikey\": \"\", \"plugin_name\": \"check_procs\", \"plugin_option\": \"-w 100 -c 200\"}"}'
 {"return_value":1,"message":"PROCS WARNING: 168 processes\n"}
