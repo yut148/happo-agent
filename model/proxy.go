@@ -40,15 +40,15 @@ func init() {
 		for {
 			select {
 			case a := <-refreshAutoScalingChan:
-				go func() {
+				go func(autoScalingGroupName, hostPrefix string, autoScalingCount int) {
 					if isPermitRefreshAutoScaling(a.AutoScalingGroupName) {
 						client := autoscaling.NewAWSClient()
-						if err := autoscaling.RefreshAutoScalingInstances(client, a.AutoScalingGroupName, a.HostPrefix, a.AutoScalingCount); err != nil {
+						if err := autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount); err != nil {
 							log := util.HappoAgentLogger()
 							log.Error(err.Error())
 						}
 					}
-				}()
+				}(a.AutoScalingGroupName, a.HostPrefix, a.AutoScalingCount)
 			}
 		}
 	}()
