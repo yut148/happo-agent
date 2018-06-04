@@ -195,6 +195,8 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 
 func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	switch requestType {
+	case "":
+		return http.StatusBadRequest, "request_type required", nil
 	case "monitor":
 		return monitorAutoScaling(host, port, requestType, jsonData, autoScalingGroupName)
 	// TODO: implement for other requestType

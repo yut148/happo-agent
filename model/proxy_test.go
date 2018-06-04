@@ -495,6 +495,7 @@ func TestProxy8(t *testing.T) {
 	//monitor ok when autoscaling config is not found
 
 	AutoScalingConfigFile = "./not_found"
+	defer func() { AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test.yaml" }()
 
 	//bastion
 	m := martini.Classic()
@@ -535,6 +536,45 @@ func TestProxy8(t *testing.T) {
 		`{"return_value":0,"message":"ok"}`,
 		res.Body.String(),
 	)
+}
+
+func TestProxy9(t *testing.T) {
+	//proxy monitor when request is not contain request_type
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_value":0,"message":"ok\n"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-1"
+
+	requestJSON := fmt.Sprintf(`{"proxy_hostport": ["%s:%d"]}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+	assert.Equal(t, "request_type required", res.Body.String())
 }
 
 func TestMain(m *testing.M) {
