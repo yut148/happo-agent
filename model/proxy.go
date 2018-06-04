@@ -110,7 +110,7 @@ func getAutoScalingInfo(nextHost string) halib.AutoScalingConfigData {
 	var autoScalingConfigData halib.AutoScalingConfigData
 	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
 	if err != nil {
-		log.Errorf("failed to get autoscaling config: %s", err)
+		log.Errorf("failed to get autoscaling config: %s", err.Error())
 		return autoScalingConfigData
 	}
 
@@ -178,7 +178,7 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 	}
 
 	if ip == "" {
-		message := fmt.Sprintf("%s has not been assigned Instance\n", host)
+		message := fmt.Sprintf("%s has not been assigned instance\n", host)
 		return http.StatusOK, makeMonitorResponse(halib.MonitorOK, message), nil
 	}
 

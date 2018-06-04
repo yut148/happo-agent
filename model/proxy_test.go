@@ -439,7 +439,7 @@ func TestProxy6(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t,
-		`{"return_value":0,"message":"dummy-prod-ag-dummy-prod-app-2 has not been assigned Instance\n"}`,
+		`{"return_value":0,"message":"dummy-prod-ag-dummy-prod-app-2 has not been assigned instance\n"}`,
 		res.Body.String(),
 	)
 }
