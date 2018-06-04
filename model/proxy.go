@@ -207,13 +207,13 @@ func postToAutoScalingAgent(host string, port int, requestType string, jsonData 
 
 func isPermitRefreshAutoScaling(autoScalingGroupName string) bool {
 	log := util.HappoAgentLogger()
-	if _, ok := lastRefreshAutoScaling[autoScalingGroupName]; !ok {
-		lastRefreshAutoScaling[autoScalingGroupName] = 0
-	}
 
 	refreshAutoScalingMutex.Lock()
 	defer refreshAutoScalingMutex.Unlock()
 
+	if _, ok := lastRefreshAutoScaling[autoScalingGroupName]; !ok {
+		lastRefreshAutoScaling[autoScalingGroupName] = 0
+	}
 	duration := time.Now().Unix() - lastRefreshAutoScaling[autoScalingGroupName]
 	if duration < refreshAutoScalingIntervalSeconds {
 		log.Debug(fmt.Sprintf("Duration of after last refresh autoscaling: %d < %d", duration, refreshAutoScalingIntervalSeconds))
