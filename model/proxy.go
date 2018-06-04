@@ -41,7 +41,7 @@ func init() {
 			select {
 			case a := <-refreshAutoScalingChan:
 				go func(autoScalingGroupName, hostPrefix string, autoScalingCount int) {
-					if isPermitRefreshAutoScaling(a.AutoScalingGroupName) {
+					if isPermitRefreshAutoScaling(autoScalingGroupName) {
 						client := autoscaling.NewAWSClient()
 						if err := autoscaling.RefreshAutoScalingInstances(client, autoScalingGroupName, hostPrefix, autoScalingCount); err != nil {
 							log := util.HappoAgentLogger()
