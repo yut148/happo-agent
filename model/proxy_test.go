@@ -491,6 +491,52 @@ func TestProxy7(t *testing.T) {
 	)
 }
 
+func TestProxy8(t *testing.T) {
+	//monitor ok when autoscaling config is not found
+
+	AutoScalingConfigFile = "./not_found"
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_value":0,"message":"ok"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	host := found[2]
+	port, _ := strconv.Atoi(found[3])
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "monitor",
+		"request_json":
+			"{\"apikey\": \"\", \"plugin_name\": \"monitor_test_plugin\", \"plugin_option\": \"0\"}"
+	}`, host, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	lastRunned = time.Now().Unix() //avoid saveMachineState
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t,
+		`{"return_value":0,"message":"ok"}`,
+		res.Body.String(),
+	)
+}
+
 func TestMain(m *testing.M) {
 	AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test.yaml"
 	os.Exit(m.Run())

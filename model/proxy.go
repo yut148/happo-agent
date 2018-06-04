@@ -83,10 +83,7 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 		}
 	}
 
-	a, err := getAutoScalingInfo(nextHost)
-	if err != nil {
-		return http.StatusInternalServerError, makeMonitorResponse(halib.MonitorUnknown, err.Error())
-	}
+	a := getAutoScalingInfo(nextHost)
 
 	var respCode int
 	var response string
@@ -108,11 +105,13 @@ func Proxy(proxyRequest halib.ProxyRequest, r render.Render) (int, string) {
 	return respCode, response
 }
 
-func getAutoScalingInfo(nextHost string) (halib.AutoScalingConfigData, error) {
+func getAutoScalingInfo(nextHost string) halib.AutoScalingConfigData {
+	log := util.HappoAgentLogger()
 	var autoScalingConfigData halib.AutoScalingConfigData
 	autoScalingList, err := autoscaling.GetAutoScalingConfig(AutoScalingConfigFile)
 	if err != nil {
-		return autoScalingConfigData, err
+		log.Errorf("failed to get autoscaling config: %s", err)
+		return autoScalingConfigData
 	}
 
 	for _, a := range autoScalingList.AutoScalings {
@@ -120,10 +119,10 @@ func getAutoScalingInfo(nextHost string) (halib.AutoScalingConfigData, error) {
 			autoScalingConfigData.AutoScalingGroupName = a.AutoScalingGroupName
 			autoScalingConfigData.HostPrefix = a.HostPrefix
 			autoScalingConfigData.AutoScalingCount = a.AutoScalingCount
-			return autoScalingConfigData, nil
+			return autoScalingConfigData
 		}
 	}
-	return autoScalingConfigData, nil
+	return autoScalingConfigData
 }
 
 func postToAgent(host string, port int, requestType string, jsonData []byte) (int, string, error) {
