@@ -574,7 +574,7 @@ func TestProxy9(t *testing.T) {
 	m.ServeHTTP(res, req)
 
 	assert.Equal(t, http.StatusBadRequest, res.Code)
-	assert.Equal(t, "request_type required", res.Body.String())
+	assert.Equal(t, "request_type unsupported", res.Body.String())
 }
 
 func TestMain(m *testing.M) {
