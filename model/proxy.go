@@ -203,7 +203,7 @@ func metricAutoScaling(host string, port int, requestType string, jsonData []byt
 	}
 
 	if ip == "" {
-		return http.StatusNotFound, fmt.Sprintf("%s has not been assigned instance\n", host), nil
+		return http.StatusServiceUnavailable, fmt.Sprintf("%s has not been assigned instance\n", host), nil
 	}
 
 	return postToAgent(ip, port, requestType, jsonData)

@@ -659,7 +659,7 @@ func TestProxy11(t *testing.T) {
 
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
 	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-2 has not been assigned instance\n", res.Body.String())
 }
 
