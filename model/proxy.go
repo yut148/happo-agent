@@ -193,10 +193,28 @@ func monitorAutoScaling(host string, port int, requestType string, jsonData []by
 	return statusCode, makeMonitorResponse(m.ReturnValue, message), perr
 }
 
+func metricAutoScaling(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+	ip, err := autoscaling.AliasToIP(host)
+	if err != nil {
+		if err == leveldb.ErrNotFound {
+			return http.StatusNotFound, fmt.Sprintf("alias not found: %s\n", host), nil
+		}
+		return http.StatusInternalServerError, err.Error(), nil
+	}
+
+	if ip == "" {
+		return http.StatusNotFound, fmt.Sprintf("%s has not been assigned instance\n", host), nil
+	}
+
+	return postToAgent(ip, port, requestType, jsonData)
+}
+
 func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	switch requestType {
 	case "monitor":
 		return monitorAutoScaling(host, port, requestType, jsonData, autoScalingGroupName)
+	case "metric":
+		return metricAutoScaling(host, port, requestType, jsonData)
 	// TODO: implement for other requestType
 	default:
 		return http.StatusBadRequest, "request_type unsupported", nil
