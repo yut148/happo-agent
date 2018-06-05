@@ -39,6 +39,13 @@ type AutoScalingData struct {
 	} `json:"instances"`
 }
 
+// AutoScalingConfigData is actual autoscaling config data
+type AutoScalingConfigData struct {
+	AutoScalingGroupName string `json:"autoscaling_group_name"`
+	AutoScalingCount     int    `json:"autoscaling_count"`
+	HostPrefix           string `json:"host_prefix"`
+}
+
 // --- Request Parameter
 
 // ProxyRequest is /proxy API
