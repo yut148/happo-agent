@@ -409,6 +409,56 @@ func DeleteAutoScaling(autoScalingGroupName string) error {
 	return nil
 }
 
+// SaveAliasMetricConfig save metric config of autoscaling instance to dbms
+func SaveAliasMetricConfig(alias string, metricConfig halib.MetricConfig) error {
+	log := util.HappoAgentLogger()
+
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	key := []byte(fmt.Sprintf("ag-%s", alias))
+
+	value, err := transaction.Get(key, nil)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	var instanceData halib.InstanceData
+	dec := gob.NewDecoder(bytes.NewReader(value))
+	if err := dec.Decode(&instanceData); err != nil {
+		transaction.Discard()
+		log.Error(err)
+		return err
+	}
+
+	instanceData.MetricConfig = metricConfig
+
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	if err := enc.Encode(instanceData); err != nil {
+		transaction.Discard()
+		log.Error(err)
+		return err
+	}
+
+	if err := transaction.Put(key, b.Bytes(), nil); err != nil {
+		transaction.Discard()
+		log.Error(err)
+		return err
+	}
+
+	if err := transaction.Commit(); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 // AliasToIP resolve autoscaling instance private ip address
 func AliasToIP(alias string) (string, error) {
 	value, err := db.DB.Get([]byte(fmt.Sprintf("ag-%s", alias)), nil)

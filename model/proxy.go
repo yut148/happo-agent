@@ -209,12 +209,44 @@ func metricAutoScaling(host string, port int, requestType string, jsonData []byt
 	return postToAgent(ip, port, requestType, jsonData)
 }
 
+func metricConfigUpdateAutoScaling(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+	log := util.HappoAgentLogger()
+
+	ip, err := autoscaling.AliasToIP(host)
+	if err != nil {
+		if err == leveldb.ErrNotFound {
+			return http.StatusNotFound, fmt.Sprintf("alias not found: %s\n", host), nil
+		}
+		return http.StatusInternalServerError, err.Error(), nil
+	}
+
+	if ip == "" {
+		return http.StatusServiceUnavailable, fmt.Sprintf("%s has not been assigned instance\n", host), nil
+	}
+
+	statusCode, jsonStr, perr := postToAgent(ip, port, requestType, jsonData)
+	if statusCode == http.StatusOK {
+		var m halib.MetricConfigUpdateRequest
+		if err := json.Unmarshal(jsonData, &m); err != nil {
+			log.Errorf("failed to save metric data: %s", err.Error())
+		} else {
+			if err := autoscaling.SaveAliasMetricConfig(host, m.Config); err != nil {
+				log.Error(err.Error())
+			}
+		}
+	}
+
+	return statusCode, jsonStr, perr
+}
+
 func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	switch requestType {
 	case "monitor":
 		return monitorAutoScaling(host, port, requestType, jsonData, autoScalingGroupName)
 	case "metric":
 		return metricAutoScaling(host, port, requestType, jsonData)
+	case "metric/config/update":
+		return metricConfigUpdateAutoScaling(host, port, requestType, jsonData)
 	// TODO: implement for other requestType
 	default:
 		return http.StatusBadRequest, "request_type unsupported", nil
