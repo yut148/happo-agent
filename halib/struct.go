@@ -22,12 +22,9 @@ type InventoryData struct {
 
 // InstanceData is actual instance
 type InstanceData struct {
-	IP            string `json:"ip"`
-	InstanceID    string `json:"instance_id"`
-	MetricPlugins []struct {
-		PluginName   string `json:"plugin_name"`
-		PluginOption string `json:"plugin_option"`
-	} `json:"metric_plugins"`
+	IP           string       `json:"ip"`
+	InstanceID   string       `json:"instance_id"`
+	MetricConfig MetricConfig `json:"metric_config"`
 }
 
 // AutoScalingData name and actual instance data

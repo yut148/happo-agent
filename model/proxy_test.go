@@ -38,15 +38,7 @@ func setup() {
 		var instanceData halib.InstanceData
 		instanceData.InstanceID = instanceID
 		instanceData.IP = ip
-		instanceData.MetricPlugins = []struct {
-			PluginName   string `json:"plugin_name"`
-			PluginOption string `json:"plugin_option"`
-		}{
-			{
-				PluginName:   "",
-				PluginOption: "",
-			},
-		}
+		instanceData.MetricConfig = halib.MetricConfig{}
 
 		var b bytes.Buffer
 		enc := gob.NewEncoder(&b)
