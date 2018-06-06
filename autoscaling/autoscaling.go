@@ -309,15 +309,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 				var instanceData halib.InstanceData
 				instanceData.InstanceID = *autoScalingInstance.InstanceId
 				instanceData.IP = *autoScalingInstance.PrivateIpAddress
-				instanceData.MetricPlugins = []struct {
-					PluginName   string `json:"plugin_name"`
-					PluginOption string `json:"plugin_option"`
-				}{
-					{
-						PluginName:   "",
-						PluginOption: "",
-					},
-				}
+				instanceData.MetricConfig = halib.MetricConfig{}
 				newInstances = append(newInstances, instanceData)
 			}
 		}
@@ -327,7 +319,7 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 				key := fmt.Sprintf("ag-%s-%s-%d", autoScalingGroupName, hostPrefix, i+1)
 				if _, ok := actualInstances[key]; !ok {
 					if _, ok := registeredInstances[key]; ok {
-						instance.MetricPlugins = registeredInstances[key].MetricPlugins
+						instance.MetricConfig = registeredInstances[key].MetricConfig
 					}
 					actualInstances[key] = instance
 					break
@@ -339,22 +331,14 @@ func RefreshAutoScalingInstances(client *AWSClient, autoScalingGroupName, hostPr
 	// fill actualInstances with emptyInstance
 	for i := 0; i < autoscalingCount; i++ {
 		emptyInstance := halib.InstanceData{
-			InstanceID: "",
-			IP:         "",
-			MetricPlugins: []struct {
-				PluginName   string `json:"plugin_name"`
-				PluginOption string `json:"plugin_option"`
-			}{
-				{
-					PluginName:   "",
-					PluginOption: "",
-				},
-			},
+			InstanceID:   "",
+			IP:           "",
+			MetricConfig: halib.MetricConfig{},
 		}
 		key := fmt.Sprintf("ag-%s-%s-%d", autoScalingGroupName, hostPrefix, i+1)
 		if _, ok := actualInstances[key]; !ok {
 			if _, ok := registeredInstances[key]; ok {
-				emptyInstance.MetricPlugins = registeredInstances[key].MetricPlugins
+				emptyInstance.MetricConfig = registeredInstances[key].MetricConfig
 			}
 			actualInstances[key] = emptyInstance
 		}

@@ -280,17 +280,9 @@ func TestRegisterAutoScalingInstance(t *testing.T) {
 			}{
 				alias: "dummy-prod-ag-dummy-prod-app-11",
 				instanceData: halib.InstanceData{
-					InstanceID: "i-zzzzzz",
-					IP:         "192.0.2.99",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-zzzzzz",
+					IP:           "192.0.2.99",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 			isNormalTest: true,
@@ -307,12 +299,9 @@ func TestRegisterAutoScalingInstance(t *testing.T) {
 			}{
 				alias: "",
 				instanceData: halib.InstanceData{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}(nil),
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 			isNormalTest: false,
@@ -329,12 +318,9 @@ func TestRegisterAutoScalingInstance(t *testing.T) {
 			}{
 				alias: "",
 				instanceData: halib.InstanceData{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}(nil),
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 			isNormalTest: false,
@@ -351,12 +337,9 @@ func TestRegisterAutoScalingInstance(t *testing.T) {
 			}{
 				alias: "",
 				instanceData: halib.InstanceData{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}(nil),
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 			isNormalTest: false,
@@ -438,134 +421,54 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			input3: 10,
 			expected: []halib.InstanceData{
 				{
-					InstanceID: "i-aaaaaa",
-					IP:         "192.0.2.11",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-aaaaaa",
+					IP:           "192.0.2.11",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-jjjjjj",
-					IP:         "192.0.2.20",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-jjjjjj",
+					IP:           "192.0.2.20",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-bbbbbb",
-					IP:         "192.0.2.12",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-bbbbbb",
+					IP:           "192.0.2.12",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-cccccc",
-					IP:         "192.0.2.13",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-cccccc",
+					IP:           "192.0.2.13",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-dddddd",
-					IP:         "192.0.2.14",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-dddddd",
+					IP:           "192.0.2.14",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-eeeeee",
-					IP:         "192.0.2.15",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-eeeeee",
+					IP:           "192.0.2.15",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-ffffff",
-					IP:         "192.0.2.16",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-ffffff",
+					IP:           "192.0.2.16",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-gggggg",
-					IP:         "192.0.2.17",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-gggggg",
+					IP:           "192.0.2.17",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-hhhhhh",
-					IP:         "192.0.2.18",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-hhhhhh",
+					IP:           "192.0.2.18",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-iiiiii",
-					IP:         "192.0.2.19",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-iiiiii",
+					IP:           "192.0.2.19",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 		},
@@ -576,134 +479,54 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			input3: 10,
 			expected: []halib.InstanceData{
 				{
-					InstanceID: "i-aaaaaa",
-					IP:         "192.0.2.11",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-aaaaaa",
+					IP:           "192.0.2.11",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-cccccc",
-					IP:         "192.0.2.13",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-cccccc",
+					IP:           "192.0.2.13",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-eeeeee",
-					IP:         "192.0.2.15",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-eeeeee",
+					IP:           "192.0.2.15",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-ffffff",
-					IP:         "192.0.2.16",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-ffffff",
+					IP:           "192.0.2.16",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-gggggg",
-					IP:         "192.0.2.17",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-gggggg",
+					IP:           "192.0.2.17",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-hhhhhh",
-					IP:         "192.0.2.18",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-hhhhhh",
+					IP:           "192.0.2.18",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-jjjjjj",
-					IP:         "192.0.2.20",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-jjjjjj",
+					IP:           "192.0.2.20",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 		},
@@ -714,56 +537,24 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			input3: 4,
 			expected: []halib.InstanceData{
 				{
-					InstanceID: "i-kkkkkk",
-					IP:         "192.0.2.21",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-kkkkkk",
+					IP:           "192.0.2.21",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-llllll",
-					IP:         "192.0.2.22",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-llllll",
+					IP:           "192.0.2.22",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-mmmmmm",
-					IP:         "192.0.2.23",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-mmmmmm",
+					IP:           "192.0.2.23",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "i-nnnnnn",
-					IP:         "192.0.2.24",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "i-nnnnnn",
+					IP:           "192.0.2.24",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 		},
@@ -774,56 +565,24 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			input3: 4,
 			expected: []halib.InstanceData{
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 		},
@@ -834,56 +593,24 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			input3: 4,
 			expected: []halib.InstanceData{
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 		},
@@ -894,56 +621,24 @@ func TestRefreshAutoScalingInstances(t *testing.T) {
 			input3: 4,
 			expected: []halib.InstanceData{
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 				{
-					InstanceID: "",
-					IP:         "",
-					MetricPlugins: []struct {
-						PluginName   string `json:"plugin_name"`
-						PluginOption string `json:"plugin_option"`
-					}{
-						{
-							PluginName:   "",
-							PluginOption: "",
-						},
-					},
+					InstanceID:   "",
+					IP:           "",
+					MetricConfig: halib.MetricConfig{},
 				},
 			},
 		},
