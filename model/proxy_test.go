@@ -577,6 +577,135 @@ func TestProxy9(t *testing.T) {
 	assert.Equal(t, "request_type unsupported", res.Body.String())
 }
 
+func TestProxy10(t *testing.T) {
+	//proxy metric when alias assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"metric_data":null,"message":""}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-1"
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "metric",
+		"request_json": "{\"apikey\": \"\"}"
+	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, `{"metric_data":null,"message":""}`, res.Body.String())
+}
+
+func TestProxy11(t *testing.T) {
+	//proxy metric when alias not assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"metric_data":null,"message":""}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-2"
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "metric",
+		"request_json": "{\"apikey\": \"\"}"
+	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
+	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-2 has not been assigned instance\n", res.Body.String())
+}
+
+func TestProxy12(t *testing.T) {
+	//proxy metric when alias not found
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"metric_data":null,"message":""}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-99"
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "metric",
+		"request_json": "{\"apikey\": \"\"}"
+	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, "alias not found: dummy-prod-ag-dummy-prod-app-99\n", res.Body.String())
+}
+
 func TestMain(m *testing.M) {
 	AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test.yaml"
 	os.Exit(m.Run())
