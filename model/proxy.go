@@ -225,7 +225,15 @@ func metricConfigUpdateAutoScaling(host string, port int, requestType string, js
 	}
 
 	statusCode, jsonStr, perr := postToAgent(ip, port, requestType, jsonData)
-	if statusCode == http.StatusOK {
+
+	var m halib.MetricConfigUpdateResponse
+	if err := json.Unmarshal([]byte(jsonStr), &m); err != nil {
+		return http.StatusInternalServerError, err.Error(), nil
+	}
+
+	// model.MetricConfigUpdate always return http status 200.
+	// so it also added `m.Status == "OK"` to condition.
+	if statusCode == http.StatusOK && m.Status == "OK" {
 		var m halib.MetricConfigUpdateRequest
 		if err := json.Unmarshal(jsonData, &m); err != nil {
 			log.Errorf("failed to save metric data: %s", err.Error())
