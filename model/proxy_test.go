@@ -761,6 +761,14 @@ func TestProxy13(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t, `{"status":"OK","message":""}`, res.Body.String())
+
+	v, _ := db.DB.Get([]byte(fmt.Sprintf("ag-%s", alias)), nil)
+	var instanceData halib.InstanceData
+	dec := gob.NewDecoder(bytes.NewReader(v))
+	dec.Decode(&instanceData)
+	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-1", instanceData.MetricConfig.Metrics[0].Hostname)
+	assert.Equal(t, "metric_test_plugin", instanceData.MetricConfig.Metrics[0].Plugins[0].PluginName)
+	assert.Equal(t, "0", instanceData.MetricConfig.Metrics[0].Plugins[0].PluginOption)
 }
 
 func TestProxy14(t *testing.T) {
@@ -813,6 +821,20 @@ func TestProxy14(t *testing.T) {
 
 	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
 	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-2 has not been assigned instance\n", res.Body.String())
+
+	v, _ := db.DB.Get([]byte(fmt.Sprintf("ag-%s", alias)), nil)
+	var instanceData halib.InstanceData
+	dec := gob.NewDecoder(bytes.NewReader(v))
+	dec.Decode(&instanceData)
+	assert.Equal(t, halib.MetricConfig{
+		Metrics: []struct {
+			Hostname string `yaml:"hostname" json:"Hostname"`
+			Plugins  []struct {
+				PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+				PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+			} `yaml:"plugins" json:"Plugins"`
+		}(nil),
+	}, instanceData.MetricConfig)
 }
 
 func TestProxy15(t *testing.T) {
