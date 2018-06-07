@@ -15,6 +15,8 @@ import (
 
 	"encoding/gob"
 
+	"encoding/json"
+
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/db"
@@ -685,6 +687,173 @@ func TestProxy12(t *testing.T) {
 		"request_type": "metric",
 		"request_json": "{\"apikey\": \"\"}"
 	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, "alias not found: dummy-prod-ag-dummy-prod-app-99\n", res.Body.String())
+}
+
+func TestProxy13(t *testing.T) {
+	//proxy metric config update when alias assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"status":"OK","message":""}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	alias := "dummy-prod-ag-dummy-prod-app-1"
+
+	var request halib.MetricConfigUpdateRequest
+	request.APIKey = ""
+	request.Config.Metrics = append(request.Config.Metrics, struct {
+		Hostname string `yaml:"hostname" json:"Hostname"`
+		Plugins  []struct {
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		} `yaml:"plugins" json:"Plugins"`
+	}{
+		"dummy-prod-ag-dummy-prod-app-1",
+		[]struct {
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		}{
+			{PluginName: "metric_test_plugin", PluginOption: "0"},
+		},
+	})
+	b, _ := json.Marshal(request)
+
+	var proxyRequest halib.ProxyRequest
+	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", alias, port))
+	proxyRequest.RequestType = "metric/config/update"
+	proxyRequest.RequestJSON = b
+	requestJSON, _ := json.Marshal(proxyRequest)
+
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, `{"status":"OK","message":""}`, res.Body.String())
+}
+
+func TestProxy14(t *testing.T) {
+	//proxy metric config update when alias not assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	alias := "dummy-prod-ag-dummy-prod-app-2"
+	port := 6777
+
+	var request halib.MetricConfigUpdateRequest
+	request.APIKey = ""
+	request.Config.Metrics = append(request.Config.Metrics, struct {
+		Hostname string `yaml:"hostname" json:"Hostname"`
+		Plugins  []struct {
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		} `yaml:"plugins" json:"Plugins"`
+	}{
+		"dummy-prod-ag-dummy-prod-app-1",
+		[]struct {
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		}{
+			{PluginName: "metric_test_plugin", PluginOption: "0"},
+		},
+	})
+	b, _ := json.Marshal(request)
+
+	var proxyRequest halib.ProxyRequest
+	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", alias, port))
+	proxyRequest.RequestType = "metric/config/update"
+	proxyRequest.RequestJSON = b
+	requestJSON, _ := json.Marshal(proxyRequest)
+
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
+	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-2 has not been assigned instance\n", res.Body.String())
+}
+
+func TestProxy15(t *testing.T) {
+	//proxy metric config update when alias not found
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	alias := "dummy-prod-ag-dummy-prod-app-99"
+	port := 6777
+
+	var request halib.MetricConfigUpdateRequest
+	request.APIKey = ""
+	request.Config.Metrics = append(request.Config.Metrics, struct {
+		Hostname string `yaml:"hostname" json:"Hostname"`
+		Plugins  []struct {
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		} `yaml:"plugins" json:"Plugins"`
+	}{
+		"dummy-prod-ag-dummy-prod-app-1",
+		[]struct {
+			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
+			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
+		}{
+			{PluginName: "metric_test_plugin", PluginOption: "0"},
+		},
+	})
+	b, _ := json.Marshal(request)
+
+	var proxyRequest halib.ProxyRequest
+	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", alias, port))
+	proxyRequest.RequestType = "metric/config/update"
+	proxyRequest.RequestJSON = b
+	requestJSON, _ := json.Marshal(proxyRequest)
+
 	reader := bytes.NewReader([]byte(requestJSON))
 
 	req, _ := http.NewRequest("POST", "/proxy", reader)
