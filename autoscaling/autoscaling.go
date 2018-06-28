@@ -413,6 +413,10 @@ func DeleteAutoScaling(autoScalingGroupName string) error {
 func SaveAliasMetricConfig(alias string, metricConfig halib.MetricConfig) error {
 	log := util.HappoAgentLogger()
 
+	for i := 0; i < len(metricConfig.Metrics); i++ {
+		metricConfig.Metrics[i].Hostname = alias
+	}
+
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
 		log.Error(err)

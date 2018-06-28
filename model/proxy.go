@@ -115,7 +115,7 @@ func getAutoScalingInfo(nextHost string) halib.AutoScalingConfigData {
 	}
 
 	for _, a := range autoScalingList.AutoScalings {
-		if strings.HasPrefix(nextHost, fmt.Sprintf("%s-%s-", a.AutoScalingGroupName, a.HostPrefix)) {
+		if strings.HasPrefix(nextHost, a.AutoScalingGroupName) {
 			autoScalingConfigData.AutoScalingGroupName = a.AutoScalingGroupName
 			autoScalingConfigData.HostPrefix = a.HostPrefix
 			autoScalingConfigData.AutoScalingCount = a.AutoScalingCount
@@ -209,42 +209,70 @@ func metricAutoScaling(host string, port int, requestType string, jsonData []byt
 	return postToAgent(ip, port, requestType, jsonData)
 }
 
-func metricConfigUpdateAutoScaling(host string, port int, requestType string, jsonData []byte) (int, string, error) {
+func makeMetricConfigUpdateResponse(status, message string) string {
+	var metricConfigUpdateResponse halib.MetricConfigUpdateResponse
+	metricConfigUpdateResponse.Status = status
+	metricConfigUpdateResponse.Message = message
+
+	jsonData, err := json.Marshal(&metricConfigUpdateResponse)
+	if err != nil {
+		return err.Error()
+	}
+	return string(jsonData)
+}
+
+func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, requestType string, jsonData []byte) (int, string, error) {
 	log := util.HappoAgentLogger()
 
-	ip, err := autoscaling.AliasToIP(host)
+	autoScaling, err := autoscaling.AutoScaling(AutoScalingConfigFile)
 	if err != nil {
-		if err == leveldb.ErrNotFound {
-			return http.StatusNotFound, fmt.Sprintf("alias not found: %s\n", host), nil
+		return http.StatusInternalServerError, "NG", err
+	}
+
+	var autoScalingData halib.AutoScalingData
+	for _, a := range autoScaling {
+		if a.AutoScalingGroupName == autoScalingGroupName {
+			autoScalingData = a
 		}
-		return http.StatusInternalServerError, err.Error(), nil
 	}
 
-	if ip == "" {
-		return http.StatusServiceUnavailable, fmt.Sprintf("%s has not been assigned instance\n", host), nil
-	}
-
-	statusCode, jsonStr, perr := postToAgent(ip, port, requestType, jsonData)
-
-	var m halib.MetricConfigUpdateResponse
-	if err := json.Unmarshal([]byte(jsonStr), &m); err != nil {
-		return http.StatusInternalServerError, err.Error(), nil
-	}
-
-	// model.MetricConfigUpdate always return http status 200.
-	// so it also added `m.Status == "OK"` to condition.
-	if statusCode == http.StatusOK && m.Status == "OK" {
-		var m halib.MetricConfigUpdateRequest
-		if err := json.Unmarshal(jsonData, &m); err != nil {
-			log.Errorf("failed to save metric data: %s", err.Error())
+	var errStrings []string
+	for _, i := range autoScalingData.Instances {
+		log.Error(i.Alias)
+		var metricConfigUpdateRequest halib.MetricConfigUpdateRequest
+		if err := json.Unmarshal(jsonData, &metricConfigUpdateRequest); err != nil {
+			message := fmt.Sprintf("failed to save metric data at %s: %s", i.Alias, err.Error())
+			log.Error(message)
+			errStrings = append(errStrings, message)
+			continue
 		} else {
-			if err := autoscaling.SaveAliasMetricConfig(host, m.Config); err != nil {
-				log.Error(err.Error())
+			if err := autoscaling.SaveAliasMetricConfig(i.Alias, metricConfigUpdateRequest.Config); err != nil {
+				message := fmt.Sprintf("failed to save metric data at %s: %s", i.Alias, err.Error())
+				log.Error(message)
+				errStrings = append(errStrings, message)
+				continue
 			}
 		}
+
+		if i.InstanceData.IP == "" {
+			continue
+		}
+
+		_, _, err := postToAgent(i.InstanceData.IP, port, requestType, jsonData)
+		if err != nil {
+			message := fmt.Sprintf("failed to post request at %s: %s", i.Alias, err.Error())
+			log.Error(message)
+			errStrings = append(errStrings, message)
+			continue
+		}
 	}
 
-	return statusCode, jsonStr, perr
+	if len(errStrings) > 0 {
+		message := fmt.Sprintf("update metric config errors: %s", strings.Join(errStrings, ","))
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), fmt.Errorf(message)
+	}
+
+	return http.StatusOK, makeMetricConfigUpdateResponse("OK", ""), nil
 }
 
 func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
