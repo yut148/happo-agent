@@ -734,7 +734,7 @@ func TestProxy13(t *testing.T) {
 			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
 		} `yaml:"plugins" json:"Plugins"`
 	}{
-		"dummy-prod-ag-dummy-prod-app-1",
+		"dummy-prod-ag",
 		[]struct {
 			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
 			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
@@ -745,7 +745,7 @@ func TestProxy13(t *testing.T) {
 	b, _ := json.Marshal(request)
 
 	var proxyRequest halib.ProxyRequest
-	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", alias, port))
+	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", "dummy-prod-ag", port))
 	proxyRequest.RequestType = "metric/config/update"
 	proxyRequest.RequestJSON = b
 	requestJSON, _ := json.Marshal(proxyRequest)
@@ -782,8 +782,19 @@ func TestProxy14(t *testing.T) {
 	m.Use(render.Renderer())
 	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
 
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"status":"OK","message":""}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-Za-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
 	alias := "dummy-prod-ag-dummy-prod-app-2"
-	port := 6777
 
 	var request halib.MetricConfigUpdateRequest
 	request.APIKey = ""
@@ -794,7 +805,7 @@ func TestProxy14(t *testing.T) {
 			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
 		} `yaml:"plugins" json:"Plugins"`
 	}{
-		"dummy-prod-ag-dummy-prod-app-1",
+		"dummy-prod-ag",
 		[]struct {
 			PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
 			PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
@@ -805,7 +816,7 @@ func TestProxy14(t *testing.T) {
 	b, _ := json.Marshal(request)
 
 	var proxyRequest halib.ProxyRequest
-	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", alias, port))
+	proxyRequest.ProxyHostPort = append(proxyRequest.ProxyHostPort, fmt.Sprintf("%s:%d", "dummy-prod-ag", port))
 	proxyRequest.RequestType = "metric/config/update"
 	proxyRequest.RequestJSON = b
 	requestJSON, _ := json.Marshal(proxyRequest)
@@ -819,26 +830,20 @@ func TestProxy14(t *testing.T) {
 
 	m.ServeHTTP(res, req)
 
-	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
-	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-2 has not been assigned instance\n", res.Body.String())
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, `{"status":"OK","message":""}`, res.Body.String())
 
 	v, _ := db.DB.Get([]byte(fmt.Sprintf("ag-%s", alias)), nil)
 	var instanceData halib.InstanceData
 	dec := gob.NewDecoder(bytes.NewReader(v))
 	dec.Decode(&instanceData)
-	assert.Equal(t, halib.MetricConfig{
-		Metrics: []struct {
-			Hostname string `yaml:"hostname" json:"Hostname"`
-			Plugins  []struct {
-				PluginName   string `yaml:"plugin_name" json:"Plugin_Name"`
-				PluginOption string `yaml:"plugin_option" json:"Plugin_Option"`
-			} `yaml:"plugins" json:"Plugins"`
-		}(nil),
-	}, instanceData.MetricConfig)
+	assert.Equal(t, "dummy-prod-ag-dummy-prod-app-2", instanceData.MetricConfig.Metrics[0].Hostname)
+	assert.Equal(t, "metric_test_plugin", instanceData.MetricConfig.Metrics[0].Plugins[0].PluginName)
+	assert.Equal(t, "0", instanceData.MetricConfig.Metrics[0].Plugins[0].PluginOption)
 }
 
 func TestProxy15(t *testing.T) {
-	//proxy metric config update when alias not found
+	//proxy metric config update when autoscaling group not found
 
 	setup()
 	defer teardown()
@@ -848,7 +853,7 @@ func TestProxy15(t *testing.T) {
 	m.Use(render.Renderer())
 	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
 
-	alias := "dummy-prod-ag-dummy-prod-app-99"
+	alias := "dummy-prod-ag-dummy-prod-app-1"
 	port := 6777
 
 	var request halib.MetricConfigUpdateRequest
@@ -886,7 +891,7 @@ func TestProxy15(t *testing.T) {
 	m.ServeHTTP(res, req)
 
 	assert.Equal(t, http.StatusNotFound, res.Code)
-	assert.Equal(t, "alias not found: dummy-prod-ag-dummy-prod-app-99\n", res.Body.String())
+	assert.Equal(t, `{"status":"NG","message":"can't find autoscaling group: dummy-prod-ag-dummy-prod-app-1"}`, res.Body.String())
 }
 
 func TestMain(m *testing.M) {
