@@ -294,6 +294,18 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 	return http.StatusOK, makeMetricConfigUpdateResponse("OK", ""), nil
 }
 
+func inventoryAutoScaling(autoScalingGroupName string, port int, requestType string, jsonData []byte) (int, string, error) {
+	ip, err := autoscaling.GetAssignedInstance(autoScalingGroupName)
+	if err != nil {
+		return http.StatusInternalServerError, "", err
+	}
+	if ip == "" {
+		return http.StatusServiceUnavailable, "", err
+	}
+
+	return postToAgent(ip, port, requestType, jsonData)
+}
+
 func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	switch requestType {
 	case "monitor":
@@ -302,7 +314,8 @@ func postToAutoScalingAgent(host string, port int, requestType string, jsonData 
 		return metricAutoScaling(host, port, requestType, jsonData)
 	case "metric/config/update":
 		return metricConfigUpdateAutoScaling(host, port, requestType, jsonData)
-	// TODO: implement for other requestType
+	case "inventory":
+		return inventoryAutoScaling(host, port, requestType, jsonData)
 	default:
 		return http.StatusBadRequest, "request_type unsupported", nil
 	}

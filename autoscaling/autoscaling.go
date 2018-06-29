@@ -482,3 +482,31 @@ func AliasToIP(alias string) (string, error) {
 	}
 	return instanceData.IP, nil
 }
+
+// GetAssignedInstance return ip assigned instance
+func GetAssignedInstance(autoScalingGroupName string) (string, error) {
+	transaction, err := db.DB.OpenTransaction()
+	if err != nil {
+		return "", err
+	}
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix(
+			[]byte(fmt.Sprintf("ag-%s-", autoScalingGroupName)),
+		),
+		nil,
+	)
+	for iter.Next() {
+		var instanceData halib.InstanceData
+		dec := gob.NewDecoder(bytes.NewReader(iter.Value()))
+		if err := dec.Decode(&instanceData); err != nil {
+			transaction.Discard()
+			return "", err
+		}
+		if instanceData.IP != "" {
+			transaction.Discard()
+			return instanceData.IP, nil
+		}
+	}
+	transaction.Discard()
+	return "", nil
+}
