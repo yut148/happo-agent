@@ -244,39 +244,41 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 		return http.StatusNotFound, makeMetricConfigUpdateResponse("NG", message), nil
 	}
 
+	var metricConfigUpdateRequest halib.MetricConfigUpdateRequest
+	if err := json.Unmarshal(jsonData, &metricConfigUpdateRequest); err != nil {
+		message := fmt.Sprintf("failed to parse metric config update request: %s", err.Error())
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
+	if err := autoscaling.SaveAutoScalingMetricConfig(autoScalingGroupName, metricConfigUpdateRequest.Config); err != nil {
+		message := fmt.Sprintf("failed to save metric config: %s", err.Error())
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
 	var errStrings []string
-	for _, i := range autoScalingData.Instances {
-		log.Error(i.Alias)
-		var metricConfigUpdateRequest halib.MetricConfigUpdateRequest
-		if err := json.Unmarshal(jsonData, &metricConfigUpdateRequest); err != nil {
-			message := fmt.Sprintf("failed to save metric data at %s: %s", i.Alias, err.Error())
-			log.Error(message)
-			errStrings = append(errStrings, message)
-			continue
-		} else {
-			if err := autoscaling.SaveAliasMetricConfig(i.Alias, metricConfigUpdateRequest.Config); err != nil {
-				message := fmt.Sprintf("failed to save metric data at %s: %s", i.Alias, err.Error())
-				log.Error(message)
-				errStrings = append(errStrings, message)
-				continue
-			}
-		}
-
-		if i.InstanceData.IP == "" {
+	for _, instance := range autoScalingData.Instances {
+		if instance.InstanceData.IP == "" {
 			continue
 		}
 
-		jsonData, err := json.Marshal(metricConfigUpdateRequest)
+		m := metricConfigUpdateRequest
+		for i := 0; i < len(m.Config.Metrics); i++ {
+			m.Config.Metrics[i].Hostname = instance.Alias
+		}
+
+		jsonData, err := json.Marshal(m)
 		if err != nil {
-			message := fmt.Sprintf("failed to post request at %s: %s", i.Alias, err.Error())
+			message := fmt.Sprintf("failed to post request at %s: %s", instance.Alias, err.Error())
 			log.Error(message)
 			errStrings = append(errStrings, message)
 			continue
 		}
 
-		_, _, err = postToAgent(i.InstanceData.IP, port, requestType, jsonData)
+		_, _, err = postToAgent(instance.InstanceData.IP, port, requestType, jsonData)
 		if err != nil {
-			message := fmt.Sprintf("failed to post request at %s: %s", i.Alias, err.Error())
+			message := fmt.Sprintf("failed to post request at %s: %s", instance.Alias, err.Error())
 			log.Error(message)
 			errStrings = append(errStrings, message)
 			continue
@@ -286,7 +288,7 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 	if len(errStrings) > 0 {
 		message := fmt.Sprintf("update metric config errors: %s", strings.Join(errStrings, ","))
 		log.Error(message)
-		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
+		return http.StatusServiceUnavailable, makeMetricConfigUpdateResponse("NG", message), nil
 	}
 
 	return http.StatusOK, makeMetricConfigUpdateResponse("OK", ""), nil

@@ -409,13 +409,9 @@ func DeleteAutoScaling(autoScalingGroupName string) error {
 	return nil
 }
 
-// SaveAliasMetricConfig save metric config of autoscaling instance to dbms
-func SaveAliasMetricConfig(alias string, metricConfig halib.MetricConfig) error {
+// SaveAutoScalingMetricConfig save metric config of autoscaling instance to dbms
+func SaveAutoScalingMetricConfig(autoScalingGroupName string, metricConfig halib.MetricConfig) error {
 	log := util.HappoAgentLogger()
-
-	for i := 0; i < len(metricConfig.Metrics); i++ {
-		metricConfig.Metrics[i].Hostname = alias
-	}
 
 	transaction, err := db.DB.OpenTransaction()
 	if err != nil {
@@ -423,33 +419,43 @@ func SaveAliasMetricConfig(alias string, metricConfig halib.MetricConfig) error 
 		return err
 	}
 
-	key := []byte(fmt.Sprintf("ag-%s", alias))
+	iter := transaction.NewIterator(
+		leveldbUtil.BytesPrefix(
+			[]byte(fmt.Sprintf("ag-%s-", autoScalingGroupName)),
+		),
+		nil,
+	)
 
-	value, err := transaction.Get(key, nil)
-	if err != nil {
-		log.Error(err)
-		return err
+	batch := new(leveldb.Batch)
+	for iter.Next() {
+		value := iter.Value()
+
+		var instanceData halib.InstanceData
+		dec := gob.NewDecoder(bytes.NewReader(value))
+		if err := dec.Decode(&instanceData); err != nil {
+			transaction.Discard()
+			log.Error(err)
+			return err
+		}
+
+		m := metricConfig
+		alias := strings.TrimPrefix(string(iter.Key()), "ag-")
+		for i := 0; i < len(m.Metrics); i++ {
+			m.Metrics[i].Hostname = alias
+		}
+		instanceData.MetricConfig = m
+
+		var b bytes.Buffer
+		enc := gob.NewEncoder(&b)
+		if err := enc.Encode(instanceData); err != nil {
+			transaction.Discard()
+			log.Error(err)
+			return err
+		}
+		batch.Put(iter.Key(), b.Bytes())
 	}
 
-	var instanceData halib.InstanceData
-	dec := gob.NewDecoder(bytes.NewReader(value))
-	if err := dec.Decode(&instanceData); err != nil {
-		transaction.Discard()
-		log.Error(err)
-		return err
-	}
-
-	instanceData.MetricConfig = metricConfig
-
-	var b bytes.Buffer
-	enc := gob.NewEncoder(&b)
-	if err := enc.Encode(instanceData); err != nil {
-		transaction.Discard()
-		log.Error(err)
-		return err
-	}
-
-	if err := transaction.Put(key, b.Bytes(), nil); err != nil {
+	if err := transaction.Write(batch, nil); err != nil {
 		transaction.Discard()
 		log.Error(err)
 		return err
