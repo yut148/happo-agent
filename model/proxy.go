@@ -266,7 +266,15 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 			continue
 		}
 
-		_, _, err := postToAgent(i.InstanceData.IP, port, requestType, jsonData)
+		jsonData, err := json.Marshal(metricConfigUpdateRequest)
+		if err != nil {
+			message := fmt.Sprintf("failed to post request at %s: %s", i.Alias, err.Error())
+			log.Error(message)
+			errStrings = append(errStrings, message)
+			continue
+		}
+
+		_, _, err = postToAgent(i.InstanceData.IP, port, requestType, jsonData)
 		if err != nil {
 			message := fmt.Sprintf("failed to post request at %s: %s", i.Alias, err.Error())
 			log.Error(message)
