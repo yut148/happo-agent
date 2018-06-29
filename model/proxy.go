@@ -115,7 +115,7 @@ func getAutoScalingInfo(nextHost string) halib.AutoScalingConfigData {
 	}
 
 	for _, a := range autoScalingList.AutoScalings {
-		if strings.HasPrefix(nextHost, fmt.Sprintf("%s-%s-", a.AutoScalingGroupName, a.HostPrefix)) {
+		if strings.HasPrefix(nextHost, a.AutoScalingGroupName) {
 			autoScalingConfigData.AutoScalingGroupName = a.AutoScalingGroupName
 			autoScalingConfigData.HostPrefix = a.HostPrefix
 			autoScalingConfigData.AutoScalingCount = a.AutoScalingCount
@@ -209,12 +209,99 @@ func metricAutoScaling(host string, port int, requestType string, jsonData []byt
 	return postToAgent(ip, port, requestType, jsonData)
 }
 
+func makeMetricConfigUpdateResponse(status, message string) string {
+	var metricConfigUpdateResponse halib.MetricConfigUpdateResponse
+	metricConfigUpdateResponse.Status = status
+	metricConfigUpdateResponse.Message = message
+
+	jsonData, err := json.Marshal(&metricConfigUpdateResponse)
+	if err != nil {
+		return err.Error()
+	}
+	return string(jsonData)
+}
+
+func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, requestType string, jsonData []byte) (int, string, error) {
+	log := util.HappoAgentLogger()
+
+	autoScaling, err := autoscaling.AutoScaling(AutoScalingConfigFile)
+	if err != nil {
+		message := fmt.Sprintf("failed to fetch autoscaling instances: %s", err.Error())
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
+	var autoScalingData halib.AutoScalingData
+	for _, a := range autoScaling {
+		if a.AutoScalingGroupName == autoScalingGroupName {
+			autoScalingData = a
+		}
+	}
+
+	if autoScalingData.AutoScalingGroupName == "" {
+		message := fmt.Sprintf("can't find autoscaling group: %s", autoScalingGroupName)
+		log.Error(message)
+		return http.StatusNotFound, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
+	var metricConfigUpdateRequest halib.MetricConfigUpdateRequest
+	if err := json.Unmarshal(jsonData, &metricConfigUpdateRequest); err != nil {
+		message := fmt.Sprintf("failed to parse metric config update request: %s", err.Error())
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
+	if err := autoscaling.SaveAutoScalingMetricConfig(autoScalingGroupName, metricConfigUpdateRequest.Config); err != nil {
+		message := fmt.Sprintf("failed to save metric config: %s", err.Error())
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
+	var errStrings []string
+	for _, instance := range autoScalingData.Instances {
+		if instance.InstanceData.IP == "" {
+			continue
+		}
+
+		m := metricConfigUpdateRequest
+		for i := 0; i < len(m.Config.Metrics); i++ {
+			m.Config.Metrics[i].Hostname = instance.Alias
+		}
+
+		jsonData, err := json.Marshal(m)
+		if err != nil {
+			message := fmt.Sprintf("failed to post request at %s: %s", instance.Alias, err.Error())
+			log.Error(message)
+			errStrings = append(errStrings, message)
+			continue
+		}
+
+		_, _, err = postToAgent(instance.InstanceData.IP, port, requestType, jsonData)
+		if err != nil {
+			message := fmt.Sprintf("failed to post request at %s: %s", instance.Alias, err.Error())
+			log.Error(message)
+			errStrings = append(errStrings, message)
+			continue
+		}
+	}
+
+	if len(errStrings) > 0 {
+		message := fmt.Sprintf("update metric config errors: %s", strings.Join(errStrings, ","))
+		log.Error(message)
+		return http.StatusServiceUnavailable, makeMetricConfigUpdateResponse("NG", message), nil
+	}
+
+	return http.StatusOK, makeMetricConfigUpdateResponse("OK", ""), nil
+}
+
 func postToAutoScalingAgent(host string, port int, requestType string, jsonData []byte, autoScalingGroupName string) (int, string, error) {
 	switch requestType {
 	case "monitor":
 		return monitorAutoScaling(host, port, requestType, jsonData, autoScalingGroupName)
 	case "metric":
 		return metricAutoScaling(host, port, requestType, jsonData)
+	case "metric/config/update":
+		return metricConfigUpdateAutoScaling(host, port, requestType, jsonData)
 	// TODO: implement for other requestType
 	default:
 		return http.StatusBadRequest, "request_type unsupported", nil
