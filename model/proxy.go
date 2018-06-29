@@ -226,7 +226,9 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 
 	autoScaling, err := autoscaling.AutoScaling(AutoScalingConfigFile)
 	if err != nil {
-		return http.StatusInternalServerError, "NG", err
+		message := fmt.Sprintf("failed to fetch autoscaling instances: %s", err.Error())
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
 	}
 
 	var autoScalingData halib.AutoScalingData
@@ -234,6 +236,12 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 		if a.AutoScalingGroupName == autoScalingGroupName {
 			autoScalingData = a
 		}
+	}
+
+	if autoScalingData.AutoScalingGroupName == "" {
+		message := fmt.Sprintf("can't find autoscaling group: %s", autoScalingGroupName)
+		log.Error(message)
+		return http.StatusNotFound, makeMetricConfigUpdateResponse("NG", message), nil
 	}
 
 	var errStrings []string
@@ -269,7 +277,8 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 
 	if len(errStrings) > 0 {
 		message := fmt.Sprintf("update metric config errors: %s", strings.Join(errStrings, ","))
-		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), fmt.Errorf(message)
+		log.Error(message)
+		return http.StatusInternalServerError, makeMetricConfigUpdateResponse("NG", message), nil
 	}
 
 	return http.StatusOK, makeMetricConfigUpdateResponse("OK", ""), nil
