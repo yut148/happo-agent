@@ -295,11 +295,33 @@ func metricConfigUpdateAutoScaling(autoScalingGroupName string, port int, reques
 }
 
 func inventoryAutoScaling(autoScalingGroupName string, port int, requestType string, jsonData []byte) (int, string, error) {
+	log := util.HappoAgentLogger()
+
+	autoScaling, err := autoscaling.AutoScaling(AutoScalingConfigFile)
+	if err != nil {
+		log.Error(fmt.Sprintf("failed to fetch autoscaling instances: %s", err.Error()))
+		return http.StatusInternalServerError, "", nil
+	}
+
+	var autoScalingData halib.AutoScalingData
+	for _, a := range autoScaling {
+		if a.AutoScalingGroupName == autoScalingGroupName {
+			autoScalingData = a
+		}
+	}
+
+	if autoScalingData.AutoScalingGroupName == "" {
+		log.Error(fmt.Sprintf("can't find autoscaling group: %s", autoScalingGroupName))
+		return http.StatusNotFound, "", nil
+	}
+
 	ip, err := autoscaling.GetAssignedInstance(autoScalingGroupName)
 	if err != nil {
+		log.Error(fmt.Sprintf("failed to get assigned instance: %s", err.Error()))
 		return http.StatusInternalServerError, "", err
 	}
 	if ip == "" {
+		log.Error(fmt.Sprintf("can't find assigned instance: %s", autoScalingGroupName))
 		return http.StatusServiceUnavailable, "", err
 	}
 
