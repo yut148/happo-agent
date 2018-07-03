@@ -51,6 +51,8 @@ func setup() {
 
 	saveInstanceData("dummy-prod-ag-dummy-prod-app-1", "i-aaaaaa", "127.0.0.1")
 	saveInstanceData("dummy-prod-ag-dummy-prod-app-2", "", "")
+	saveInstanceData("dummy-stg-ag-dummy-stg-app-1", "", "")
+	saveInstanceData("dummy-stg-ag-dummy-stg-app-2", "", "")
 }
 
 func teardown() {
@@ -489,7 +491,7 @@ func TestProxy8(t *testing.T) {
 	//monitor ok when autoscaling config is not found
 
 	AutoScalingConfigFile = "./not_found"
-	defer func() { AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test.yaml" }()
+	defer func() { AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test_multi.yaml" }()
 
 	//bastion
 	m := martini.Classic()
@@ -894,7 +896,115 @@ func TestProxy15(t *testing.T) {
 	assert.Equal(t, `{"status":"NG","message":"can't find autoscaling group: dummy-prod-ag-dummy-prod-app-1"}`, res.Body.String())
 }
 
+func TestProxy16(t *testing.T) {
+	//proxy inventory when alias assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	//edge
+	ts := httptest.NewTLSServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, `{"return_code":0, "return_value":"dummy-prod-ag-dummy-prod-app-1\n"}`)
+			}))
+	defer ts.Close()
+
+	re, _ := regexp.Compile("([a-z]+)://([A-nZa-z0-9.]+):([0-9]+)(.*)")
+	found := re.FindStringSubmatch(ts.URL)
+	port, _ := strconv.Atoi(found[3])
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "inventory",
+		"request_json":
+			"{\"apikey\": \"\", \"command\": \"uname\", \"command_option\": \"-n\"}"
+	}`, "dummy-prod-ag", port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t,
+		`{"return_code":0, "return_value":"dummy-prod-ag-dummy-prod-app-1\n"}`,
+		res.Body.String(),
+	)
+}
+
+func TestProxy17(t *testing.T) {
+	//proxy inventory when alias not assigned instance
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "inventory",
+		"request_json":
+			"{\"apikey\": \"\", \"command\": \"uname\", \"command_option\": \"-n\"}"
+	}`, "dummy-stg-ag", 6777)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
+	assert.Equal(t, "", res.Body.String())
+}
+
+func TestProxy18(t *testing.T) {
+	//proxy inventory when autoscaling group not found
+
+	setup()
+	defer teardown()
+
+	//bastion
+	m := martini.Classic()
+	m.Use(render.Renderer())
+	m.Post("/proxy", binding.Json(halib.ProxyRequest{}), Proxy)
+
+	alias := "dummy-prod-ag-dummy-prod-app-1"
+	port := 6777
+
+	requestJSON := fmt.Sprintf(`{
+		"proxy_hostport": ["%s:%d"],
+		"request_type": "inventory",
+		"request_json":
+			"{\"apikey\": \"\", \"command\": \"uname\", \"command_option\": \"-n\"}"
+	}`, alias, port)
+	reader := bytes.NewReader([]byte(requestJSON))
+
+	req, _ := http.NewRequest("POST", "/proxy", reader)
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	m.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, "", res.Body.String())
+}
+
 func TestMain(m *testing.M) {
-	AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test.yaml"
+	AutoScalingConfigFile = "../autoscaling/testdata/autoscaling_test_multi.yaml"
 	os.Exit(m.Run())
 }
