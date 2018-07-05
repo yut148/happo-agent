@@ -79,6 +79,7 @@ daemontest:
     - script: 
         name: "prepare test daemon behavior"
         code: |
+            set -e
             BINARY="${WERCKER_OUTPUT_DIR:?}/pkg/linux_amd64/happo-agent"
             mkdir /etc/happo || :
             cd /etc/happo
@@ -86,40 +87,56 @@ daemontest:
             yes "" | openssl req -new -key happo-agent.key -sha256 -out happo-agent.csr
             openssl x509 -in happo-agent.csr -days 3650 -req -signkey happo-agent.key -sha256 -out happo-agent.pub
             touch metrics.yaml
-
             apt-get -y update
             apt-get -y install jq time bc
     - script: 
         name: "test daemon behavior"
         code: |
+            set -e
             TEST_DURATION_SEC=360
             CPU_THRESHOLD_SEC=$(echo "${TEST_DURATION_SEC} * 0.05" | bc)
             MEM_THRESHOLD_KB=40960
-            DB_DISK_THRESHOLD_KB=4096
+            DB_DISK_THRESHOLD_KB=40
 
-            REQUESTS=1000
-            REQUESTS_INTERVAL=0.1
+            MONITOR_REQUESTS=1000
+            MONITOR_REQUESTS_INTERVAL=0.1
+            METRICS_COUNT=200
 
             echo "=== TEST SUMMARY ==="
             echo "TEST_DURATION_SEC=${TEST_DURATION_SEC}"
             echo "CPU_THRESHOLD_SEC=${CPU_THRESHOLD_SEC}"
             echo "MEM_THRESHOLD_KB=${MEM_THRESHOLD_KB}"
             echo "DB_DISK_THRESHOLD_KB=${DB_DISK_THRESHOLD_KB}"
-            echo "REQUESTS=${REQUESTS}"
-            echo "REQUESTS_INTERVAL=${REQUESTS_INTERVAL}"
+            echo "MONITOR_REQUESTS=${MONITOR_REQUESTS}"
+            echo "MONITOR_REQUESTS_INTERVAL=${MONITOR_REQUESTS_INTERVAL}"
+            echo "METRICS_COUNT=${METRICS_COUNT}"
             echo "===================="
+
+            echo "#!/bin/bash"                                                   >> /usr/local/bin/metrics_test_plugin_multi
+            echo "for i in \$(seq 1000 \$(expr 1000 + ${METRICS_COUNT:?})) ; do" >> /usr/local/bin/metrics_test_plugin_multi
+            echo "echo -n \$i. ; /usr/local/bin/metrics_test_plugin \$i"         >> /usr/local/bin/metrics_test_plugin_multi
+            echo "done"                                                          >> /usr/local/bin/metrics_test_plugin_multi
+            chmod a+x /usr/local/bin/metrics_test_plugin_multi
+            cat /usr/local/bin/metrics_test_plugin_multi
+
+            echo "metrics:"                                   >> /etc/happo/metrics.yaml
+            echo "- hostname: happo-agent-test01"             >> /etc/happo/metrics.yaml
+            echo "  plugins:"                                 >> /etc/happo/metrics.yaml
+            echo "  - plugin_name: metrics_test_plugin_multi" >> /etc/happo/metrics.yaml
+            echo "    plugin_option: \"\""                    >> /etc/happo/metrics.yaml
 
             BINARY="${WERCKER_OUTPUT_DIR:?}/pkg/linux_amd64/happo-agent"
             /usr/bin/time -f "kernel %S sec\nuser %U sec\nusage %P\nrssmax %M KB" -o /tmp/time.out ${BINARY:?} daemon \
               --public-key=/etc/happo/happo-agent.pub \
               --private-key=/etc/happo/happo-agent.key \
               --metric-config=/etc/happo/metrics.yaml \
-              --logfile=- &
+              --logfile=/dev/stdout &
             sleep 5
             bash -c "touch /tmp/running ; sleep ${TEST_DURATION_SEC:?} ; kill $(pgrep happo-agent) ; rm -f /tmp/running" &
+
             # use installed test plugins at "install test plugin" step
-            for i in $(seq 1 ${REQUESTS:?}); do
-              test $(curl -k -XPOST -s https://127.0.0.1:6777/monitor -d '{"apikey":"","plugin_name":"monitor_test_plugin","plugin_option":"0"}' | jq .return_value) -eq 0 && sleep ${REQUESTS_INTERVAL:?} || exit 1
+            for i in $(seq 1 ${MONITOR_REQUESTS:?}); do
+              test $(curl -k -XPOST -s https://127.0.0.1:6777/monitor -d '{"apikey":"","plugin_name":"monitor_test_plugin","plugin_option":"0"}' | jq .return_value) -eq 0 && sleep ${MONITOR_REQUESTS_INTERVAL:?} || exit 1
               echo -n .
             done
             echo ""
@@ -140,24 +157,30 @@ daemontest:
             echo "#############################"
             echo ""
 
+            CPU_USED_SEC=$(echo "$(grep ^kernel /tmp/time.out | awk '{print $2}') + $(grep ^user /tmp/time.out | awk '{print $2}')" | bc)
+            echo "CPU_USED_SEC=${CPU_USED_SEC:?}"
+            MEM_USED_KB=$(grep ^rssmax /tmp/time.out | awk '{print $2}')
+            echo "MEM_USED_KB=${MEM_USED_KB:?}"
+            DB_DISK_USAGE_KB=$(du -k happo-agent.db | awk '{print $1}')
+            echo "DB_DISK_USAGE_KB=${DB_DISK_USAGE_KB:?}"
+            echo ""
+
             echo "=== TEST SUMMARY ==="
             echo "TEST_DURATION_SEC=${TEST_DURATION_SEC}"
             echo "CPU_THRESHOLD_SEC=${CPU_THRESHOLD_SEC}"
             echo "MEM_THRESHOLD_KB=${MEM_THRESHOLD_KB}"
             echo "DB_DISK_THRESHOLD_KB=${DB_DISK_THRESHOLD_KB}"
-            echo "REQUESTS=${REQUESTS}"
-            echo "REQUESTS_INTERVAL=${REQUESTS_INTERVAL}"
+            echo "MONITOR_REQUESTS=${MONITOR_REQUESTS}"
+            echo "MONITOR_REQUESTS_INTERVAL=${MONITOR_REQUESTS_INTERVAL}"
+            echo "METRICS_COUNT=${METRICS_COUNT}"
             echo "===================="
 
-            CPU_USED_SEC=$(echo "$(grep ^kernel /tmp/time.out | awk '{print $2}') + $(grep ^user /tmp/time.out | awk '{print $2}')" | bc)
             echo -n "CPU_USED_SEC=${CPU_USED_SEC:?}"
             [[ $(echo "${CPU_USED_SEC:?} > ${CPU_THRESHOLD_SEC:?}" | bc) -eq 0 ]] && echo " OK" || (echo " NG(CPU_USED_SEC > ${CPU_THRESHOLD_SEC:?})" ; exit 1)
 
-            MEM_USED_KB=$(grep ^rssmax /tmp/time.out | awk '{print $2}')
             echo -n "MEM_USED_KB=${MEM_USED_KB:?}"
             [[ $(echo "${MEM_USED_KB:?} > ${MEM_THRESHOLD_KB:?}" | bc) -eq 0 ]] && echo " OK" || (echo " NG(MEM_USED_KB > ${MEM_THRESHOLD_KB:?})" ; exit 1)
 
-            DB_DISK_USAGE_KB=$(du -k happo-agent.db | awk '{print $1}')
             echo -n "DB_DISK_USAGE_KB=${DB_DISK_USAGE_KB:?}"
             [[ $(echo "${DB_DISK_USAGE_KB:?} > ${DB_DISK_THRESHOLD_KB:?}" | bc) -eq 0 ]] && echo " OK" || (echo " NG(DB_DISK_USAGE_KB > ${DB_DISK_THRESHOLD_KB:?})" ; exit 1)
 deploy:
