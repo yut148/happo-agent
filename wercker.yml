@@ -126,6 +126,7 @@ daemontest:
             echo "    plugin_option: \"\""                    >> /etc/happo/metrics.yaml
 
             BINARY="${WERCKER_OUTPUT_DIR:?}/pkg/linux_amd64/happo-agent"
+            export MARTINI_ENV="production"
             /usr/bin/time -f "kernel %S sec\nuser %U sec\nusage %P\nrssmax %M KB" -o /tmp/time.out ${BINARY:?} daemon \
               --public-key=/etc/happo/happo-agent.pub \
               --private-key=/etc/happo/happo-agent.key \
