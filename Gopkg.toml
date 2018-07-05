@@ -22,12 +22,15 @@
 
 [[constraint]]
   name = "github.com/Sirupsen/logrus"
+  version = "v1.0.5"
 
 [[constraint]]
   name = "github.com/Songmu/timeout"
+  revision = "84831c43cf48f6b1d52c64ed499d714ffd62eca1"
 
 [[constraint]]
   name = "github.com/client9/reopen"
+  revision = "4b86f9c0ead51cc410d05655596e30f281ed9071"
 
 [[constraint]]
   name = "github.com/codegangsta/cli"
@@ -35,6 +38,7 @@
 
 [[constraint]]
   name = "github.com/codegangsta/martini-contrib"
+  revision = "8ce6181c2609699e4c7cd30994b76a850a9cdadc"
 
 [[constraint]]
   name = "github.com/go-martini/martini"
@@ -42,6 +46,7 @@
 
 [[constraint]]
   name = "github.com/martini-contrib/binding"
+  revision = "05d3e151b6cf34dacac6306226a33db68459a3b5"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -49,9 +54,12 @@
 
 [[constraint]]
   name = "github.com/syndtr/goleveldb"
+  revision = "8c81ea47d4c41a385645e133e15510fc6a2a74b4"
 
 [[constraint]]
   name = "golang.org/x/net"
+  revision = "9313baa13d9262e49d07b20ed57dceafcd7240cc"
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"
+  revision = "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
