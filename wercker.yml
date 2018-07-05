@@ -1,4 +1,5 @@
 box: "netmarkjp/golang-build:1.9.4"
+command-timeout: 60
 build: 
   steps:
     - wercker/setup-go-workspace:
@@ -93,12 +94,12 @@ daemontest:
         name: "test daemon behavior"
         code: |
             set -e
-            TEST_DURATION_SEC=360
-            CPU_THRESHOLD_SEC=$(echo "${TEST_DURATION_SEC} * 0.05" | bc)
+            TEST_DURATION_SEC=2700
+            CPU_THRESHOLD_SEC=$(echo "${TEST_DURATION_SEC} * 0.04" | bc)
             MEM_THRESHOLD_KB=40960
-            DB_DISK_THRESHOLD_KB=40
+            DB_DISK_THRESHOLD_KB=250
 
-            MONITOR_REQUESTS=1000
+            MONITOR_REQUESTS=10000
             MONITOR_REQUESTS_INTERVAL=0.1
             METRICS_COUNT=200
 
