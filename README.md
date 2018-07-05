@@ -385,6 +385,22 @@ You also can run test suite with docker on local PC.
 
 See [helper scripts usage](contrib/development/README.md)
 
+## About testing
+
+Overview : Basically use `go test`
+
+- Unit test : `go test` in CI
+- Endpoint behavior test : `go test` in CI
+- Regression test : automatically do in CI
+
+`daemontest` pipeline is the daemon running test.
+if you run `daemontest` on local with wercker-cli,
+run below.
+
+```bash
+wercker build --pipeline daemontest
+```
+
 ## Author
 
 - [Yuichiro Saito](https://github.com/koemu)
