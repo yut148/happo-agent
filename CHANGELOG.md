@@ -1,3 +1,7 @@
+### 1.1.0 (Sun Mar 4 13:39:36 2018 +0900)
+
+- Merge pull request #36 from heartbeatsjp/default-disable-requeststatus-middleware (Sun Mar 4 13:39:36 2018 +0900) 20e3591
+
 ### 1.0.1 (Fri Feb 9 16:44:26 2018 +0900)
 
 - Merge pull request #30 from heartbeatsjp/glide-to-dep (Wed Feb 7 16:44:44 2018 +0900) c8892ca

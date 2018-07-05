@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +43,12 @@ func init() {
 
 // ExecCommand execute command with specified timeout behavior
 func ExecCommand(command string, option string) (int, string, string, error) {
+	var timeBegin time.Time
+	var cswBegin int
+	if HappoAgentLoggerEnableInfo() {
+		timeBegin = time.Now()
+		cswBegin = getContextSwitch()
+	}
 
 	commandTimeout := CommandTimeout
 	if commandTimeout == -1 {
@@ -59,7 +67,35 @@ func ExecCommand(command string, option string) (int, string, string, error) {
 		err = &TimeoutError{"Exec timeout: " + commandWithOptions}
 	}
 
+	if HappoAgentLoggerEnableInfo() {
+		now := time.Now()
+		cswTook := getContextSwitch() - cswBegin
+		timeTook := now.Sub(timeBegin)
+		HappoAgentLogger().Infof("%v: ExecCommand %v end. csw=%v, duration=%v,", now.Format(time.RFC3339Nano), command, cswTook, timeTook.Seconds())
+	}
 	return exitStatus.GetChildExitCode(), stdout, stderr, err
+}
+
+func getContextSwitch() int {
+	if _, err := os.Stat("/proc/stat"); err != nil {
+		return -1
+	}
+	fp, err := os.Open("/proc/stat")
+	defer fp.Close()
+	if err != nil {
+		return -1
+	}
+	for scanner := bufio.NewScanner(fp); scanner.Scan(); {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "ctxt ") {
+			csw, err := strconv.Atoi(strings.Split(line, " ")[1])
+			if err != nil {
+				return -1
+			}
+			return csw
+		}
+	}
+	return -1
 }
 
 // ExecCommandCombinedOutput execute command with specified timeout behavior

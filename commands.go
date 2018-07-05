@@ -121,6 +121,11 @@ var daemonFlags = []cli.Flag{
 		EnvVar: "HAPPO_AGENT_SENSU_PLUGIN_PATHS",
 	},
 	cli.BoolFlag{
+		Name:   "enable-requeststatus-middleware",
+		Usage:  "enable util.MartiniRequestStatus middleware(if enable, restart happo-agent at least once a day)",
+		EnvVar: "HAPPO_AGENT_ENABLE_REQUESTSTATUS_MIDDLEWARE",
+	},
+	cli.BoolFlag{
 		Name:   "disable-collect-metrics",
 		Usage:  "disable collect metrics ( if true, metrics.yaml has no meaning )",
 		EnvVar: "HAPPO_AGENT_DISABLE_COLLECT_METRICS",

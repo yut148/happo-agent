@@ -81,6 +81,11 @@ func HappoAgentLogger() *logrus.Logger {
 	return logger
 }
 
+// HappoAgentLoggerEnableInfo returns enable info
+func HappoAgentLoggerEnableInfo() bool {
+	return logger.Level >= logrus.InfoLevel
+}
+
 // SetLogLevel parse string and set log level
 func SetLogLevel(logLevel string) {
 	logLevel = strings.ToLower(logLevel)

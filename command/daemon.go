@@ -76,8 +76,10 @@ func CmdDaemon(c *cli.Context) {
 	signal.Notify(sigHup, syscall.SIGHUP)
 	go func() {
 		for {
-			<-sigHup
-			fp.Reopen()
+			select {
+			case <-sigHup:
+				fp.Reopen()
+			}
 		}
 	}()
 
@@ -89,7 +91,11 @@ func CmdDaemon(c *cli.Context) {
 			SSLRedirect:      true,
 			DisableProdCheck: true,
 		}))
-	m.Use(util.MartiniRequestStatus())
+
+	enableRequestStatusMiddlware := c.Bool("enable-requeststatus-middleware")
+	if enableRequestStatusMiddlware {
+		m.Use(util.MartiniRequestStatus())
+	}
 
 	// CPU Profiling
 	if c.String("cpu-profile") != "" {
@@ -140,7 +146,9 @@ func CmdDaemon(c *cli.Context) {
 	m.Get("/metric/status", model.MetricDataBufferStatus)
 	m.Get("/status", model.Status)
 	m.Get("/status/memory", model.MemoryStatus)
-	m.Get("/status/request", model.RequestStatus)
+	if enableRequestStatusMiddlware {
+		m.Get("/status/request", model.RequestStatus)
+	}
 	m.Get("/machine-state", model.ListMachieState)
 	m.Get("/machine-state/:key", model.GetMachineState)
 
