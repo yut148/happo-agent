@@ -173,14 +173,19 @@ func CmdDaemon(c *cli.Context) {
 		}
 	}()
 
+	disableCollectMetrics := c.Bool("disable-collect-metrics")
+	util.HappoAgentLogger().Debug("disable-collect-metrics: ", disableCollectMetrics)
+
 	// Metric collect timer
 	timeMetrics := time.NewTicker(time.Minute).C
 	for {
 		select {
 		case <-timeMetrics:
-			err := collect.Metrics(c.String("metric-config"))
-			if err != nil {
-				log.Fatal(err)
+			if !disableCollectMetrics {
+				err := collect.Metrics(c.String("metric-config"))
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	}
