@@ -401,6 +401,23 @@ run below.
 wercker build --pipeline daemontest
 ```
 
+### about daemontest
+
+To confirm binary will suite to the criteria.
+
+- Case:
+    - Test Duration: 2700sec(45min)
+    - Monitor Requests: 10kreq/45min => 3333/3min
+    - Metric Count: 200 => metrics data stored 200 metrics per minute
+- Criteria:
+    - CPU Usage: up to 4%
+    - Mem Usage: up to 500MB
+    - Disk Usage: up to 250KB
+
+We know that long-long running test is good for daemon,
+but max is 59min, because of Wercker's restriction.
+
+
 ## Author
 
 - [Yuichiro Saito](https://github.com/koemu)
