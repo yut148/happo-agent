@@ -95,8 +95,9 @@ daemontest:
         code: |
             set -e
             TEST_DURATION_SEC=2700
-            CPU_THRESHOLD_SEC=$(echo "${TEST_DURATION_SEC} * 0.04" | bc)
-            MEM_THRESHOLD_KB=40960
+            CPU_THRESHOLD_PERCENT=4
+            CPU_THRESHOLD_SEC=$(echo "${TEST_DURATION_SEC} * ${CPU_THRESHOLD_PERCENT:?} / 100" | bc)
+            MEM_THRESHOLD_KB=51200
             DB_DISK_THRESHOLD_KB=250
 
             MONITOR_REQUESTS=10000
@@ -105,6 +106,7 @@ daemontest:
 
             echo "=== TEST SUMMARY ==="
             echo "TEST_DURATION_SEC=${TEST_DURATION_SEC}"
+            echo "CPU_THRESHOLD_PERCENT=${CPU_THRESHOLD_PERCENT}"
             echo "CPU_THRESHOLD_SEC=${CPU_THRESHOLD_SEC}"
             echo "MEM_THRESHOLD_KB=${MEM_THRESHOLD_KB}"
             echo "DB_DISK_THRESHOLD_KB=${DB_DISK_THRESHOLD_KB}"
@@ -169,6 +171,7 @@ daemontest:
 
             echo "=== TEST SUMMARY ==="
             echo "TEST_DURATION_SEC=${TEST_DURATION_SEC}"
+            echo "CPU_THRESHOLD_PERCENT=${CPU_THRESHOLD_PERCENT}"
             echo "CPU_THRESHOLD_SEC=${CPU_THRESHOLD_SEC}"
             echo "MEM_THRESHOLD_KB=${MEM_THRESHOLD_KB}"
             echo "DB_DISK_THRESHOLD_KB=${DB_DISK_THRESHOLD_KB}"
