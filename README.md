@@ -322,6 +322,25 @@ $ wget -q --no-check-certificate -O -  https://127.0.0.1:6777/autoscaling
 {"autoscaling":[{"autoscaling_group_name":"hb-autoscaling","instances":[{"alias":"hb-autoscaling-app-1","instance_data":{"ip":"192.0.2.11","instance_id":"i-aaaaaaaaaaaaaaaaa","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-2","instance_data":{"ip":"192.0.2.12","instance_id":"i-bbbbbbbbbbbbbbbbb","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-3","instance_data":{"ip":"192.0.2.13","instance_id":"i-ccccccccccccccccc","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-4","instance_data":{"ip":"192.0.2.14","instance_id":"i-ddddddddddddddddd","metric_plugins":[{"plugin_name":"","plugin_option":""}]}}]}]}
 ```
 
+### /autoscaling/resolve/:alias
+
+Resolve ip from alias
+
+- Input format
+    - None
+- Input variables
+    - None
+- Return format
+    - JSON
+- Return variables
+    - status: result status
+    - ip: private ip address by Amazon EC2
+
+```
+# wget -q --no-check-certificate -O -  https://127.0.0.1:6777/autoscaling/resolve/hb-autoscaling-app-1
+{"Status":"OK","ip":"192.0.2.11"}
+```
+
 ### /autoscaling/config/update
 
 Update autoscaling config
