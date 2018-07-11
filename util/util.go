@@ -183,3 +183,25 @@ func buildMetricAppendAPIRequest(endpoint string, postdata []byte) (*http.Client
 	}}
 	return client, req, err
 }
+
+// RequestToAutoScalingResolveAPI send request to AutoScalingResolveAPI
+func RequestToAutoScalingResolveAPI(endpoint string, alias string) (*http.Response, error) {
+	client, req, err := buildAutoScalingResolveAPIRequest(endpoint, alias)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(req)
+}
+
+func buildAutoScalingResolveAPIRequest(endpoint string, alias string) (*http.Client, *http.Request, error) {
+	uri := fmt.Sprintf("%s/autoscaling/resolve/%s", endpoint, alias)
+	req, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}}
+	return client, req, err
+}
