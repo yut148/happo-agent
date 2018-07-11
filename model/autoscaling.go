@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/codegangsta/martini-contrib/render"
+	"github.com/go-martini/martini"
 	"github.com/heartbeatsjp/happo-agent/autoscaling"
 	"github.com/heartbeatsjp/happo-agent/halib"
 	"github.com/heartbeatsjp/happo-agent/util"
@@ -25,6 +26,28 @@ func AutoScaling(req *http.Request, r render.Render) {
 	}
 	autoScalingResponse.AutoScaling = autoScaling
 	r.JSON(http.StatusOK, autoScalingResponse)
+}
+
+// AutoScalingResolve return ip of alias
+func AutoScalingResolve(params martini.Params, r render.Render) {
+	var response halib.AutoScalingResolveResponse
+	alias := params["alias"]
+	if alias == "" {
+		response.Status = "error"
+		r.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	ip, err := autoscaling.AliasToIP(alias)
+	if err != nil {
+		response.Status = "error"
+		r.JSON(http.StatusInternalServerError, response)
+		return
+	}
+	response.Status = "OK"
+	response.IP = ip
+
+	r.JSON(http.StatusOK, response)
 }
 
 // AutoScalingConfigUpdate save autoscaling config

@@ -164,6 +164,12 @@ type AutoScalingResponse struct {
 	AutoScaling []AutoScalingData `json:"autoscaling"`
 }
 
+// AutoScalingResolveResponse is /autoscaling/resolve/:alias API
+type AutoScalingResolveResponse struct {
+	Status string `jspn:"status"`
+	IP     string `json:"ip"`
+}
+
 // AutoScalingRefreshResponse is /autoscaling/refresh API
 type AutoScalingRefreshResponse struct {
 	Status  string `json:"status"`
