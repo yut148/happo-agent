@@ -274,6 +274,19 @@ var Commands = []cli.Command{
 			},
 		},
 	},
+	{
+		Name:   "resolve_alias",
+		Usage:  "Resolve alias.",
+		Action: command.CmdResolveAlias,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:   "bastion-endpoint, b",
+				Value:  "https://127.0.0.1:6777",
+				Usage:  "Bastion (Nearby happo-agent) endpoint address",
+				EnvVar: "HAPPO_AGENT_BASTION_ENDPOINT",
+			},
+		},
+	},
 }
 
 // CommandNotFound implements action when subcommand not found

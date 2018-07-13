@@ -150,6 +150,7 @@ func CmdDaemon(c *cli.Context) {
 	m.Post("/autoscaling/instance/deregister", binding.Json(halib.AutoScalingInstanceDeregisterRequest{}), model.AutoScalingInstanceDeregister)
 	m.Post("/autoscaling/config/update", binding.Json(halib.AutoScalingConfigUpdateRequest{}), model.AutoScalingConfigUpdate)
 	m.Get("/autoscaling", model.AutoScaling)
+	m.Get("/autoscaling/resolve/:alias", model.AutoScalingResolve)
 	m.Get("/metric/status", model.MetricDataBufferStatus)
 	m.Get("/status", model.Status)
 	m.Get("/status/memory", model.MemoryStatus)

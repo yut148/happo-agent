@@ -322,6 +322,25 @@ $ wget -q --no-check-certificate -O -  https://127.0.0.1:6777/autoscaling
 {"autoscaling":[{"autoscaling_group_name":"hb-autoscaling","instances":[{"alias":"hb-autoscaling-app-1","instance_data":{"ip":"192.0.2.11","instance_id":"i-aaaaaaaaaaaaaaaaa","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-2","instance_data":{"ip":"192.0.2.12","instance_id":"i-bbbbbbbbbbbbbbbbb","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-3","instance_data":{"ip":"192.0.2.13","instance_id":"i-ccccccccccccccccc","metric_plugins":[{"plugin_name":"","plugin_option":""}]}},{"alias":"hb-autoscaling-app-4","instance_data":{"ip":"192.0.2.14","instance_id":"i-ddddddddddddddddd","metric_plugins":[{"plugin_name":"","plugin_option":""}]}}]}]}
 ```
 
+### /autoscaling/resolve/:alias
+
+エイリアスをプライベートIPアドレスに解決します。
+
+- 入力形式
+    - なし
+- 入力変数
+    - なし
+- 返り値の形式
+    - JSON
+- 返り値の変数
+    - status: 実行結果のステータス
+    - ip: プライベートIPアドレス
+
+```
+# wget -q --no-check-certificate -O -  https://127.0.0.1:6777/autoscaling/resolve/hb-autoscaling-app-1
+{"Status":"OK","ip":"192.0.2.11"}
+```
+
 ### /autoscaling/config/update
 
 AutoScalingの設定を更新します。
