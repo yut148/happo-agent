@@ -411,12 +411,28 @@ To confirm binary will suite to the criteria.
     - Metric Count: 200 => metrics data stored 200 metrics per minute
 - Criteria:
     - CPU Usage: up to 4%
+        - Monitoring agent's cpu usage shoud be small.
     - Mem Usage: up to 500MB
+        - Monitoring agent's memory usage shoud be small. And more, we have to avoid memory leaking.
     - Disk Usage: up to 250KB
+        - Disk Usage is almost related to the amount of storing metrics. We have to keep disk usage properly.
 
 We know that long-long running test is good for daemon,
 but max is 59min, because of Wercker's restriction.
 
+... note about implementation:
+
+- daemontest configurations are in wercker.yml `daemontest > steps > script.name=="test daemon behavior" > code`
+    - yq filter is `.daemontest.steps[] | select(.script.name=="test daemon behavior") | .script.code`
+- Case:
+    - Test Duration: `TEST_DURATION_SEC`
+        - to complete requests while test duration, maybe we have to change `MONITOR_REQUESTS` and `MONITOR_REQUESTS_INTERVAL`
+    - Monitor Requests: `MONITOR_REQUESTS / TEST_DURATION_SEC`
+    - Metric Count: `METRICS_COUNT`
+- Criteria:
+    - CPU Usage: `CPU_THRESHOLD_PERCENT`
+    - Mem Usage: `MEM_THRESHOLD_KB`
+    - Disk Usage: `DB_DISK_THRESHOLD_KB`
 
 ## Author
 
