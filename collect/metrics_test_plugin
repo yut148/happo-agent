@@ -4,4 +4,4 @@ METRIC_PATH=$(echo "$(dirname $0)/${0}" | sed -e 's@/@.@g' -e 's@^\.@@' -e 's@\.
 METRIC_VALUE=${1-1000}
 METRIC_TIMESTAMP=$(date +%s)
 
-echo "${METRIC_PATH:?} ${METRIC_VALUE:?} ${METRIC_TIMESTAMP:?}"
+echo -e "${METRIC_PATH:?}\t${METRIC_VALUE:?}\t${METRIC_TIMESTAMP:?}"
